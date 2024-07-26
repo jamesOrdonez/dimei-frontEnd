@@ -4,5 +4,4 @@
 
 > React Admin Dashboard made with DIMEI components and React.
 
-![preview](public/assets/preview.jpg)
-
+![preview](public/capturas/dashboar.png)
