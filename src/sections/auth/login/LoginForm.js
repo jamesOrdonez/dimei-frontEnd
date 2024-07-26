@@ -2,7 +2,8 @@ import { Navigate } from 'react-router-dom';
 
 export default function Login() {
   const handleClick = (e) => {
-    Navigate('/dashboard', { replace: true });
+    e.preventDefault();
+    return (window.location.href = '/dashboard');
   };
 
   return (
