@@ -3,13 +3,14 @@ import Layouts from '../layouts/navbar/DashboardLayout';
 import Page404 from '../layouts/404/404';
 import Dashboard from '../pages/Dashboard';
 import UserPage from '../pages/UserPage';
+import Login from '../sections/auth/login/LoginForm';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
 //
 /* import BlogPage from '../pages/BlogPage'; */
 /* import UserPage from '../pages/UserPage';
-import LoginPage from '../pages/LoginPage';
+
 import Page404 from '../pages/Page404'; */
 /* import ProductsPage from '../pages/ProductsPage'; */
 
@@ -63,6 +64,7 @@ export default function Router() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<UserPage />} />
       </Route>
+      <Route path="/" element={<Login />} />
       <Route path="*" element={<Page404 />} />
     </Routes>
   );
