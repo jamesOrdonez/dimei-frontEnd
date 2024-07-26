@@ -1,4 +1,4 @@
-export default function Search() {
+export default function Search({ searchTerm, setSearchTerm }) {
   return (
     <div class="w-full md:w-1/2">
       <form class="flex items-center">
@@ -27,6 +27,8 @@ export default function Search() {
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 "
             placeholder="Search"
             required=""
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </form>

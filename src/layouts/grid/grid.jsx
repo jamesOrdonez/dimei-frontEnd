@@ -1,68 +1,61 @@
+import { useState } from 'react';
 import Form from './components/form';
 import Search from './components/search';
 
 export default function DataGrid({ datos }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredData = datos.filter((item) => {
+    for (const key in item) {
+      if (Object.prototype.hasOwnProperty.call(item, key)) {
+        const value = item[key];
+        if (value && typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  });
+
   return (
     <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
       <div class="bg-white  relative shadow-md sm:rounded-lg overflow-hidden">
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-          <Search />
+          <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           <Form />
         </div>
         <div class="font-[sans-serif] overflow-x-auto">
           <table class="min-w-full bg-white">
             <thead class="whitespace-nowrap">
               <tr>
-                <th class="p-4 text-left text-sm font-semibold text-black">Name</th>
-                <th class="p-4 text-left text-sm font-semibold text-black">
-                  Role
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-3 h-3 fill-gray-400 inline cursor-pointer ml-2"
-                    viewBox="0 0 401.998 401.998"
-                  >
-                    <path
-                      d="M73.092 164.452h255.813c4.949 0 9.233-1.807 12.848-5.424 3.613-3.616 5.427-7.898 5.427-12.847s-1.813-9.229-5.427-12.85L213.846 5.424C210.232 1.812 205.951 0 200.999 0s-9.233 1.812-12.85 5.424L60.242 133.331c-3.617 3.617-5.424 7.901-5.424 12.85 0 4.948 1.807 9.231 5.424 12.847 3.621 3.617 7.902 5.424 12.85 5.424zm255.813 73.097H73.092c-4.952 0-9.233 1.808-12.85 5.421-3.617 3.617-5.424 7.898-5.424 12.847s1.807 9.233 5.424 12.848L188.149 396.57c3.621 3.617 7.902 5.428 12.85 5.428s9.233-1.811 12.847-5.428l127.907-127.906c3.613-3.614 5.427-7.898 5.427-12.848 0-4.948-1.813-9.229-5.427-12.847-3.614-3.616-7.899-5.42-12.848-5.42z"
-                      data-original="#000000"
-                    />
-                  </svg>
-                </th>
-                <th class="p-4 text-left text-sm font-semibold text-black">
-                  Active
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-3 h-3 fill-gray-400 inline cursor-pointer ml-2"
-                    viewBox="0 0 401.998 401.998"
-                  >
-                    <path
-                      d="M73.092 164.452h255.813c4.949 0 9.233-1.807 12.848-5.424 3.613-3.616 5.427-7.898 5.427-12.847s-1.813-9.229-5.427-12.85L213.846 5.424C210.232 1.812 205.951 0 200.999 0s-9.233 1.812-12.85 5.424L60.242 133.331c-3.617 3.617-5.424 7.901-5.424 12.85 0 4.948 1.807 9.231 5.424 12.847 3.621 3.617 7.902 5.424 12.85 5.424zm255.813 73.097H73.092c-4.952 0-9.233 1.808-12.85 5.421-3.617 3.617-5.424 7.898-5.424 12.847s1.807 9.233 5.424 12.848L188.149 396.57c3.621 3.617 7.902 5.428 12.85 5.428s9.233-1.811 12.847-5.428l127.907-127.906c3.613-3.614 5.427-7.898 5.427-12.848 0-4.948-1.813-9.229-5.427-12.847-3.614-3.616-7.899-5.42-12.848-5.42z"
-                      data-original="#000000"
-                    />
-                  </svg>
-                </th>
+                {filteredData.length > 0 &&
+                  Object.keys(filteredData[0]).map((key, index) => {
+                    if (key !== 'children') {
+                      return (
+                        <th key={index} className="p-4 text-left text-sm font-semibold text-black">
+                          {key.toUpperCase()}
+                        </th>
+                      );
+                    }
+                    return null;
+                  })}{' '}
                 <th class="p-4 text-left text-sm font-semibold text-black">Action</th>
               </tr>
             </thead>
 
             <tbody class="whitespace-nowrap">
-              {datos.map((item) => (
+              {filteredData.map((item) => (
                 <tr class="odd:bg-blue-50">
-                  <td class="p-4 text-sm">
-                    <div class="flex items-center cursor-pointer w-max">
-                      <img src="https://readymadeui.com/profile_4.webp" class="w-9 h-9 rounded-full shrink-0" />
-                      <div class="ml-4">
-                        <p class="text-sm text-black">Gladys Jones</p>
-                        <p class="text-xs text-gray-500 mt-0.5">gladys@example.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="p-4 text-sm text-black">Admin</td>
-                  <td class="p-4">
-                    <label class="relative cursor-pointer">
-                      <input type="checkbox" class="sr-only peer" checked />
-                      <div class="w-11 h-6 flex items-center bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:absolute after:left-[2px] peer-checked:after:border-white after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007bff]"></div>
-                    </label>
-                  </td>
+                  {Object.keys(item).map((key) => {
+                    if (key !== 'children') {
+                      return (
+                        <td key={key} class="p-4 text-sm text-black">
+                          {item[key]}
+                        </td>
+                      );
+                    }
+                    return null;
+                  })}
                   <td class="p-4">
                     <button class="mr-4" title="Edit">
                       <svg
