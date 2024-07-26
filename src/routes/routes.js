@@ -1,5 +1,5 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
-import Layouts from '../layouts/dashboard/DashboardLayout';
+import Layouts from '../layouts/navbar/DashboardLayout';
 import Page404 from '../layouts/404/404';
 import Dashboard from '../pages/Dashboard';
 import UserPage from '../pages/UserPage';

@@ -49,8 +49,13 @@ export default function Nav({ openNav, onCloseNav }) {
         '& .simplebar-content': { height: 1, display: 'flex', flexDirection: 'column' },
       }}
     >
-      <Box sx={{ px: 2.5, py: 3, display: 'inline-flex', marginBottom: '20px' }}>
-        <img src="https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png" alt="" height="40px" width="" />
+      <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
+        <img
+          src="https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png"
+          alt=""
+          height="20px"
+          width="140px"
+        />
       </Box>
 
       <Box sx={{ mb: 5, mx: 2.5 }}>

@@ -30,6 +30,7 @@ import Scrollbar from '../components/scrollbar';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
 import USERLIST from '../_mock/user';
+import { DataGrid } from '../layouts/grid';
 
 // ----------------------------------------------------------------------
 
@@ -151,7 +152,7 @@ export default function UserPage() {
       <Helmet>
         <title> User | Minimal UI </title>
       </Helmet>
-
+      <DataGrid />
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
