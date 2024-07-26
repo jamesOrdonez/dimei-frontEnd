@@ -64,7 +64,7 @@ export default function Dashboard() {
                 '08/01/2003',
                 '09/01/2003',
                 '10/01/2003',
-                '11/01/2003',
+                '11/01/2004',
               ]}
               chartData={[
                 {
@@ -112,9 +112,9 @@ export default function Dashboard() {
               title="Conversion Rates"
               subheader="(+43%) than last year"
               chartData={[
-                { label: 'Italy', value: 400 },
-                { label: 'Japan', value: 430 },
-                { label: 'China', value: 448 },
+                { label: 'Ital', value: 400 },
+                { label: 'Japn', value: 430 },
+                { label: 'Chna', value: 448 },
                 { label: 'Canada', value: 470 },
                 { label: 'France', value: 540 },
                 { label: 'Germany', value: 580 },
