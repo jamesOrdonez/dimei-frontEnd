@@ -2,6 +2,7 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import Layouts from '../layouts/dashboard/DashboardLayout';
 import Page404 from '../layouts/404/404';
 import Dashboard from '../pages/Dashboard';
+import UserPage from '../pages/UserPage';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -60,6 +61,7 @@ export default function Router() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/usuarios" element={<UserPage />} />
       </Route>
       <Route path="*" element={<Page404 />} />
     </Routes>
