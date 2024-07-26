@@ -48,6 +48,7 @@ export default function Nav({ openNav, onCloseNav }) {
         height: 1,
         '& .simplebar-content': { height: 1, display: 'flex', flexDirection: 'column' },
       }}
+      style={{ background: '#fff' }}
     >
       <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
         <img
