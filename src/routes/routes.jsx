@@ -2,7 +2,7 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import Layouts from '../layouts/navbar/DashboardLayout';
 import Page404 from '../layouts/404/404';
 import Dashboard from '../pages/Dashboard';
-import UserPage from '../pages/UserPage';
+import UserPage from '../pages/user';
 import Login from '../sections/auth/login/LoginForm';
 // layouts
 
