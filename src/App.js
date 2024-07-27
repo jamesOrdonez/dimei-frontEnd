@@ -4,10 +4,11 @@ import { HelmetProvider } from 'react-helmet-async';
 import Router from './routes/routes';
 // theme
 import ThemeProvider from './theme';
-// components
-import { StyledChart } from './components/chart';
-import ScrollToTop from './components/scroll-to-top';
+import axios from 'axios';
 
+axios.defaults.baseURL = 'http://localhost:8080/api/v1/';
+// Alter defaults after instance has been created
+axios.defaults.headers.common['Authorization'] = 'AUTH_TOKEN';
 // ----------------------------------------------------------------------
 
 export default function App() {

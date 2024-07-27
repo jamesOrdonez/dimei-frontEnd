@@ -48,9 +48,15 @@ export default function Nav({ openNav, onCloseNav }) {
         height: 1,
         '& .simplebar-content': { height: 1, display: 'flex', flexDirection: 'column' },
       }}
+      style={{ background: '#fff' }}
     >
-      <Box sx={{ px: 2.5, py: 3, display: 'inline-flex', marginBottom: '20px' }}>
-        <img src="https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png" alt="" height="40px" width="" />
+      <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
+        <img
+          src="https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png"
+          alt=""
+          height="20px"
+          width="140px"
+        />
       </Box>
 
       <Box sx={{ mb: 5, mx: 2.5 }}>
@@ -60,11 +66,11 @@ export default function Nav({ openNav, onCloseNav }) {
 
             <Box sx={{ ml: 2 }}>
               <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
-                JHON MARIO CHILITO
+                Jhon Mario
               </Typography>
 
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                ADMIN
+                Admin
               </Typography>
             </Box>
           </StyledAccount>
