@@ -2,7 +2,6 @@ import { Helmet } from 'react-helmet-async';
 import { DataGrid } from '../../layouts/grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import Swealert from '../../components/Swealert';
 import { LoaderModule } from '../../components/loaders';
 
 /* const data = [
@@ -118,7 +117,7 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> User | DIMEI </title>
+        <title> Usuarios</title>
       </Helmet>
       <DataGrid datos={data} error={error} message={message} />
     </>

@@ -52,8 +52,8 @@ export default function Nav({ openNav, onCloseNav }) {
     >
       <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
         <img
-          src="https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png"
-          alt=""
+          src="https://www.ingenieria.unam.mx/dimei/images/logos/logo_dimei22.png"
+          alt="logo"
           height="20px"
           width="140px"
         />
