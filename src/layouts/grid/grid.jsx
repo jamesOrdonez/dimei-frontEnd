@@ -23,7 +23,7 @@ export default function DataGrid({ datos, error, message }) {
   return (
     <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
       {error ? (
-        <Error />
+        <Error message={message} />
       ) : (
         <div class="bg-white  relative shadow-md sm:rounded-lg overflow-hidden">
           <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">

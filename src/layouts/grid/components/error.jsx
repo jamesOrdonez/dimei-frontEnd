@@ -1,5 +1,5 @@
-import './style.css';
-export default function Error() {
+import './style/style.css';
+export default function Error({ message }) {
   return (
     <div>
       <div className="containers" style={{ display: 'flex', justifyContent: 'center' }}>
@@ -58,7 +58,7 @@ export default function Error() {
       <div>
         <div class="bg-red-100 text-red-800 p-4 rounded-lg" role="alert">
           <strong class="font-bold text-sm mr-4">Error!</strong>
-          <span class="block text-sm sm:inline max-sm:mt-2">This is a error message that requires your attention.</span>
+          <span class="block text-sm sm:inline max-sm:mt-2">{message}.</span>
         </div>
       </div>
     </div>
