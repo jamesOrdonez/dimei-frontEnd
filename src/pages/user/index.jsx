@@ -3,6 +3,7 @@ import { DataGrid } from '../../layouts/grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import Swealert from '../../components/Swealert';
+import Loader from '../../components/loader';
 
 const data = [
   {
@@ -87,7 +88,7 @@ const data = [
 
 export default function UserPage() {
   const [error, setError] = useState(false);
-  useEffect(async () => {
+  useEffect(() => {
     const AllUser = async () => {
       try {
         const respon = await axios.get('/getUser');
@@ -103,7 +104,8 @@ export default function UserPage() {
       <Helmet>
         <title> User | DIMEI </title>
       </Helmet>
-      <DataGrid datos={data} error={error} message={'sapo'} />
+      <Loader />
+      <DataGrid datos={data} error={false} message={'sapo'} />
     </>
   );
 }
