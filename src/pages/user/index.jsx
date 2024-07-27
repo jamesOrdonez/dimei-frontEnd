@@ -3,7 +3,7 @@ import { DataGrid } from '../../layouts/grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import Swealert from '../../components/Swealert';
-import Loader from '../../components/loader';
+import { LoaderModule } from '../../components/loaders';
 
 const data = [
   {
@@ -104,8 +104,8 @@ export default function UserPage() {
       <Helmet>
         <title> User | DIMEI </title>
       </Helmet>
-      <Loader />
-      <DataGrid datos={data} error={false} message={'sapo'} />
+      <LoaderModule />
+      {/*  <DataGrid datos={data} error={true} message={'sapo'} /> */}
     </>
   );
 }

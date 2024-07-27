@@ -1,6 +1,4 @@
-import './style.css';
-
-export default function Loader() {
+export default function LoaderModule() {
   return (
     <div className="margin-90">
       <div class="loader">
