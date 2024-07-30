@@ -38,6 +38,7 @@ export default function Login() {
           <div class="w-full p-6">
             <form onSubmit={handleClick}>
               <div class="mb-8">
+                {' '}
                 <h3 class="text-gray-800 text-3xl font-extrabold">DIMEI</h3>
               </div>
 
