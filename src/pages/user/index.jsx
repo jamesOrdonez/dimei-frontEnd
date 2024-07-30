@@ -95,7 +95,7 @@ export default function UserPage() {
     const AllUser = async () => {
       try {
         const respon = await axios.get('/getUser');
-        setData(respon.data);
+        setData(respon.data.data);
         setLoader(false);
       } catch (error) {
         setMessage(error.response.data.message);
@@ -119,7 +119,7 @@ export default function UserPage() {
       <Helmet>
         <title> Usuarios</title>
       </Helmet>
-      <DataGrid datos={data} error={error} message={message} />
+      <DataGrid datos={data} error={error} message={message} modulo={'Usuarios'} />
     </>
   );
 }
