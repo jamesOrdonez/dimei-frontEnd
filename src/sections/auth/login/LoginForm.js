@@ -1,6 +1,15 @@
-import { Navigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
 
 export default function Login() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData({ ...formData, [name]: value });
+  };
   const handleClick = (e) => {
     e.preventDefault();
     return (window.location.href = '/dashboard');
@@ -26,6 +35,8 @@ export default function Login() {
             </label>
             <div className="mt-2">
               <input
+                value={formData.email}
+                onChange={handleChange}
                 id="email"
                 name="email"
                 type="email"
@@ -49,6 +60,8 @@ export default function Login() {
             </div>
             <div className="mt-2">
               <input
+                value={formData.password}
+                onChange={handleChange}
                 id="password"
                 name="password"
                 type="password"
