@@ -3,7 +3,7 @@ import Layouts from '../layouts/navbar/DashboardLayout';
 import Page404 from '../layouts/404/404';
 import Dashboard from '../pages/Dashboard';
 import UserPage from '../pages/user';
-import Login from '../sections/auth/login/LoginForm';
+import { LoginForm } from '../Auth';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -64,7 +64,7 @@ export default function Router() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<UserPage />} />
       </Route>
-      <Route path="/" element={<Login />} />
+      <Route path="/" element={<LoginForm />} />
       <Route path="*" element={<Page404 />} />
     </Routes>
   );

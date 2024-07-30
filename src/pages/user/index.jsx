@@ -2,7 +2,6 @@ import { Helmet } from 'react-helmet-async';
 import { DataGrid } from '../../layouts/grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import Swealert from '../../components/Swealert';
 import { LoaderModule } from '../../components/loaders';
 
 /* const data = [
@@ -96,7 +95,7 @@ export default function UserPage() {
     const AllUser = async () => {
       try {
         const respon = await axios.get('/getUser');
-        setData(respon.data);
+        setData(respon.data.data);
         setLoader(false);
       } catch (error) {
         setMessage(error.response.data.message);
@@ -118,9 +117,9 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> User | DIMEI </title>
+        <title> Usuarios</title>
       </Helmet>
-      <DataGrid datos={data} error={error} message={message} />
+      <DataGrid datos={data} error={error} message={message} modulo={'Usuarios'} />
     </>
   );
 }
