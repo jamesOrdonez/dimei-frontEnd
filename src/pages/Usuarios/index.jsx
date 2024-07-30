@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { DataGrid } from '../../layouts/grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { LoaderModule } from '../../components/loaders';
+import { Loader, LoaderModule } from '../../components/loaders';
 
 /* const data = [
   {
@@ -85,7 +85,7 @@ import { LoaderModule } from '../../components/loaders';
   },
 ];
  */
-export default function UserPage() {
+export default function Usuarios() {
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
   const [loader, setLoader] = useState(true);
@@ -94,7 +94,7 @@ export default function UserPage() {
   useEffect(() => {
     const AllUser = async () => {
       try {
-        const respon = await axios.get('/getUser');
+        const respon = await axios.get('/getUser/1');
         setData(respon.data.data);
         setLoader(false);
       } catch (error) {
@@ -106,19 +106,14 @@ export default function UserPage() {
     AllUser();
   }, []);
   if (loader) {
-    return (
-      <div class="bg-gray-200 rounded-full w-full max-w-4xl mx-auto mt-4">
-        <div class="w-1/2 py-0.5 flex items-center justify-center rounded-full bg-blue-500">
-          <p class="text-xs text-white font-bold leading-none">50%</p>
-        </div>
-      </div>
-    );
+    return <Loader />;
   }
   return (
     <>
       <Helmet>
         <title> Usuarios</title>
       </Helmet>
+
       <DataGrid datos={data} error={error} message={message} modulo={'Usuarios'} />
     </>
   );
