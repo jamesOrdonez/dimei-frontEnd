@@ -90,7 +90,7 @@ export default function Usuarios() {
   const [message, setMessage] = useState('');
   const [loader, setLoader] = useState(true);
   const [data, setData] = useState([]);
-  const [bloc, setBlock] = useState(false);
+  const [block, setBlock] = useState(false);
 
   useEffect(() => {
     const AllUser = async () => {
@@ -115,7 +115,7 @@ export default function Usuarios() {
         <title> Usuarios</title>
       </Helmet>
 
-      <DataGrid datos={data} error={error} message={message} modulo={'Usuarios'} block={bloc} onclick={setBlock} />
+      <DataGrid datos={data} error={error} message={message} modulo={'Usuarios'} block={block} onclick={setBlock} />
     </>
   );
 }
