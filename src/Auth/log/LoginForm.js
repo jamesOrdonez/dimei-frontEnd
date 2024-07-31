@@ -1,10 +1,15 @@
 import axios from 'axios';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /* const logo = 'https://readymadeui.com/signin-image.webp'; */
 const logo = 'https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png';
 
 export default function Login() {
+  const [Token, SetToken] = useState(null);
+  const [rol, setRol] = useState(null);
+  const [company, setCompany] = useState(null);
+  const [user, setUser] = useState(null);
+
   const [formData, setFormData] = useState({
     user: '',
     password: '',
@@ -16,16 +21,27 @@ export default function Login() {
   };
   const handleClick = async (e) => {
     e.preventDefault();
-    /*     return (window.location.href = '/dashboard'); */
 
     try {
       const respon = await axios.post('/login', formData);
       console.log('🚀 ~ handleClick ~ respon:', respon);
+      setRol(respon.data.rolId);
+      setCompany(respon.data.company);
+      setUser(respon.data.user);
+      await SetToken(respon.data.token);
+      return await (window.location.href = '/dashboard');
     } catch (e) {
       console.log(e);
       return alert(e.response.data.message + '__' + 'module:' + e.response.data.module);
     }
   };
+
+  useEffect(() => {
+    sessionStorage.setItem('Toke', Token);
+    sessionStorage.setItem('rol', rol);
+    sessionStorage.setItem('company', company);
+    sessionStorage.setItem('user', user);
+  }, [Token]);
 
   return (
     <>
@@ -50,7 +66,7 @@ export default function Login() {
                     type="text"
                     required
                     class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent px-4 py-3.5 rounded-md outline-blue-600"
-                    placeholder="Enter user"
+                    placeholder="Usuario"
                     value={formData.user}
                     onChange={handleChange}
                   />
