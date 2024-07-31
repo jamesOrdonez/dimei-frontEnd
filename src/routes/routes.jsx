@@ -2,8 +2,10 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import Layouts from '../layouts/navbar/DashboardLayout';
 import Page404 from '../layouts/404/404';
 import Dashboard from '../pages/Dashboard';
-import UserPage from '../pages/user';
-import Login from '../sections/auth/login/LoginForm';
+import { LoginForm } from '../Auth';
+import Usuarios from '../pages/Usuarios';
+import ProductsPage from '../pages/ProductsPage';
+import BlogPage from '../pages/BlogPage';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -62,9 +64,12 @@ export default function Router() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/usuarios" element={<UserPage />} />
+        <Route path="/usuarios" element={<Usuarios />} />
+        {/*  */}
+        <Route path="/productos" element={<ProductsPage />} />
+        <Route path="/blog" element={<BlogPage />} />
       </Route>
-      <Route path="/" element={<Login />} />
+      <Route path="/" element={<LoginForm />} />
       <Route path="*" element={<Page404 />} />
     </Routes>
   );
