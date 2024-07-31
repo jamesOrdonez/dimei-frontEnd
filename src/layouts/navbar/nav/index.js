@@ -10,6 +10,7 @@ import Scrollbar from '../../../components/scrollbar';
 import NavSection from '../../../components/nav-section';
 //
 import navConfig from './config';
+import { decrypt } from '../../../utils/crypto';
 
 // ----------------------------------------------------------------------
 
@@ -32,6 +33,8 @@ Nav.propTypes = {
 
 export default function Nav({ openNav, onCloseNav }) {
   const { pathname } = useLocation();
+  const usuario = decrypt(sessionStorage.getItem('user'));
+  const rol = decrypt(sessionStorage.getItem('rol'));
 
   const isDesktop = useResponsive('up', 'lg');
 
@@ -39,7 +42,6 @@ export default function Nav({ openNav, onCloseNav }) {
     if (openNav) {
       onCloseNav();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   const renderContent = (
@@ -66,11 +68,15 @@ export default function Nav({ openNav, onCloseNav }) {
 
             <Box sx={{ ml: 2 }}>
               <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
-                Jhon Mario
+                {usuario}
               </Typography>
 
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Admin
+                {rol == 1 && 'Desarrollador'}
+                {rol == 2 && 'Almacenista'}
+                {rol == 3 && 'Proyectos'}
+                {rol == 4 && 'Mantenimientos'}
+                {rol == 5 && 'Administrador'}
               </Typography>
             </Box>
           </StyledAccount>
