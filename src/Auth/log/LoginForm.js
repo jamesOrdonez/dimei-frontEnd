@@ -38,7 +38,7 @@ export default function Login() {
   };
 
   useEffect(() => {
-    sessionStorage.setItem('Toke', Token);
+    sessionStorage.setItem('Token', Token);
     sessionStorage.setItem('rol', encrypt(rol));
     sessionStorage.setItem('company', encrypt(company));
     sessionStorage.setItem('user', encrypt(user));

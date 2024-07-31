@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import Form from './components/form';
 import Search from './components/search';
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Bars3BottomLeftIcon, Bars3Icon, RectangleGroupIcon, TrashIcon } from '@heroicons/react/24/outline';
 import Paginate from './components/paginate';
 import Error from './components/error';
 
-export default function DataGrid({ datos, error, message, modulo }) {
+export default function DataGrid({ datos, error, message, modulo, block }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredData = datos.filter((item) => {
@@ -36,9 +36,38 @@ export default function DataGrid({ datos, error, message, modulo }) {
           </ul>
 
           <div class="bg-white  relative shadow-md sm:rounded-lg overflow-hidden">
+            {' '}
             <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
               <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-              <Form />
+              <div className="flex">
+                <div class="font-[sans-serif] w-max bg-white border-2 flex rounded-lg overflow-hidden mx-auto mr-5">
+                  {block ? (
+                    <button type="button" class="px-5 py-2.5 flex items-center text-sm tracking-wider outline-none">
+                      <Bars3BottomLeftIcon class="h-6 w-6 text-gray-500" />
+                    </button>
+                  ) : (
+                    <button type="button" class="px-5 py-2.5 flex items-center text-sm tracking-wider outline-none">
+                      <Bars3BottomLeftIcon class="h-6 w-6 text-blue-600" />
+                    </button>
+                  )}
+                  {block ? (
+                    <button
+                      type="button"
+                      class="px-5 py-2.5 flex items-center text-sm tracking-wider outline-none bg-blue-50"
+                    >
+                      <RectangleGroupIcon class="h-6 w-6 text-blue-600" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      class="px-5 py-2.5 flex items-center text-sm tracking-wider outline-none bg-blue-50"
+                    >
+                      <RectangleGroupIcon class="h-6 w-6 text-gray-500" />
+                    </button>
+                  )}
+                </div>
+                <Form />
+              </div>
             </div>
             <div class="font-[sans-serif] overflow-x-auto">
               <table class="min-w-full bg-white">

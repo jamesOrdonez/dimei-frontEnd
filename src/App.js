@@ -6,9 +6,10 @@ import Router from './routes/routes';
 import ThemeProvider from './theme';
 import axios from 'axios';
 
+const TOKEN = sessionStorage.getItem('Token');
 axios.defaults.baseURL = 'http://localhost:8080/api/v1/';
-// Alter defaults after instance has been created
-axios.defaults.headers.common['Authorization'] = 'AUTH_TOKEN';
+axios.defaults.headers.common['Authorization'] = TOKEN;
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 // ----------------------------------------------------------------------
 
 export default function App() {
