@@ -30,7 +30,7 @@ export default function Productos() {
   return (
     <>
       <Helmet>
-        <title> Usuarios</title>
+        <title>Productos</title>
       </Helmet>
 
       <DataGrid datos={data} error={error} message={message} modulo={'Productos'} block={true} />
