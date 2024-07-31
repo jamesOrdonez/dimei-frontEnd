@@ -22,7 +22,7 @@ export default function Productos() {
             descricion: item.description,
             usuarios: item.user,
             compañia: item.company,
-            imagen: <img src={item.img} alt="" className="w-12" />,
+            imagen: <img src={item.img} alt="" className="w-12 h-12" />,
           };
         });
         console.log('🚀 ~ Form ~ Form:', Form);
