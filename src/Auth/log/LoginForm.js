@@ -10,8 +10,7 @@ export default function Login() {
   const [rol, setRol] = useState(null);
   const [company, setCompany] = useState(null);
   const [user, setUser] = useState(null);
-  const usuarios = user;
-  console.log('🚀 ~ Login ~ usuarios:', usuarios);
+
   const [formData, setFormData] = useState({
     user: '',
     password: '',
@@ -68,7 +67,7 @@ export default function Login() {
                   required
                   class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent px-4 py-3.5 rounded-md outline-blue-600"
                   placeholder="Usuario"
-                  value={formData.user}
+                  value={formData.user.toUpperCase()}
                   onChange={handleChange}
                 />
               </div>
