@@ -2,6 +2,7 @@ import { useState } from 'react';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
+import { decrypt } from '../../../utils/crypto';
 // mocks_
 
 // ----------------------------------------------------------------------
@@ -33,6 +34,7 @@ export default function AccountPopover() {
   const handleClose = () => {
     setOpen(null);
   };
+  const usuario = decrypt(sessionStorage.getItem('user'));
 
   return (
     <>
@@ -77,7 +79,7 @@ export default function AccountPopover() {
       >
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
-            JHON MARIO
+            {usuario}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
             whoaomi11@gmail.com
@@ -95,10 +97,9 @@ export default function AccountPopover() {
         </Stack>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <MenuItem onClick={handleClose} sx={{ m: 1 }}>
-          Logout
-        </MenuItem>
+        <a href="/">
+          <MenuItem sx={{ m: 1 }}>Logout</MenuItem>
+        </a>
       </Popover>
     </>
   );
