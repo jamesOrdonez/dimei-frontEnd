@@ -14,7 +14,11 @@ export default function Productos() {
   useEffect(() => {
     const AllUser = async () => {
       try {
-        const respon = await axios.get('/getProduct/1');
+
+        const company = sessionStorage.getItem("company");
+        const decriptCompany = decrypt(company);
+
+        const respon = await axios.get(`/getProduct/${decriptCompany}`);
         const Form = respon.data.data.reverse().map((item) => {
           return {
             id: item.id,

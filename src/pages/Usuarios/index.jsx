@@ -3,6 +3,7 @@ import { DataGrid } from '../../layouts/grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Loader, LoaderModule } from '../../components/loaders';
+import { decrypt } from '../../utils/crypto';
 
 /* const data = [
   {
@@ -95,7 +96,10 @@ export default function Usuarios() {
   useEffect(() => {
     const AllUser = async () => {
       try {
-        const respon = await axios.get('/getUser/1');
+
+        const company = sessionStorage.getItem("company");
+        const decriptCompany = decrypt(company);
+        const respon = await axios.get(`/getUser/${decriptCompany}`);
         setData(respon.data.data);
         setLoader(false);
       } catch (error) {
