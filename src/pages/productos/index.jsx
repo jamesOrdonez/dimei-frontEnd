@@ -3,6 +3,7 @@ import { DataGrid } from '../../layouts/grid';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader } from '../../components/loaders';
+import { decrypt } from '../../utils/crypto';
 
 export default function Productos() {
   const [error, setError] = useState(false);
