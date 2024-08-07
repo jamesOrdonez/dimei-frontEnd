@@ -6,6 +6,7 @@ import { LoginForm } from '../Auth';
 import Usuarios from '../pages/Usuarios';
 import ProductsPage from '../pages/ProductsPage';
 import BlogPage from '../pages/BlogPage';
+import Productos from '../pages/productos';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -65,6 +66,7 @@ export default function Router() {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/Productos" element={<Productos />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

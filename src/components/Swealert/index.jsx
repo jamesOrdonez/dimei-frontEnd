@@ -17,6 +17,7 @@ export default function Swealert({ ico, message }) {
       icon: ico || 'info',
       title: message || 'error inesperado',
     });
+    return Toast;
   };
-  return Show;
+  return Show();
 }

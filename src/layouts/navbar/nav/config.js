@@ -1,5 +1,6 @@
 // component
 import SvgColor from '../../../components/svg-color';
+import { TruckIcon } from '@heroicons/react/24/outline';
 
 // ----------------------------------------------------------------------
 
@@ -15,6 +16,11 @@ const navConfig = [
     title: 'usuarios',
     path: '/usuarios',
     icon: icon('ic_user'),
+  },
+  {
+    title: 'productos',
+    path: '/Productos',
+    icon: <TruckIcon class="h-6 w-6 text-gray-500" />,
   },
   /*  
 

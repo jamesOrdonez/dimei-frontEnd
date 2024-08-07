@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import Form from './components/form';
 import Search from './components/search';
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import Paginate from './components/paginate';
 import Error from './components/error';
+import Block from './components/block';
 
-export default function DataGrid({ datos, error, message, modulo }) {
+export default function DataGrid({ datos, error, message, modulo, block, onclick }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredData = datos.filter((item) => {
@@ -36,54 +37,62 @@ export default function DataGrid({ datos, error, message, modulo }) {
           </ul>
 
           <div class="bg-white  relative shadow-md sm:rounded-lg overflow-hidden">
+            {' '}
             <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
               <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-              <Form />
+              <div className="flex">
+                <Block block={block} onclick={onclick} />
+                <Form />
+              </div>
             </div>
-            <div class="font-[sans-serif] overflow-x-auto">
-              <table class="min-w-full bg-white">
-                <thead class="whitespace-nowrap">
-                  <tr>
-                    {filteredData.length > 0 &&
-                      Object.keys(filteredData[0]).map((key, index) => {
-                        if (key !== 'children') {
-                          return (
-                            <th key={index} className="p-4 text-left text-sm font-semibold text-black">
-                              {key.toUpperCase()}
-                            </th>
-                          );
-                        }
-                        return null;
-                      })}{' '}
-                    <th class="p-4 text-left text-sm font-semibold text-black">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody class="whitespace-nowrap">
-                  {filteredData.map((item) => (
-                    <tr class="odd:bg-blue-50">
-                      {Object.keys(item).map((key) => {
-                        if (key !== 'children') {
-                          return (
-                            <td key={key} class="p-4 text-sm text-black">
-                              {item[key]}
-                            </td>
-                          );
-                        }
-                        return null;
-                      })}
-                      <td class="p-4">
-                        <Form id={item.id} />
-                        <button title="Delete">
-                          <TrashIcon className="h-6 w-6 text-red-500" />
-                        </button>
-                      </td>
+            {block ? (
+              ''
+            ) : (
+              <div class="font-[sans-serif] overflow-x-auto">
+                <table class="min-w-full bg-white">
+                  <thead class="whitespace-nowrap">
+                    <tr>
+                      {filteredData.length > 0 &&
+                        Object.keys(filteredData[0]).map((key, index) => {
+                          if (key !== 'children') {
+                            return (
+                              <th key={index} className="p-4 text-left text-sm font-semibold text-black">
+                                {key.toUpperCase()}
+                              </th>
+                            );
+                          }
+                          return null;
+                        })}{' '}
+                      <th class="p-4 text-left text-sm font-semibold text-black">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Paginate />
-            </div>
+                  </thead>
+
+                  <tbody class="whitespace-nowrap">
+                    {filteredData.map((item) => (
+                      <tr class="odd:bg-blue-50">
+                        {Object.keys(item).map((key) => {
+                          if (key !== 'children') {
+                            return (
+                              <td key={key} class="p-4 text-sm text-black">
+                                {item[key]}
+                              </td>
+                            );
+                          }
+                          return null;
+                        })}
+                        <td class="p-4">
+                          <Form id={item.id} />
+                          <button title="Delete">
+                            <TrashIcon className="h-6 w-6 text-red-500" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <Paginate />
+              </div>
+            )}
           </div>
         </>
       )}
