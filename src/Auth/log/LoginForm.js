@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { encrypt } from '../../utils/crypto';
+import Swealert from '../../components/Swealert';
 
 /* const logo = 'https://readymadeui.com/signin-image.webp'; */
 const logo = 'https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png';
@@ -25,15 +26,19 @@ export default function Login() {
 
     try {
       const respon = await axios.post('/login', formData);
-      console.log('🚀 ~ handleClick ~ respon:', respon);
       setRol(respon.data.rolId);
       setCompany(respon.data.company);
       setUser(respon.data.user);
       await SetToken(respon.data.token);
       return await (window.location.href = '/dashboard');
     } catch (e) {
-      console.log(e);
-      return alert(e.response.data.message + '__' + 'module:' + e.response.data.module);
+      if (e.message == 'Network Error') {
+        const Alert = Swealert({ ico: 'error', message: e.message });
+        return Alert;
+      } else {
+        const Alert = Swealert({ ico: 'error', message: e.response.data.message });
+        return Alert;
+      }
     }
   };
 
@@ -94,6 +99,7 @@ export default function Login() {
                   name="remember-me"
                   type="checkbox"
                   class="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-md"
+                  defaultChecked
                 />
                 <label for="remember-me" class="ml-3 block text-sm">
                   Acuérdate de mí
