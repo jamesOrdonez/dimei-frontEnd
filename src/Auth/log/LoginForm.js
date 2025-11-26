@@ -26,7 +26,7 @@ export default function Login() {
       // Guardar datos en sessionStorage inmediatamente
       sessionStorage.setItem('Token', respon.data.token);
       sessionStorage.setItem('rol', encrypt(respon.data.rolId));
-      sessionStorage.setItem('company', encrypt(respon.data.company));
+      sessionStorage.setItem('company', 1);
       sessionStorage.setItem('user', encrypt(respon.data.user));
 
       // Redirigir al dashboard
