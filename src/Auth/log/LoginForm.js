@@ -44,11 +44,7 @@ export default function Login() {
     <div className="font-[sans-serif]">
       <div className="grid lg:grid-cols-3 md:grid-cols-2 items-center gap-4 h-full">
         <div className="max-md:order-1 lg:col-span-2 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8">
-          <img
-            src={logo}
-            className="lg:w-[50%] w-full h-full object-contain block mx-auto"
-            alt="login-image"
-          />
+          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="login-image" />
         </div>
 
         <div className="w-full p-6">
