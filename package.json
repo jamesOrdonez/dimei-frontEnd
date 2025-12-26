@@ -38,13 +38,13 @@
     ]
   },
   "dependencies": {
-    "@emotion/react": "^11.10.6",
-    "@emotion/styled": "^11.10.6",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@faker-js/faker": "^7.6.0",
     "@heroicons/react": "^2.1.5",
     "@iconify/react": "^4.1.0",
     "@mui/lab": "^5.0.0-alpha.103",
-    "@mui/material": "^5.11.10",
+    "@mui/material": "^5.18.0",
     "apexcharts": "^3.37.0",
     "axios": "^1.7.2",
     "change-case": "^4.1.2",
