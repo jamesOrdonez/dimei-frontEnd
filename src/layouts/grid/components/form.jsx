@@ -1,16 +1,6 @@
-import { PencilSquareIcon } from '@heroicons/react/24/outline';
-
-
-import {
-  Modal,
-  Box,
-  Card,
-  CardContent,
-  Typography,
-} from "@mui/material";
-
+import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import FormModal from './form.modal';
-import { useState } from 'react';
 
 const style = {
   position: 'absolute',
@@ -18,105 +8,84 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   bgcolor: 'background.paper',
+  minWidth: 400,
 };
 
-
-const formSchema = [
-  {
-    row: 1,
-    columns: [
-      {
-        name: "name",
-        label: "Nombre",
-        type: "text",
-        xs: 12,
-        md: 6,
-      },
-      {
-        name: "email",
-        label: "Correo",
-        type: "email",
-        xs: 12,
-        md: 6,
-      },
-    ],
-  },
-  {
-    row: 2,
-    columns: [
-      {
-        name: "age",
-        label: "Edad",
-        type: "number",
-        xs: 12,
-        md: 4,
-      },
-      {
-        name: "role",
-        label: "Rol",
-        type: "select",
-        options: [
-          { label: "Admin", value: "admin" },
-          { label: "Usuario", value: "user" },
-        ],
-        xs: 12,
-        md: 8,
-      },
-    ],
-  },
-];
-
-
-export default function Form({ id }) {
+export default function Form({ schema, title = 'Formulario', initialValues = null, onSubmit, onClose }) {
   const [open, setOpen] = useState(false);
-  const handleClose = () => setOpen(false);
-
-
   const [formData, setFormData] = useState({});
 
-  const handleChange = (e) => {
-    console.log(formData);
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  /* =========================
+     SYNC EDIT MODE
+  ========================= */
+  useEffect(() => {
+    if (initialValues) {
+      setFormData(initialValues);
+      setOpen(true);
+    }
+  }, [initialValues]);
+
+  /* =========================
+     HANDLERS
+  ========================= */
+  const handleOpenNew = () => {
+    setFormData({});
+    setOpen(true);
   };
+
+  const handleClose = () => {
+    setOpen(false);
+    setFormData({});
+    onClose?.();
+  };
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = () => {
+    onSubmit(formData);
+    handleClose();
+  };
+
+  const isEditing = Boolean(initialValues);
 
   return (
     <>
-      {id ? (
-        <button class="mr-4" title="Edit">
-          <PencilSquareIcon className="h-6 w-6 text-blue-500" />
+      {/* BOTÓN NUEVO */}
+      {!isEditing && (
+        <button
+          type="button"
+          className="flex items-center justify-center text-white bg-blue-600 font-medium rounded-lg text-sm px-4 py-2 hover:bg-blue-700"
+          onClick={handleOpenNew}
+        >
+          Nuevo
         </button>
-      ) : (
-        <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-          <button
-            type="button"
-            class="flex items-center justify-center text-white bg-blue-600  font-medium rounded-lg text-sm px-4 py-2 hover:bg-blue-700"
-            onClick={() => setOpen(true)}
-          >
-            Nuevo
-          </button>
-        </div>
       )}
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
+
+      <Modal open={open} onClose={handleClose}>
         <Box sx={style}>
           <Card>
             <CardContent>
               <Typography variant="h6" mb={2}>
-                Formulario dinámico
+                {isEditing ? `Editar ${title}` : `Nuevo ${title}`}
               </Typography>
 
-              <FormModal
-                schema={formSchema}
-                values={formData}
-                onChange={handleChange}
-              />
+              <FormModal schema={schema} values={formData} onChange={handleChange} />
+
+              {/* BOTONES */}
+              <div className="mt-6 flex justify-end gap-3">
+                <button onClick={handleClose} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                  Cancelar
+                </button>
+
+                <button onClick={handleSubmit} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                  Guardar
+                </button>
+              </div>
             </CardContent>
           </Card>
         </Box>

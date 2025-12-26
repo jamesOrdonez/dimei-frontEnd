@@ -18,8 +18,8 @@ const navConfig = [
     icon: icon('ic_user'),
   },
   {
-    title: 'productos',
-    path: '/Productos',
+    title: 'Items',
+    path: '/items',
     icon: <TruckIcon class="h-6 w-6 text-gray-500" />,
   },
   /*  
