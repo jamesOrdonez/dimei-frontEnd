@@ -7,6 +7,7 @@ import Usuarios from '../pages/Usuarios';
 import ProductsPage from '../pages/ProductsPage';
 import BlogPage from '../pages/BlogPage';
 import Items from '../pages/productos/index';
+import ItemProductos from '../pages/productos/itemProductos';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -67,6 +68,7 @@ export default function Router() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
+        <Route path="/itemProductos" element={<ItemProductos />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

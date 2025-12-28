@@ -1,4 +1,5 @@
 // component
+import { TagIcon } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
 
@@ -21,6 +22,11 @@ const navConfig = [
     title: 'Items',
     path: '/items',
     icon: <TruckIcon class="h-6 w-6 text-gray-500" />,
+  },
+  {
+    title: 'Productos',
+    path: '/itemProductos',
+    icon: <TagIcon class="h-6 w-6 text-gray-500" />,
   },
   /*  
 
