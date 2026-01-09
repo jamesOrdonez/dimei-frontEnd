@@ -36,16 +36,13 @@ export default function Grupo() {
     try {
       setLoader(true);
       const res = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
-      const ops = {};
 
       setData(
         res.data.data.map((item) => {
-          ops[item.id] = item.mathOperation;
-
           return {
             id: item.id,
             name: item.name,
-            state: item.state,
+            state: item.state === 1 ? 'Activo' : 'Inactivo',
           };
         })
       );
