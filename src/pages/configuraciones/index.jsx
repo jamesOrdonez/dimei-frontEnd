@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Tabs, Tab, Box } from '@mui/material';
 import Grupo from './components/grupo';
+import Unidad_medida from './components/unidad.medida';
 
 // 🔁 TAB PANEL REUTILIZABLE
 function TabPanel({ children, value, index }) {
@@ -48,10 +49,10 @@ export default function Configuraciones() {
       label: 'Grupo',
       component: <Grupo />,
     },
-    /* {
+    {
       label: 'Unidad de medida',
-      component: <div>Configuración de items</div>,
-    }, */
+      component: <Unidad_medida />,
+    },
   ];
 
   return <ConfigTabs tabs={tabs} />;

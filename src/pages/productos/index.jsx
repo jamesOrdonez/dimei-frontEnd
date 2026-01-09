@@ -268,8 +268,8 @@ export default function Items() {
         onDelete={handleDelete}
         onCloseForm={() => setEditingItem(null)}
       />
-
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      {/* 
+      <pre>{JSON.stringify(data, null, 2)}</pre> */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">
         <DialogTitle>{movementType === 'entrance' ? 'Entrada' : 'Salida'} de inventario</DialogTitle>
         <DialogContent>

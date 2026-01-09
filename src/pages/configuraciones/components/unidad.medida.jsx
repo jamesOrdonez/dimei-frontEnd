@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader } from '../../../components/loaders';
 
-export default function Grupo() {
+export default function Unidad_medida() {
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
   const [loader, setLoader] = useState(true);
@@ -35,17 +35,13 @@ export default function Grupo() {
   const fetchItems = async () => {
     try {
       setLoader(true);
-      const res = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
-      const ops = {};
+      const res = await axios.get(`/unitOfMeasuremet`);
 
       setData(
         res.data.data.map((item) => {
-          ops[item.id] = item.mathOperation;
-
           return {
             id: item.id,
-            name: item.name,
-            state: item.state,
+            nombre: item.unitOfMeasure,
           };
         })
       );
@@ -107,13 +103,13 @@ export default function Grupo() {
   return (
     <>
       <Helmet>
-        <title>Grupo Items</title>
+        <title>Unidad de Medida</title>
       </Helmet>
       <DataGrid
         datos={data}
         error={error}
         message={message}
-        modulo="Grupo Items"
+        modulo="Unidad de Medida"
         block={block}
         onclick={setBlock}
         schema={itemSchema}
