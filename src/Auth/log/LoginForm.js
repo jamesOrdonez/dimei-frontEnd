@@ -22,7 +22,7 @@ export default function Login() {
 
     try {
       const respon = await axios.post('/login', formData, { withCredentials: true });
-      console.log(respon.data);
+      console.log('Log Login:' + respon.data);
 
       // Guardar datos en sessionStorage inmediatamente
       sessionStorage.setItem('Token', respon.data.token);

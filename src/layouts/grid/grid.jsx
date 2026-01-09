@@ -21,12 +21,22 @@ export default function DataGrid({
   onCloseForm,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // puedes cambiarlo
 
   const filteredData = datos.filter((item) =>
     Object.values(item).some(
       (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const paginatedData = filteredData.slice(startIndex, endIndex);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 lg:px-12">
@@ -72,7 +82,7 @@ export default function DataGrid({
                   </thead>
 
                   <tbody>
-                    {filteredData.map((item) => (
+                    {paginatedData.map((item) => (
                       <tr key={item.id} className="odd:bg-blue-50">
                         {Object.keys(item).map((key) => (
                           <td key={key} className="p-4 text-sm">
@@ -96,7 +106,7 @@ export default function DataGrid({
                   </tbody>
                 </table>
 
-                <Paginate />
+                <Paginate currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
               </div>
             )}
           </div>
