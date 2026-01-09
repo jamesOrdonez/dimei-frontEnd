@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import Form from './components/form';
 import Search from './components/search';
 import { TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import Paginate from './components/paginate';
 import Error from './components/error';
 import Block from './components/block';
+import Form_product from './components/form.product';
 
-export default function DataGrid({
+export default function DataGrid_product({
   datos,
   error,
   message,
@@ -55,7 +55,7 @@ export default function DataGrid({
 
               <div className="flex gap-2">
                 <Block block={block} onclick={onclick} />
-                <Form
+                <Form_product
                   schema={schema}
                   title={modulo}
                   onSubmit={onSubmit}

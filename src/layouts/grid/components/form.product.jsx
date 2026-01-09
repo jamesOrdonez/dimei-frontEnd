@@ -1,17 +1,28 @@
 import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import FormModal from './form.modal';
+import FormModal_product from './form.modal.product';
 
 const style = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
+
+  width: {
+    xs: '95%', // 📱 móvil
+    sm: '85%', // tablet
+    md: 600, // desktop
+  },
+
+  maxHeight: '90vh',
+  overflowY: 'auto',
+
   bgcolor: 'background.paper',
-  minWidth: 400,
+  borderRadius: 2,
+  boxShadow: 24,
 };
 
-export default function Form({ schema, title = 'Formulario', initialValues = null, onSubmit, onClose }) {
+export default function Form_product({ schema, title = 'Formulario', initialValues = null, onSubmit, onClose }) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({});
 
@@ -74,10 +85,18 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
                 {isEditing ? `Editar ${title}` : `Nuevo ${title}`} 📝
               </Typography>
 
-              <FormModal schema={schema} values={formData} onChange={handleChange} />
+              <FormModal_product schema={schema} values={formData} onChange={handleChange} />
 
               {/* BOTONES */}
-              <div className="mt-6 flex justify-end gap-3">
+              <Box
+                sx={{
+                  mt: 3,
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: 2,
+                  flexWrap: 'wrap', // 📱 botones uno debajo del otro si no caben
+                }}
+              >
                 <button onClick={handleClose} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
                   Cancelar
                 </button>
@@ -85,7 +104,7 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
                 <button onClick={handleSubmit} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                   Guardar
                 </button>
-              </div>
+              </Box>
             </CardContent>
           </Card>
         </Box>

@@ -22,12 +22,14 @@ export default function Login() {
 
     try {
       const respon = await axios.post('/login', formData, { withCredentials: true });
+      console.log('Log Login:' + respon.data);
 
       // Guardar datos en sessionStorage inmediatamente
       sessionStorage.setItem('Token', respon.data.token);
       sessionStorage.setItem('rol', encrypt(respon.data.rolId));
       sessionStorage.setItem('company', 1);
       sessionStorage.setItem('user', encrypt(respon.data.user));
+      sessionStorage.setItem('userId', encrypt(respon.data.userId));
 
       // Redirigir al dashboard
       window.location.href = '/dashboard';
