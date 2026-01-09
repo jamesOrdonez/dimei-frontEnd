@@ -187,7 +187,6 @@ export default function ItemProductos() {
         editingItem={editingItem}
         onCloseForm={handleCloseForm}
       />
-      <pre>{JSON.stringify(data, null, 2)}</pre>
     </>
   );
 }

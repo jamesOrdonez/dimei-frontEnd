@@ -254,7 +254,6 @@ export default function Items() {
       <Helmet>
         <title>Items</title>
       </Helmet>
-
       <DataGrid
         datos={data}
         error={error}
@@ -270,6 +269,7 @@ export default function Items() {
         onCloseForm={() => setEditingItem(null)}
       />
 
+      <pre>{JSON.stringify(data, null, 2)}</pre>
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">
         <DialogTitle>{movementType === 'entrance' ? 'Entrada' : 'Salida'} de inventario</DialogTitle>
         <DialogContent>

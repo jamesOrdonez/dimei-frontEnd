@@ -8,6 +8,7 @@ import ProductsPage from '../pages/ProductsPage';
 import BlogPage from '../pages/BlogPage';
 import Items from '../pages/productos/index';
 import ItemProductos from '../pages/productos/itemProductos';
+import Configuraciones from '../pages/configuraciones';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -69,6 +70,7 @@ export default function Router() {
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
         <Route path="/itemProductos" element={<ItemProductos />} />
+        <Route path="/configuraciones" element={<Configuraciones />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />
