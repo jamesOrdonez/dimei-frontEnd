@@ -15,20 +15,7 @@ export default function Unidad_medida() {
   const itemSchema = [
     {
       row: 1,
-      columns: [
-        { name: 'name', label: 'Nombre', type: 'text', xs: 12, md: 12 },
-        {
-          name: 'state',
-          label: 'Estado',
-          type: 'select',
-          options: [
-            { label: 'Activo', value: '1' },
-            { label: 'Inactivo', value: '0' },
-          ],
-          xs: 12,
-          md: 12,
-        },
-      ],
+      columns: [{ name: 'unitOfMeasure', label: 'Nombre', type: 'text', xs: 12, md: 12 }],
     },
   ];
 
@@ -63,8 +50,7 @@ export default function Unidad_medida() {
   const handleEdit = (row) => {
     setEditingItem({
       id: row.id,
-      name: row.name,
-      state: row.state === 'Activo' ? '1' : '0',
+      unitOfMeasure: row.nombre,
     });
   };
 
@@ -73,14 +59,13 @@ export default function Unidad_medida() {
   ========================= */
   const onSubmit = async (formData) => {
     if (editingItem) {
-      await axios.put(`/updateItemGroup/${formData.id}`, {
+      await axios.put(`/unitOfMeasuremet/${formData.id}`, {
         ...formData,
-        state: Number(formData.state),
+        company: sessionStorage.getItem('company'),
       });
     } else {
-      await axios.post('/saveItemGroup', {
+      await axios.post('/unitOfMeasuremet', {
         ...formData,
-        state: Number(formData.state),
         company: sessionStorage.getItem('company'),
       });
     }
@@ -94,7 +79,7 @@ export default function Unidad_medida() {
   ========================= */
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar este item?')) return;
-    await axios.delete(`/deleteItemgroup/${id}`);
+    await axios.delete(`/unitOfMeasuremet/${id}`);
     fetchItems();
   };
 
