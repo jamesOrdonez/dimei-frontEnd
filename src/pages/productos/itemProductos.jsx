@@ -3,6 +3,7 @@ import { DataGrid } from '../../layouts/grid';
 import { useEffect, useState } from 'react';
 import { decrypt } from '../../utils/crypto';
 import axios from 'axios';
+import useProductSchema from './models';
 
 export default function ItemProductos() {
   const [error, setError] = useState(false);
@@ -11,32 +12,6 @@ export default function ItemProductos() {
   const [data, setData] = useState([]);
   const [block, setBlock] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-
-  /* =========================
-     FORM SCHEMA
-  ========================= */
-
-  const productSchema = [
-    {
-      row: 1,
-      columns: [
-        {
-          name: 'name',
-          label: 'Nombre del producto',
-          type: 'text',
-          xs: 12,
-          md: 12,
-        },
-        {
-          name: 'description',
-          label: 'Descripción',
-          type: 'textarea',
-          xs: 12,
-          md: 12,
-        },
-      ],
-    },
-  ];
 
   /* =========================
      FETCH PRODUCTS
@@ -141,6 +116,7 @@ export default function ItemProductos() {
   const handleCloseForm = () => {
     setEditingItem(null);
   };
+  const schema = useProductSchema();
 
   if (loader) return null; // o tu Loader si tienes uno
 
@@ -149,7 +125,6 @@ export default function ItemProductos() {
       <Helmet>
         <title>Productos</title>
       </Helmet>
-
       <DataGrid
         datos={data}
         error={error}
@@ -157,13 +132,14 @@ export default function ItemProductos() {
         modulo="Producto"
         block={block}
         onclick={setBlock}
-        schema={productSchema}
+        schema={schema}
         onSubmit={onSubmit}
         onEdit={handleEdit}
         onDelete={onDelete}
         editingItem={editingItem}
         onCloseForm={handleCloseForm}
       />
+      <pre>{JSON.stringify(data, null, 2)}</pre>
     </>
   );
 }

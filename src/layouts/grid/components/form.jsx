@@ -71,7 +71,7 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
           <Card>
             <CardContent>
               <Typography variant="h6" mb={2}>
-                {isEditing ? `Editar ${title}` : `Nuevo ${title}`}
+                {isEditing ? `Editar ${title}` : `Nuevo ${title}`} 📝
               </Typography>
 
               <FormModal schema={schema} values={formData} onChange={handleChange} />
