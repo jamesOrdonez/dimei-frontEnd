@@ -44,6 +44,7 @@ export default function useProductSchema() {
           name: 'net_items',
           label: 'Items Necesarios',
           type: 'select',
+          multiple: true, // 👈 IMPORTANTE
           options: unitOfMeasure,
           xs: 12,
           md: 12,

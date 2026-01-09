@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { decrypt } from '../../utils/crypto';
 import axios from 'axios';
 import useProductSchema from './models';
+import DataGrid_product from '../../layouts/grid/grid.product';
 
 export default function ItemProductos() {
   const [error, setError] = useState(false);
@@ -49,19 +50,38 @@ export default function ItemProductos() {
       const payload = {
         name: formData.name,
         description: formData.description,
+        user: decrypt(sessionStorage.getItem('userId')),
+        company: sessionStorage.getItem('company'),
       };
 
-      // UPDATE
-      if (formData.id) {
-        await axios.put(`/updateProduct/${formData.id}`, payload);
-      }
+      let productId = formData.id;
+
       // CREATE
+      if (!productId) {
+        const res = await axios.post('/saveProduct', payload);
+        productId = res.data.data.id;
+        console.log(productId);
+      }
+      // UPDATE
       else {
-        await axios.post('/saveProduct', {
-          ...payload,
-          user: decrypt(sessionStorage.getItem('userId')),
-          company: sessionStorage.getItem('company'),
-        });
+        await axios.put(`/updateProduct/${productId}`, payload);
+      }
+
+      /* =========================
+       SAVE ITEM PRODUCT
+    ========================= */
+
+      if (Array.isArray(formData.net_items) && formData.net_items.length > 0) {
+        const requests = formData.net_items.map((items) =>
+          axios.post('/saveItemProduct', {
+            product: productId,
+            item: items.id,
+            quantity: items.quantity,
+            company: sessionStorage.getItem('company'),
+          })
+        );
+
+        await Promise.all(requests);
       }
 
       setEditingItem(null);
@@ -125,7 +145,7 @@ export default function ItemProductos() {
       <Helmet>
         <title>Productos</title>
       </Helmet>
-      <DataGrid
+      <DataGrid_product
         datos={data}
         error={error}
         message={message}
