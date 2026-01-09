@@ -46,6 +46,13 @@ export default function ItemProductos() {
   const onSubmit = async (formData) => {
     try {
       setError(false);
+      console.log(formData);
+      // VALIDACIÓN
+      if (Array.isArray(formData.net_items) && formData.net_items.some((i) => !i.quantity || Number(i.quantity) <= 0)) {
+        setError(true);
+        setMessage('Todos los items deben tener una cantidad válida');
+        return;
+      }
 
       const payload = {
         name: formData.name,
@@ -56,30 +63,38 @@ export default function ItemProductos() {
 
       let productId = formData.id;
 
-      // CREATE
+      /* =========================
+       CREATE / UPDATE PRODUCT
+    ========================= */
+
       if (!productId) {
         const res = await axios.post('/saveProduct', payload);
         productId = res.data.data.id;
-        console.log(productId);
-      }
-      // UPDATE
-      else {
+      } else {
         await axios.put(`/updateProduct/${productId}`, payload);
       }
 
       /* =========================
-       SAVE ITEM PRODUCT
+       ITEMS PRODUCT
     ========================= */
 
-      if (Array.isArray(formData.net_items) && formData.net_items.length > 0) {
-        const requests = formData.net_items.map((items) =>
-          axios.post('/saveItemProduct', {
+      if (Array.isArray(formData.net_items)) {
+        const requests = formData.net_items.map((item) => {
+          // UPDATE
+          if (item.id_items) {
+            return axios.put(`/updateItemProduct/${item.id_items}`, {
+              quantity: item.quantity,
+            });
+          }
+
+          // CREATE
+          return axios.post('/saveItemProduct', {
             product: productId,
-            item: items.id,
-            quantity: items.quantity,
+            item: item.id,
+            quantity: item.quantity,
             company: sessionStorage.getItem('company'),
-          })
-        );
+          });
+        });
 
         await Promise.all(requests);
       }
@@ -96,12 +111,25 @@ export default function ItemProductos() {
      EDIT
   ========================= */
 
-  const handleEdit = (row) => {
-    setEditingItem({
-      id: row.id,
-      name: row.Nombre,
-      description: row.Descripcion,
-    });
+  const handleEdit = async (row) => {
+    try {
+      const res = await axios.get(`/getItemProduct/${row.id}`);
+
+      const netItems = res.data.data.map((i) => ({
+        id_items: i.id,
+        id: i.item,
+        quantity: i.quantity,
+      }));
+
+      setEditingItem({
+        id: row.id,
+        name: row.Nombre,
+        description: row.Descripcion,
+        net_items: netItems,
+      });
+    } catch (error) {
+      console.error('Error cargando items del producto', error);
+    }
   };
 
   /* =========================

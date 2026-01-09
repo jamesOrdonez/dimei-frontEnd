@@ -1,5 +1,6 @@
 import { Grid, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, IconButton } from '@mui/material';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import axios from 'axios';
 
 const FormModal_product = ({ schema, values, onChange }) => {
   const shouldRenderField = (field) => {
@@ -105,7 +106,7 @@ const FormModal_product = ({ schema, values, onChange }) => {
                   ?.options.find((o) => o.value === item.id);
 
                 return (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id_items || item.id}>
                     <TableCell>{option?.label}</TableCell>
 
                     {/* CANTIDAD */}
@@ -132,14 +133,17 @@ const FormModal_product = ({ schema, values, onChange }) => {
                     {/* DELETE */}
                     <TableCell align="right">
                       <IconButton
-                        onClick={() =>
+                        onClick={async () => {
+                          if (item.id_items) {
+                            await axios.delete(`/deleteItemProduct/${item.id_items}`);
+                          }
                           onChange({
                             target: {
                               name: 'net_items',
                               value: values.net_items.filter((i) => i.id !== item.id),
                             },
-                          })
-                        }
+                          });
+                        }}
                       >
                         <TrashIcon className="h-5 w-5 text-red-500" />
                       </IconButton>
