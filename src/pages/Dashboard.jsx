@@ -21,7 +21,7 @@ export default function Dashboard() {
 
       <Container maxWidth="xl">
         <Typography variant="h4" sx={{ mb: 5 }}>
-          Bienvenido, Jhon Mario Chilito
+          Bienvenido
         </Typography>
 
         <Grid container spacing={3}>
