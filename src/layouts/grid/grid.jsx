@@ -19,6 +19,8 @@ export default function DataGrid({
   onDelete,
   editingItem,
   onCloseForm,
+  aditionalButton,
+  aditionalSchema,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,6 +57,20 @@ export default function DataGrid({
 
               <div className="flex gap-2">
                 <Block block={block} onclick={onclick} />
+                {aditionalButton ? (
+                  <>
+                    <Form
+                      schema={aditionalSchema}
+                      title={'remision'}
+                      onSubmit={onSubmit}
+                      initialValues={editingItem}
+                      onClose={onCloseForm}
+                      buttonName={'Remisionar'}
+                      color={'green'}
+                      aditionalSchema={true}
+                    />
+                  </>
+                ) : null}
                 <Form
                   schema={schema}
                   title={modulo}

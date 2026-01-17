@@ -46,14 +46,16 @@ export default function Items() {
     {
       row: 2,
       columns: [
-        { name: 'position', label: 'Lugar de almacenamiento', type: 'text', xs: 12, md: 6 },
-        { name: 'price', label: 'Precio', type: 'number', xs: 12, md: 6 },
+        { name: 'position1', label: 'Lugar de almacenamiento', type: 'text', xs: 12, md: 4 },
+        { name: 'position2', label: 'Lugar de almacenamiento', type: 'text', xs: 12, md: 4 },
+        { name: 'position3', label: 'Lugar de almacenamiento', type: 'text', xs: 12, md: 4 },
       ],
     },
     {
       row: 3,
       columns: [
-        { name: 'unitOfMeasure', label: 'Unidad de medida', type: 'select', options: unitOfMeasure, xs: 12, md: 8 },
+        { name: 'price', label: 'Precio', type: 'number', xs: 12, md: 6 },
+        { name: 'unitOfMeasure', label: 'Unidad de medida', type: 'select', options: unitOfMeasure, xs: 12, md: 6 },
         {
           name: 'variable',
           label: '¿Es variable?',
@@ -63,7 +65,7 @@ export default function Items() {
             { label: 'No', value: '0' },
           ],
           xs: 12,
-          md: 4,
+          md: 12,
         },
         {
           name: 'value1',
@@ -99,6 +101,33 @@ export default function Items() {
     },
   ];
 
+  const aditionalSchema = [
+    {
+      row: 1,
+      columns: [
+        {
+          name: 'items',
+          label: 'Seleccione grupo de items',
+          type: 'select',
+          options: itemGroup,
+          xs: 12,
+        },
+        {
+          name: 'net_items',
+          label: 'Seleccione los items para la remision',
+          type: 'select',
+          multiple: true,
+          options: [
+            { label: 'Si', value: '1' },
+            { label: 'No', value: '0' },
+          ],
+          xs: 12,
+        },
+        { name: 'description', label: 'Descripcion de la remision', type: 'textarea', xs: 12 },
+      ],
+    },
+  ];
+
   const fetchItems = async () => {
     try {
       setLoader(true);
@@ -114,7 +143,7 @@ export default function Items() {
             Descripcion: item.description,
             cantidad: item.amount,
             grupo: item.name,
-            ubicacion: item.position,
+            ubicacion: [item.position1, item.position2, item.position3].filter(Boolean).join(' - '),
             precio: item.price,
             variable: item.variable === 1 ? 'si' : 'no',
             'valor 1': item.value1,
@@ -175,11 +204,15 @@ export default function Items() {
     const groupSelected = itemGroup.find((g) => g.label === row.grupo);
     const unitSelected = unitOfMeasure.find((u) => u.label === row['unidad de medida']);
 
+    const [position1 = '', position2 = '', position3 = ''] = row.ubicacion?.split(' - ') || [];
+
     setEditingItem({
       id: row.id,
       description: row.Descripcion,
       amount: row.cantidad,
-      position: row.ubicacion,
+      position1,
+      position2,
+      position3,
       price: row.precio,
       group_item: groupSelected?.value || '',
       unitOfMeasure: unitSelected?.value || '',
@@ -200,8 +233,12 @@ export default function Items() {
         variable: Number(formData.variable),
       });
     } else {
+      const { net_items, ...cleanFormData } = formData;
+
+      console.log(cleanFormData);
+
       await axios.post('/saveItem', {
-        ...formData,
+        ...cleanFormData,
         variable: Number(formData.variable),
         company: sessionStorage.getItem('company'),
         user: decrypt(sessionStorage.getItem('userId')),
@@ -254,6 +291,7 @@ export default function Items() {
       <Helmet>
         <title>Items</title>
       </Helmet>
+
       <DataGrid
         datos={data}
         error={error}
@@ -267,6 +305,8 @@ export default function Items() {
         editingItem={editingItem}
         onDelete={handleDelete}
         onCloseForm={() => setEditingItem(null)}
+        aditionalButton={true}
+        aditionalSchema={aditionalSchema}
       />
       {/* 
       <pre>{JSON.stringify(data, null, 2)}</pre> */}

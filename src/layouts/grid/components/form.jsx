@@ -1,6 +1,7 @@
 import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import FormModal from './form.modal';
+import FormModal_product from './form.modal.product';
 
 const style = {
   position: 'absolute',
@@ -11,16 +12,32 @@ const style = {
   minWidth: 400,
 };
 
-export default function Form({ schema, title = 'Formulario', initialValues = null, onSubmit, onClose }) {
+export default function Form({
+  schema,
+  title = 'Formulario',
+  initialValues = null,
+  onSubmit,
+  onClose,
+  buttonName,
+  color,
+  aditionalSchema = null,
+}) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({});
+
+  // 🔥 IMPORTANTE: inicializar net_items
+  const [formData, setFormData] = useState({
+    net_items: [],
+  });
 
   /* =========================
      SYNC EDIT MODE
   ========================= */
   useEffect(() => {
     if (initialValues) {
-      setFormData(initialValues);
+      setFormData({
+        ...initialValues,
+        net_items: initialValues.net_items || [],
+      });
       setOpen(true);
     }
   }, [initialValues]);
@@ -29,13 +46,17 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
      HANDLERS
   ========================= */
   const handleOpenNew = () => {
-    setFormData({});
+    setFormData({
+      net_items: [],
+    });
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
-    setFormData({});
+    setFormData({
+      net_items: [],
+    });
     onClose?.();
   };
 
@@ -59,10 +80,12 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
       {!isEditing && (
         <button
           type="button"
-          className="flex items-center justify-center text-white bg-blue-600 font-medium rounded-lg text-sm px-4 py-2 hover:bg-blue-700"
+          className={`flex items-center justify-center text-white bg-${
+            color || 'blue'
+          }-600 font-medium rounded-lg text-sm px-4 py-2 hover:bg-${color || 'blue'}-700`}
           onClick={handleOpenNew}
         >
-          Nuevo
+          {buttonName || 'Nuevo'}
         </button>
       )}
 
@@ -74,7 +97,11 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
                 {isEditing ? `Editar ${title}` : `Nuevo ${title}`} 📝
               </Typography>
 
-              <FormModal schema={schema} values={formData} onChange={handleChange} />
+              {aditionalSchema ? (
+                <FormModal_product schema={schema} values={formData} onChange={handleChange} />
+              ) : (
+                <FormModal schema={schema} values={formData} onChange={handleChange} />
+              )}
 
               {/* BOTONES */}
               <div className="mt-6 flex justify-end gap-3">

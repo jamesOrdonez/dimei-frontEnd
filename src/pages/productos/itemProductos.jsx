@@ -166,7 +166,7 @@ export default function ItemProductos() {
   };
   const schema = useProductSchema();
 
-  if (loader) return null; // o tu Loader si tienes uno
+  if (loader) return null;
 
   return (
     <>
