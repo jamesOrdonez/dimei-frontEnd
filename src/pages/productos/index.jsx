@@ -97,6 +97,12 @@ export default function Items() {
           md: 4,
           dependsOn: { field: 'variable', value: '1' },
         },
+        {
+          name: 'img',
+          label: 'Imagen del item',
+          type: 'file',
+          xs: 12,
+        },
       ],
     },
   ];
@@ -140,6 +146,7 @@ export default function Items() {
 
           return {
             id: item.id,
+            img: <img src={item.img} className="w-50 h-30" />,
             Descripcion: item.description,
             cantidad: item.amount,
             grupo: item.name,
@@ -227,22 +234,38 @@ export default function Items() {
      UPDATE/CREATE
   ========================= */
   const onSubmit = async (formData) => {
+    const payload = new FormData();
+    if (formData.img instanceof File) {
+      payload.append('img', formData.img);
+    }
+
+    Object.keys(formData).forEach((key) => {
+      if (key === 'img') return;
+
+      let value = formData[key];
+
+      if (key === 'variable') {
+        value = Array.isArray(value) ? Number(value[0]) : Number(value);
+      }
+
+      if (value !== undefined && value !== null) {
+        payload.append(key, value);
+      }
+    });
+
+    payload.append('company', sessionStorage.getItem('company'));
+    payload.append('user', decrypt(sessionStorage.getItem('userId')));
+
+    const config = {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    };
+
     if (editingItem) {
-      await axios.put(`/updateItem/${formData.id}`, {
-        ...formData,
-        variable: Number(formData.variable),
+      await axios.put(`/updateItem/${formData.id}`, payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
     } else {
-      const { net_items, ...cleanFormData } = formData;
-
-      console.log(cleanFormData);
-
-      await axios.post('/saveItem', {
-        ...cleanFormData,
-        variable: Number(formData.variable),
-        company: sessionStorage.getItem('company'),
-        user: decrypt(sessionStorage.getItem('userId')),
-      });
+      await axios.post('/saveItem', payload, config);
     }
 
     setEditingItem(null);

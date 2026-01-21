@@ -2,14 +2,23 @@ import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import FormModal from './form.modal';
 import FormModal_product from './form.modal.product';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const style = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
+
+  width: '90%',
+  maxWidth: 600,
+
+  maxHeight: '90vh',
+  overflowY: 'auto',
+
   bgcolor: 'background.paper',
-  minWidth: 400,
+  borderRadius: 2,
+  boxShadow: 24,
 };
 
 export default function Form({
@@ -23,6 +32,8 @@ export default function Form({
   aditionalSchema = null,
 }) {
   const [open, setOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // 🔥 IMPORTANTE: inicializar net_items
   const [formData, setFormData] = useState({
@@ -61,9 +72,11 @@ export default function Form({
   };
 
   const handleChange = (e) => {
+    const { name, type, files, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: type === 'file' ? files[0] : value,
     }));
   };
 
@@ -91,8 +104,8 @@ export default function Form({
 
       <Modal open={open} onClose={handleClose}>
         <Box sx={style}>
-          <Card>
-            <CardContent>
+          <Card sx={{ boxShadow: 'none' }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" mb={2}>
                 {isEditing ? `Editar ${title}` : `Nuevo ${title}`} 📝
               </Typography>
