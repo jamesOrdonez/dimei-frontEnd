@@ -18,6 +18,9 @@ export default function Items() {
   const [itemGroup, setItemGroup] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [mathOperationMap, setMathOperationMap] = useState({});
+  const [totalItems, setTotalItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [selectedGroupRemision, setSelectedGroupRemision] = useState(null);
 
   const unitOfMeasureOptions = async () => {
     const res = await axios.get('/unitOfMeasuremet');
@@ -26,13 +29,40 @@ export default function Items() {
 
   const itemGroupOptions = async () => {
     const res = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
-    setItemGroup(res.data.data.map((g) => ({ label: g.name, value: g.id })));
+    setItemGroup(res.data.data.map((g) => ({ label: g.name, value: g.name })));
+  };
+
+  const itemsOptions = async () => {
+    const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
+    setTotalItems(
+      res.data.data.map((i) => ({
+        label: i.description,
+        value: i.id,
+        group: i.group_name,
+      }))
+    );
   };
 
   useEffect(() => {
     unitOfMeasureOptions();
     itemGroupOptions();
+    itemsOptions();
   }, []);
+
+  const handleRemisionChange = (formData) => {
+    console.log('Grupo seleccionado:', formData.items);
+
+    if (formData.items && formData.items !== selectedGroupRemision) {
+      setSelectedGroupRemision(formData.items);
+
+      const filtered = totalItems.filter(
+        (item) => item.group === formData.items // 👈 nombre vs nombre
+      );
+
+      console.log('Items filtrados:', filtered);
+      setFilteredItems(filtered);
+    }
+  };
 
   const itemSchema = [
     {
@@ -123,10 +153,7 @@ export default function Items() {
           label: 'Seleccione los items para la remision',
           type: 'select',
           multiple: true,
-          options: [
-            { label: 'Si', value: '1' },
-            { label: 'No', value: '0' },
-          ],
+          options: filteredItems,
           xs: 12,
         },
         { name: 'description', label: 'Descripcion de la remision', type: 'textarea', xs: 12 },
@@ -149,7 +176,7 @@ export default function Items() {
             img: <img src={item.img} className="w-50 h-30" />,
             Descripcion: item.description,
             cantidad: item.amount,
-            grupo: item.name,
+            grupo: item.group_name,
             ubicacion: [item.position1, item.position2, item.position3].filter(Boolean).join(' - '),
             precio: item.price,
             variable: item.variable === 1 ? 'si' : 'no',
@@ -234,7 +261,24 @@ export default function Items() {
      UPDATE/CREATE
   ========================= */
   const onSubmit = async (formData) => {
+    if (formData.net_items && formData.net_items.length > 0) {
+      await axios.post('/saveRemision', {
+        description: formData.description,
+        net_items: formData.net_items,
+        company: sessionStorage.getItem('company'),
+        fkUser: decrypt(sessionStorage.getItem('userId')),
+      });
+
+      fetchItems();
+      return;
+    }
+
+    /* =========================
+     ITEM NORMAL (CREATE / UPDATE)
+  ========================= */
+
     const payload = new FormData();
+
     if (formData.img instanceof File) {
       payload.append('img', formData.img);
     }
@@ -261,9 +305,7 @@ export default function Items() {
     };
 
     if (editingItem) {
-      await axios.put(`/updateItem/${formData.id}`, payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await axios.put(`/updateItem/${formData.id}`, payload, config);
     } else {
       await axios.post('/saveItem', payload, config);
     }
@@ -330,7 +372,9 @@ export default function Items() {
         onCloseForm={() => setEditingItem(null)}
         aditionalButton={true}
         aditionalSchema={aditionalSchema}
+        onChangeForm={handleRemisionChange}
       />
+
       {/* 
       <pre>{JSON.stringify(data, null, 2)}</pre> */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">

@@ -21,6 +21,7 @@ export default function DataGrid({
   onCloseForm,
   aditionalButton,
   aditionalSchema,
+  onChangeForm,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,6 +69,7 @@ export default function DataGrid({
                       buttonName={'Remisionar'}
                       color={'green'}
                       aditionalSchema={true}
+                      onChangeForm={onChangeForm}
                     />
                   </>
                 ) : null}

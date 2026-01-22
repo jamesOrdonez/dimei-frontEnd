@@ -30,6 +30,7 @@ export default function Form({
   buttonName,
   color,
   aditionalSchema = null,
+  onChangeForm,
 }) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
@@ -70,14 +71,21 @@ export default function Form({
     });
     onClose?.();
   };
-
   const handleChange = (e) => {
     const { name, type, files, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'file' ? files[0] : value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === 'file' ? files[0] : value,
+      };
+
+      if (onChangeForm) {
+        onChangeForm(updated);
+      }
+
+      return updated;
+    });
   };
 
   const handleSubmit = () => {
