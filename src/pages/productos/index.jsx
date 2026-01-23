@@ -29,7 +29,7 @@ export default function Items() {
 
   const itemGroupOptions = async () => {
     const res = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
-    setItemGroup(res.data.data.map((g) => ({ label: g.name, value: g.name })));
+    setItemGroup(res.data.data.map((g) => ({ label: g.name, value: g.name, realValue: g.id })));
   };
 
   const itemsOptions = async () => {
@@ -70,7 +70,17 @@ export default function Items() {
       columns: [
         { name: 'description', label: 'Descripcion del item', type: 'textarea', xs: 12 },
         { name: 'amount', label: 'Cantidad que ingresa', type: 'number', xs: 12, md: 6 },
-        { name: 'group_item', label: 'Grupo al que pertenece', type: 'select', options: itemGroup, xs: 12, md: 6 },
+        {
+          name: 'group_item',
+          label: 'Grupo al que pertenece',
+          type: 'select',
+          options: itemGroup.map((g) => ({
+            label: g.label,
+            value: g.realValue,
+          })),
+          xs: 12,
+          md: 6,
+        },
       ],
     },
     {
@@ -248,7 +258,7 @@ export default function Items() {
       position2,
       position3,
       price: row.precio,
-      group_item: groupSelected?.value || '',
+      group_item: groupSelected?.realValue || '',
       unitOfMeasure: unitSelected?.value || '',
       variable: row.variable === 'si' ? '1' : '0',
       value1: row['valor 1'],
@@ -261,16 +271,35 @@ export default function Items() {
      UPDATE/CREATE
   ========================= */
   const onSubmit = async (formData) => {
-    if (formData.net_items && formData.net_items.length > 0) {
-      await axios.post('/saveRemision', {
-        description: formData.description,
-        net_items: formData.net_items,
-        company: sessionStorage.getItem('company'),
-        fkUser: decrypt(sessionStorage.getItem('userId')),
-      });
+    try {
+      if (formData.net_items && formData.net_items.length > 0) {
+        const remision = await axios.post('/saveRemision', {
+          description: formData.description,
+          net_items: formData.net_items,
+          company: sessionStorage.getItem('company'),
+          fkUser: decrypt(sessionStorage.getItem('userId')),
+        });
 
-      fetchItems();
-      return;
+        // Si llega aquí, fue 200 OK
+        fetchItems();
+        return;
+      }
+    } catch (error) {
+      const data = error.response?.data;
+
+      if (data?.errors && data.errors.length > 0) {
+        let mensaje = 'Problemas de stock:\n\n';
+
+        data.errors.forEach((err) => {
+          mensaje += `• ${err.description}: solicitados ${err.solicitado}, disponibles ${err.disponible}\n`;
+        });
+
+        alert(mensaje);
+        return;
+      } else {
+        alert(data?.message || 'Error creando remisión');
+        return;
+      }
     }
 
     /* =========================
