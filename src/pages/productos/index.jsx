@@ -6,6 +6,8 @@ import { Loader } from '../../components/loaders';
 import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tooltip } from '@mui/material';
 import { decrypt } from '../../utils/crypto';
+import { pdf } from '@react-pdf/renderer';
+import RemisionPDF from './remisionPDF';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -50,16 +52,11 @@ export default function Items() {
   }, []);
 
   const handleRemisionChange = (formData) => {
-    console.log('Grupo seleccionado:', formData.items);
-
     if (formData.items && formData.items !== selectedGroupRemision) {
       setSelectedGroupRemision(formData.items);
 
-      const filtered = totalItems.filter(
-        (item) => item.group === formData.items // 👈 nombre vs nombre
-      );
+      const filtered = totalItems.filter((item) => item.group === formData.items);
 
-      console.log('Items filtrados:', filtered);
       setFilteredItems(filtered);
     }
   };
@@ -68,7 +65,7 @@ export default function Items() {
     {
       row: 1,
       columns: [
-        { name: 'description', label: 'Descripcion del item', type: 'textarea', xs: 12 },
+        { name: 'description', label: 'Descripcion del item', type: 'textarea', xs: 12, required: true },
         { name: 'amount', label: 'Cantidad que ingresa', type: 'number', xs: 12, md: 6 },
         {
           name: 'group_item',
@@ -266,6 +263,37 @@ export default function Items() {
       value2: row['valor 2'],
     });
   };
+  const generarYDescargarPDF = async (formData, remisionId, userId) => {
+    const itemsPDF = formData.net_items.map((ni) => {
+      const info = totalItems.find((t) => t.value === ni.id);
+
+      return {
+        description: info?.label || 'Item desconocido',
+        grupo: info?.group || '',
+        cantidad: ni.quantity,
+      };
+    });
+
+    const remisionPDF = {
+      remisionId: remisionId,
+      fecha: new Date().toLocaleDateString(),
+      description: formData.description,
+      grupo: formData.items,
+      items: itemsPDF,
+      elaboradoPor: decrypt(sessionStorage.getItem('user')),
+      aprobadoPor: ' ',
+    };
+
+    const blob = await pdf(<RemisionPDF remision={remisionPDF} />).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `remision_${remisionPDF.remisionId}.pdf`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
 
   /* =========================
      UPDATE/CREATE
@@ -273,14 +301,27 @@ export default function Items() {
   const onSubmit = async (formData) => {
     try {
       if (formData.net_items && formData.net_items.length > 0) {
-        const remision = await axios.post('/saveRemision', {
+        if (!formData.description || formData.description.trim() === '') {
+          alert('La descripción de la remisión es obligatoria');
+          return;
+        }
+
+        const netItemsFormateados = formData.net_items.map((item) => ({
+          id: item.id,
+          quantity: Number(item.quantity),
+        }));
+
+        const res = await axios.post('/saveRemision', {
           description: formData.description,
-          net_items: formData.net_items,
+          net_items: netItemsFormateados,
           company: sessionStorage.getItem('company'),
           fkUser: decrypt(sessionStorage.getItem('userId')),
         });
 
-        // Si llega aquí, fue 200 OK
+        const remisionId = res.data.id || res.data.remisionId || res.data.data?.id;
+
+        await generarYDescargarPDF(formData, remisionId, decrypt(sessionStorage.getItem('userId')));
+
         fetchItems();
         return;
       }
