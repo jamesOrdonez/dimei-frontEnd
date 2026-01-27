@@ -6,7 +6,8 @@ import { Loader } from '../../components/loaders';
 import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tooltip } from '@mui/material';
 import { decrypt } from '../../utils/crypto';
-import QRCode from 'qrcode';
+import { pdf } from '@react-pdf/renderer';
+import RemisionPDF from './remisionPDF';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -19,6 +20,9 @@ export default function Items() {
   const [itemGroup, setItemGroup] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [mathOperationMap, setMathOperationMap] = useState({});
+  const [totalItems, setTotalItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [selectedGroupRemision, setSelectedGroupRemision] = useState(null);
 
   const unitOfMeasureOptions = async () => {
     const res = await axios.get('/unitOfMeasuremet');
@@ -27,21 +31,53 @@ export default function Items() {
 
   const itemGroupOptions = async () => {
     const res = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
-    setItemGroup(res.data.data.map((g) => ({ label: g.name, value: g.id })));
+    setItemGroup(res.data.data.map((g) => ({ label: g.name, value: g.name, realValue: g.id })));
+  };
+
+  const itemsOptions = async () => {
+    const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
+    setTotalItems(
+      res.data.data.map((i) => ({
+        label: i.description,
+        value: i.id,
+        group: i.group_name,
+      }))
+    );
   };
 
   useEffect(() => {
     unitOfMeasureOptions();
     itemGroupOptions();
+    itemsOptions();
   }, []);
+
+  const handleRemisionChange = (formData) => {
+    if (formData.items && formData.items !== selectedGroupRemision) {
+      setSelectedGroupRemision(formData.items);
+
+      const filtered = totalItems.filter((item) => item.group === formData.items);
+
+      setFilteredItems(filtered);
+    }
+  };
 
   const itemSchema = [
     {
       row: 1,
       columns: [
-        { name: 'description', label: 'Descripcion del item', type: 'textarea', xs: 12 },
+        { name: 'description', label: 'Descripcion del item', type: 'textarea', xs: 12, required: true },
         { name: 'amount', label: 'Cantidad que ingresa', type: 'number', xs: 12, md: 6 },
-        { name: 'group_item', label: 'Grupo al que pertenece', type: 'select', options: itemGroup, xs: 12, md: 6 },
+        {
+          name: 'group_item',
+          label: 'Grupo al que pertenece',
+          type: 'select',
+          options: itemGroup.map((g) => ({
+            label: g.label,
+            value: g.realValue,
+          })),
+          xs: 12,
+          md: 6,
+        },
       ],
     },
     {
@@ -124,10 +160,7 @@ export default function Items() {
           label: 'Seleccione los items para la remision',
           type: 'select',
           multiple: true,
-          options: [
-            { label: 'Si', value: '1' },
-            { label: 'No', value: '0' },
-          ],
+          options: filteredItems,
           xs: 12,
         },
         { name: 'description', label: 'Descripcion de la remision', type: 'textarea', xs: 12 },
@@ -135,27 +168,10 @@ export default function Items() {
     },
   ];
 
-  const downloadQR = async (id) => {
-    try {
-      const qrDataUrl = await QRCode.toDataURL(id.toString(), {
-        width: 300,
-        margin: 2,
-      });
-
-      const link = document.createElement('a');
-      link.href = qrDataUrl;
-      link.download = `QR_item_${id}.png`;
-      link.click();
-    } catch (error) {
-      console.error('Error generando QR', error);
-    }
-  };
-
   const fetchItems = async () => {
     try {
       setLoader(true);
       const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
-
       const ops = {};
 
       setData(
@@ -164,18 +180,10 @@ export default function Items() {
 
           return {
             id: item.id,
-
             img: <img src={item.img} className="w-50 h-30" />,
-
-            qr: (
-              <Button onClick={() => downloadQR(item.id)} size="small" variant="outlined">
-                Descargar QR
-              </Button>
-            ),
-
             Descripcion: item.description,
             cantidad: item.amount,
-            grupo: item.name,
+            grupo: item.group_name,
             ubicacion: [item.position1, item.position2, item.position3].filter(Boolean).join(' - '),
             precio: item.price,
             variable: item.variable === 1 ? 'si' : 'no',
@@ -218,8 +226,7 @@ export default function Items() {
       );
 
       setMathOperationMap(ops);
-    } catch (error) {
-      console.error(error);
+    } catch {
       setError(true);
       setMessage('Error cargando items');
     } finally {
@@ -248,7 +255,7 @@ export default function Items() {
       position2,
       position3,
       price: row.precio,
-      group_item: groupSelected?.value || '',
+      group_item: groupSelected?.realValue || '',
       unitOfMeasure: unitSelected?.value || '',
       variable: row.variable === 'si' ? '1' : '0',
       value1: row['valor 1'],
@@ -256,12 +263,92 @@ export default function Items() {
       value2: row['valor 2'],
     });
   };
+  const generarYDescargarPDF = async (formData, remisionId, userId) => {
+    const itemsPDF = formData.net_items.map((ni) => {
+      const info = totalItems.find((t) => t.value === ni.id);
+
+      return {
+        description: info?.label || 'Item desconocido',
+        grupo: info?.group || '',
+        cantidad: ni.quantity,
+      };
+    });
+
+    const remisionPDF = {
+      remisionId: remisionId,
+      fecha: new Date().toLocaleDateString(),
+      description: formData.description,
+      grupo: formData.items,
+      items: itemsPDF,
+      elaboradoPor: decrypt(sessionStorage.getItem('user')),
+      aprobadoPor: ' ',
+    };
+
+    const blob = await pdf(<RemisionPDF remision={remisionPDF} />).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `remision_${remisionPDF.remisionId}.pdf`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
 
   /* =========================
      UPDATE/CREATE
   ========================= */
   const onSubmit = async (formData) => {
+    try {
+      if (formData.net_items && formData.net_items.length > 0) {
+        if (!formData.description || formData.description.trim() === '') {
+          alert('La descripción de la remisión es obligatoria');
+          return;
+        }
+
+        const netItemsFormateados = formData.net_items.map((item) => ({
+          id: item.id,
+          quantity: Number(item.quantity),
+        }));
+
+        const res = await axios.post('/saveRemision', {
+          description: formData.description,
+          net_items: netItemsFormateados,
+          company: sessionStorage.getItem('company'),
+          fkUser: decrypt(sessionStorage.getItem('userId')),
+        });
+
+        const remisionId = res.data.id || res.data.remisionId || res.data.data?.id;
+
+        await generarYDescargarPDF(formData, remisionId, decrypt(sessionStorage.getItem('userId')));
+
+        fetchItems();
+        return;
+      }
+    } catch (error) {
+      const data = error.response?.data;
+
+      if (data?.errors && data.errors.length > 0) {
+        let mensaje = 'Problemas de stock:\n\n';
+
+        data.errors.forEach((err) => {
+          mensaje += `• ${err.description}: solicitados ${err.solicitado}, disponibles ${err.disponible}\n`;
+        });
+
+        alert(mensaje);
+        return;
+      } else {
+        alert(data?.message || 'Error creando remisión');
+        return;
+      }
+    }
+
+    /* =========================
+     ITEM NORMAL (CREATE / UPDATE)
+  ========================= */
+
     const payload = new FormData();
+
     if (formData.img instanceof File) {
       payload.append('img', formData.img);
     }
@@ -288,9 +375,7 @@ export default function Items() {
     };
 
     if (editingItem) {
-      await axios.put(`/updateItem/${formData.id}`, payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await axios.put(`/updateItem/${formData.id}`, payload, config);
     } else {
       await axios.post('/saveItem', payload, config);
     }
@@ -357,7 +442,9 @@ export default function Items() {
         onCloseForm={() => setEditingItem(null)}
         aditionalButton={true}
         aditionalSchema={aditionalSchema}
+        onChangeForm={handleRemisionChange}
       />
+
       {/* 
       <pre>{JSON.stringify(data, null, 2)}</pre> */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">
