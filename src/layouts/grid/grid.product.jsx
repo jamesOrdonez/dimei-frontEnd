@@ -82,27 +82,35 @@ export default function DataGrid_product({
                   </thead>
 
                   <tbody>
-                    {paginatedData.map((item) => (
-                      <tr key={item.id} className="odd:bg-blue-50">
-                        {Object.keys(item).map((key) => (
-                          <td key={key} className="p-4 text-sm">
-                            {item[key]}
-                          </td>
-                        ))}
-
-                        <td className="p-4 flex gap-3">
-                          {/* EDIT */}
-                          <button title="Editar" onClick={() => onEdit(item)}>
-                            <PencilSquareIcon className="h-6 w-6 text-blue-600" />
-                          </button>
-
-                          {/* DELETE */}
-                          <button title="Eliminar" onClick={() => onDelete(item.id)}>
-                            <TrashIcon className="h-6 w-6 text-red-500" />
-                          </button>
+                    {paginatedData < 0 ? (
+                      <tr>
+                        <td colSpan="100%" className="p-6 text-center text-gray-500">
+                          Aún no hay registros. Crea uno nuevo para empezar ✅
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      paginatedData.map((item) => (
+                        <tr key={item.id} className="odd:bg-blue-50">
+                          {Object.keys(item).map((key) => (
+                            <td key={key} className="p-4 text-sm">
+                              {item[key]}
+                            </td>
+                          ))}
+
+                          <td className="p-4 flex gap-3">
+                            {/* EDIT */}
+                            <button title="Editar" onClick={() => onEdit(item)}>
+                              <PencilSquareIcon className="h-6 w-6 text-blue-600" />
+                            </button>
+
+                            {/* DELETE */}
+                            <button title="Eliminar" onClick={() => onDelete(item.id)}>
+                              <TrashIcon className="h-6 w-6 text-red-500" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
 
