@@ -6,6 +6,7 @@ import { Loader } from '../../components/loaders';
 import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tooltip } from '@mui/material';
 import { decrypt } from '../../utils/crypto';
+import QRCode from 'qrcode';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -134,10 +135,27 @@ export default function Items() {
     },
   ];
 
+  const downloadQR = async (id) => {
+    try {
+      const qrDataUrl = await QRCode.toDataURL(id.toString(), {
+        width: 300,
+        margin: 2,
+      });
+
+      const link = document.createElement('a');
+      link.href = qrDataUrl;
+      link.download = `QR_item_${id}.png`;
+      link.click();
+    } catch (error) {
+      console.error('Error generando QR', error);
+    }
+  };
+
   const fetchItems = async () => {
     try {
       setLoader(true);
       const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
+
       const ops = {};
 
       setData(
@@ -146,7 +164,15 @@ export default function Items() {
 
           return {
             id: item.id,
+
             img: <img src={item.img} className="w-50 h-30" />,
+
+            qr: (
+              <Button onClick={() => downloadQR(item.id)} size="small" variant="outlined">
+                Descargar QR
+              </Button>
+            ),
+
             Descripcion: item.description,
             cantidad: item.amount,
             grupo: item.name,
@@ -192,7 +218,8 @@ export default function Items() {
       );
 
       setMathOperationMap(ops);
-    } catch {
+    } catch (error) {
+      console.error(error);
       setError(true);
       setMessage('Error cargando items');
     } finally {
