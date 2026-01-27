@@ -9,6 +9,7 @@ import { decrypt } from '../../utils/crypto';
 import { pdf } from '@react-pdf/renderer';
 import RemisionPDF from './remisionPDF';
 import QRCode from 'qrcode';
+import { BASE_URL } from '../../App';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -199,11 +200,11 @@ export default function Items() {
           return {
             id: item.id,
 
-            img: <img src={item.img} className="w-50 h-30" />,
+            img: <img src={`${BASE_URL}/getItem/image/${item.id}?t=${Date.now()}`} className="w-50 h-30" alt="item" />,
 
             qr: (
-              <button onClick={() => downloadQR(item.id)} className="hover:h-7">
-                <QrCodeIcon class="h-6 w-6 text-gray-500" />
+              <button onClick={() => downloadQR(item.id)} className="">
+                <QrCodeIcon className="h-6 w-6 text-gray-500 hover:h-7 w-7 hover:text-green-500" />
               </button>
             ),
 
