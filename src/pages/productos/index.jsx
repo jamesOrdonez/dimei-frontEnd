@@ -3,11 +3,12 @@ import { DataGrid } from '../../layouts/grid';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader } from '../../components/loaders';
-import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tooltip } from '@mui/material';
 import { decrypt } from '../../utils/crypto';
 import { pdf } from '@react-pdf/renderer';
 import RemisionPDF from './remisionPDF';
+import QRCode from 'qrcode';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -168,10 +169,27 @@ export default function Items() {
     },
   ];
 
+  const downloadQR = async (id) => {
+    try {
+      const qrDataUrl = await QRCode.toDataURL(id.toString(), {
+        width: 300,
+        margin: 2,
+      });
+
+      const link = document.createElement('a');
+      link.href = qrDataUrl;
+      link.download = `QR_item_${id}.png`;
+      link.click();
+    } catch (error) {
+      console.error('Error generando QR', error);
+    }
+  };
+
   const fetchItems = async () => {
     try {
       setLoader(true);
       const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
+
       const ops = {};
 
       setData(
@@ -180,10 +198,18 @@ export default function Items() {
 
           return {
             id: item.id,
+
             img: <img src={item.img} className="w-50 h-30" />,
+
+            qr: (
+              <button onClick={() => downloadQR(item.id)} className="hover:h-7">
+                <QrCodeIcon class="h-6 w-6 text-gray-500" />
+              </button>
+            ),
+
             Descripcion: item.description,
             cantidad: item.amount,
-            grupo: item.group_name,
+            grupo: item.name,
             ubicacion: [item.position1, item.position2, item.position3].filter(Boolean).join(' - '),
             precio: item.price,
             variable: item.variable === 1 ? 'si' : 'no',
@@ -226,7 +252,8 @@ export default function Items() {
       );
 
       setMathOperationMap(ops);
-    } catch {
+    } catch (error) {
+      console.error(error);
       setError(true);
       setMessage('Error cargando items');
     } finally {
