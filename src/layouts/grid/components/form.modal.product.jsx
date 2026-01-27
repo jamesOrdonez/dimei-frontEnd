@@ -19,10 +19,10 @@ const FormModal_product = ({ schema, values, onChange }) => {
             SelectProps={{ multiple: field.multiple || false }}
             name={field.name}
             label={field.label}
-            value={field.multiple ? (values[field.name] || []).map((i) => i.id) : values[field.name] || ''}
+            value={field.multiple ? (values[field.name] || []).map((i) => i.id) : values[field.name] ?? ''}
             onChange={(e) => {
               if (field.multiple) {
-                const selectedIds = e.target.value;
+                const selectedIds = e.target.value.map(Number);
                 const current = values.net_items || [];
 
                 const newItems = selectedIds.map((id) => {
@@ -37,11 +37,19 @@ const FormModal_product = ({ schema, values, onChange }) => {
                   },
                 });
               } else {
-                // ✅ SELECT SIMPLE
+                const newGroup = Number(e.target.value);
+
                 onChange({
                   target: {
                     name: field.name,
-                    value: e.target.value,
+                    value: newGroup,
+                  },
+                });
+
+                onChange({
+                  target: {
+                    name: 'net_items',
+                    value: [],
                   },
                 });
               }

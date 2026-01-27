@@ -3,12 +3,36 @@ import axios from 'axios';
 
 export default function useProductSchema() {
   const [unitOfMeasure, setUnitOfMeasure] = useState([]);
+  const [GrupoItems, setGrupoItems] = useState([]);
 
   useEffect(() => {
     const loadUnits = async () => {
       try {
         const res = await axios.get('/getItem/1');
-        setUnitOfMeasure(res.data.data.map((u) => ({ label: u.description, value: u.id })));
+        const grupo = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
+
+        // grupos
+        const grupo_data = grupo.data.data.map((g) => ({
+          label: g.name,
+          value: g.id,
+          name: g.name,
+        }));
+
+        // items SIN transformar aún
+        const items = res.data.data;
+
+        // filtrar correctamente
+        const Filter = items
+          .filter((item) => grupo_data.some((g) => g.name === item.group_name))
+          .map((item) => ({
+            label: item.description,
+            value: item.id,
+          }));
+
+        console.log(Filter);
+
+        setGrupoItems(grupo_data);
+        setUnitOfMeasure(Filter);
       } catch (error) {
         console.error('Error cargando unidades de medida', error);
       }
@@ -41,10 +65,23 @@ export default function useProductSchema() {
       row: 2,
       columns: [
         {
-          name: 'net_items',
-          label: 'Items Necesarios',
+          name: 'group_item',
+          label: 'Grupo al que pertenece',
           type: 'select',
-          multiple: true, // 👈 IMPORTANTE
+          options: GrupoItems,
+          xs: 12,
+          md: 6,
+        },
+      ],
+    },
+    {
+      row: 2,
+      columns: [
+        {
+          name: 'net_items',
+          label: 'Items',
+          type: 'select',
+          multiple: true,
           options: unitOfMeasure,
           xs: 12,
           md: 12,
