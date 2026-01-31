@@ -10,6 +10,7 @@ import { pdf } from '@react-pdf/renderer';
 import RemisionPDF from './remisionPDF';
 import QRCode from 'qrcode';
 import { BASE_URL } from '../../App';
+import { useLocation } from 'react-router-dom';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -25,6 +26,7 @@ export default function Items() {
   const [totalItems, setTotalItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [selectedGroupRemision, setSelectedGroupRemision] = useState(null);
+  const fullUrl = window.location.href;
 
   const unitOfMeasureOptions = async () => {
     const res = await axios.get('/unitOfMeasuremet');
@@ -172,7 +174,7 @@ export default function Items() {
 
   const downloadQR = async (id) => {
     try {
-      const qrDataUrl = await QRCode.toDataURL(id.toString(), {
+      const qrDataUrl = await QRCode.toDataURL(fullUrl + '/' + id.toString(), {
         width: 300,
         margin: 2,
       });
