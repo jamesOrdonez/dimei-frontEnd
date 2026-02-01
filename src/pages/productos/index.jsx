@@ -212,7 +212,7 @@ export default function Items() {
 
             Descripcion: item.description,
             cantidad: item.amount,
-            grupo: item.name,
+            grupo: item.group_name,
             ubicacion: [item.position1, item.position2, item.position3].filter(Boolean).join(' - '),
             precio: item.price,
             variable: item.variable === 1 ? 'si' : 'no',
