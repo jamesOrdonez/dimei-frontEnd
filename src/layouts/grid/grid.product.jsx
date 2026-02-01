@@ -22,8 +22,7 @@ export default function DataGrid_product({
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // puedes cambiarlo
-
+  const itemsPerPage = 5;
   const filteredData = datos.filter((item) =>
     Object.values(item).some(
       (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())

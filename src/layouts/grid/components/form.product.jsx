@@ -1,6 +1,7 @@
 import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import FormModal_product from './form.modal.product';
+import useProductSchema from '../../../pages/productos/models';
 
 const style = {
   position: 'absolute',
@@ -9,9 +10,9 @@ const style = {
   transform: 'translate(-50%, -50%)',
 
   width: {
-    xs: '95%', // 📱 móvil
-    sm: '85%', // tablet
-    md: 600, // desktop
+    xs: '95%',
+    sm: '85%',
+    md: 600,
   },
 
   maxHeight: '90vh',
@@ -24,7 +25,17 @@ const style = {
 
 export default function Form_product({ schema, title = 'Formulario', initialValues = null, onSubmit, onClose }) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({});
+  const emptyForm = {
+    name: '',
+    description: '',
+    group_item: '',
+    net_items: [],
+  };
+
+  const [formData, setFormData] = useState(emptyForm);
+
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const schemaFinal = useProductSchema(selectedGroup);
 
   /* =========================
      SYNC EDIT MODE
@@ -40,7 +51,8 @@ export default function Form_product({ schema, title = 'Formulario', initialValu
      HANDLERS
   ========================= */
   const handleOpenNew = () => {
-    setFormData({});
+    setFormData(emptyForm);
+    setSelectedGroup('');
     setOpen(true);
   };
 
@@ -51,10 +63,16 @@ export default function Form_product({ schema, title = 'Formulario', initialValu
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
+
+    if (name === 'group_item') {
+      setSelectedGroup(value);
+    }
   };
 
   const handleSubmit = () => {
@@ -63,6 +81,12 @@ export default function Form_product({ schema, title = 'Formulario', initialValu
   };
 
   const isEditing = Boolean(initialValues);
+
+  useEffect(() => {
+    if (initialValues?.group_item) {
+      setSelectedGroup(initialValues.group_item);
+    }
+  }, [initialValues]);
 
   return (
     <>
@@ -85,7 +109,7 @@ export default function Form_product({ schema, title = 'Formulario', initialValu
                 {isEditing ? `Editar ${title}` : `Nuevo ${title}`} 📝
               </Typography>
 
-              <FormModal_product schema={schema} values={formData} onChange={handleChange} />
+              <FormModal_product schema={schemaFinal} values={formData} onChange={handleChange} />
 
               {/* BOTONES */}
               <Box
@@ -94,7 +118,7 @@ export default function Form_product({ schema, title = 'Formulario', initialValu
                   display: 'flex',
                   justifyContent: 'flex-end',
                   gap: 2,
-                  flexWrap: 'wrap', // 📱 botones uno debajo del otro si no caben
+                  flexWrap: 'wrap',
                 }}
               >
                 <button onClick={handleClose} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">

@@ -1,5 +1,4 @@
 import { Helmet } from 'react-helmet-async';
-import { DataGrid } from '../../layouts/grid';
 import { useEffect, useState } from 'react';
 import { decrypt } from '../../utils/crypto';
 import axios from 'axios';

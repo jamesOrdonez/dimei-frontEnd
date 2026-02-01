@@ -1,9 +1,11 @@
+// dimei-frontEnd/src/pages/productos/models/index.js
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-export default function useProductSchema() {
-  const [unitOfMeasure, setUnitOfMeasure] = useState([]);
+export default function useProductSchema(selectedGroup) {
+  const [items, setItems] = useState([]);
   const [GrupoItems, setGrupoItems] = useState([]);
+  const [unitOfMeasure, setUnitOfMeasure] = useState([]);
 
   useEffect(() => {
     const loadUnits = async () => {
@@ -11,35 +13,37 @@ export default function useProductSchema() {
         const res = await axios.get('/getItem/1');
         const grupo = await axios.get(`/getItemGroup/${sessionStorage.getItem('company')}`);
 
-        // grupos
-        const grupo_data = grupo.data.data.map((g) => ({
-          label: g.name,
-          value: g.id,
-          name: g.name,
-        }));
+        setItems(res.data.data);
 
-        // items SIN transformar aún
-        const items = res.data.data;
-
-        // filtrar correctamente
-        const Filter = items
-          .filter((item) => grupo_data.some((g) => g.name === item.group_name))
-          .map((item) => ({
-            label: item.description,
-            value: item.id,
-          }));
-
-        console.log(Filter);
-
-        setGrupoItems(grupo_data);
-        setUnitOfMeasure(Filter);
+        setGrupoItems(
+          grupo.data.data.map((g) => ({
+            label: g.name,
+            value: g.name,
+          }))
+        );
       } catch (error) {
-        console.error('Error cargando unidades de medida', error);
+        console.error(error);
       }
     };
 
     loadUnits();
   }, []);
+
+  useEffect(() => {
+    if (!selectedGroup) {
+      setUnitOfMeasure([]);
+      return;
+    }
+
+    const filtered = items
+      .filter((item) => item.group_name && item.group_name.trim() === selectedGroup)
+      .map((item) => ({
+        label: item.description,
+        value: item.id,
+      }));
+
+    setUnitOfMeasure(filtered);
+  }, [selectedGroup, items]);
 
   return [
     {
@@ -84,7 +88,7 @@ export default function useProductSchema() {
           multiple: true,
           options: unitOfMeasure,
           xs: 12,
-          md: 12,
+          md: 6,
         },
       ],
     },

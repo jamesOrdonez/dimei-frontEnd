@@ -37,7 +37,7 @@ const FormModal_product = ({ schema, values, onChange }) => {
                   },
                 });
               } else {
-                const newGroup = Number(e.target.value);
+                const newGroup = e.target.value;
 
                 onChange({
                   target: {
