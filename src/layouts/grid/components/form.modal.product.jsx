@@ -1,4 +1,15 @@
-import { Grid, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, IconButton } from '@mui/material';
+import {
+  Grid,
+  TextField,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  IconButton,
+  Autocomplete,
+} from '@mui/material';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
@@ -11,48 +22,56 @@ const FormModal_product = ({ schema, values, onChange }) => {
 
   const renderField = (field) => {
     switch (field.type) {
+      case 'autocomplete':
+        return (
+          <Autocomplete
+            fullWidth
+            options={field.options}
+            getOptionLabel={(option) => option.label}
+            value={field.options.find((o) => o.value === values[field.name]) || null}
+            onChange={(_, newValue) => {
+              onChange({
+                target: {
+                  name: field.name,
+                  value: newValue ? newValue.value : '',
+                },
+              });
+
+              // limpiar items al cambiar grupo
+              onChange({
+                target: {
+                  name: 'net_items',
+                  value: [],
+                },
+              });
+            }}
+            renderInput={(params) => <TextField {...params} label={field.label} />}
+          />
+        );
+
       case 'select':
         return (
           <TextField
             select
             fullWidth
-            SelectProps={{ multiple: field.multiple || false }}
-            name={field.name}
+            SelectProps={{ multiple: true }}
             label={field.label}
-            value={field.multiple ? (values[field.name] || []).map((i) => i.id) : values[field.name] ?? ''}
+            value={(values.net_items || []).map((i) => i.id)}
             onChange={(e) => {
-              if (field.multiple) {
-                const selectedIds = e.target.value.map(Number);
-                const current = values.net_items || [];
+              const selectedIds = e.target.value;
+              const current = values.net_items || [];
 
-                const newItems = selectedIds.map((id) => {
-                  const found = current.find((i) => i.id === id);
-                  return found || { id, quantity: '' };
-                });
+              const newItems = selectedIds.map((id) => {
+                const found = current.find((i) => i.id === id);
+                return found || { id, quantity: '' };
+              });
 
-                onChange({
-                  target: {
-                    name: 'net_items',
-                    value: newItems,
-                  },
-                });
-              } else {
-                const newGroup = e.target.value;
-
-                onChange({
-                  target: {
-                    name: field.name,
-                    value: newGroup,
-                  },
-                });
-
-                onChange({
-                  target: {
-                    name: 'net_items',
-                    value: [],
-                  },
-                });
-              }
+              onChange({
+                target: {
+                  name: 'net_items',
+                  value: newItems,
+                },
+              });
             }}
           >
             {field.options.map((opt) => (

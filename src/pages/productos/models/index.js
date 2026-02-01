@@ -71,8 +71,9 @@ export default function useProductSchema(selectedGroup) {
         {
           name: 'group_item',
           label: 'Grupo al que pertenece',
-          type: 'select',
+          type: 'autocomplete',
           options: GrupoItems,
+
           xs: 12,
           md: 6,
         },
