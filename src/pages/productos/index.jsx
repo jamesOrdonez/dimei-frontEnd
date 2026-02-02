@@ -3,14 +3,11 @@ import { DataGrid } from '../../layouts/grid';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader } from '../../components/loaders';
-import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import { ArrowRightCircleIcon, ArrowLeftCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tooltip } from '@mui/material';
 import { decrypt } from '../../utils/crypto';
 import { pdf } from '@react-pdf/renderer';
 import RemisionPDF from './remisionPDF';
-import QRCode from 'qrcode';
-import { BASE_URL } from '../../App';
-import { useLocation } from 'react-router-dom';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -26,7 +23,6 @@ export default function Items() {
   const [totalItems, setTotalItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [selectedGroupRemision, setSelectedGroupRemision] = useState(null);
-  const fullUrl = window.location.href;
 
   const unitOfMeasureOptions = async () => {
     const res = await axios.get('/unitOfMeasuremet');
@@ -40,8 +36,10 @@ export default function Items() {
 
   const itemsOptions = async () => {
     const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
+
     setTotalItems(
       res.data.data.map((i) => ({
+        id: i.id, // 👈 ⭐ CLAVE
         label: i.description,
         value: i.id,
         group: i.group_name,
@@ -56,13 +54,20 @@ export default function Items() {
   }, []);
 
   const handleRemisionChange = (formData) => {
-    if (formData.items && formData.items !== selectedGroupRemision) {
-      setSelectedGroupRemision(formData.items);
+    if (!formData.items) return;
 
-      const filtered = totalItems.filter((item) => item.group === formData.items);
+    // items del grupo actual
+    const groupItems = totalItems.filter((item) => item.group === formData.items);
 
-      setFilteredItems(filtered);
-    }
+    // items ya seleccionados (de cualquier grupo)
+    const selectedIds = (formData.net_items || []).map((i) => i.id || i);
+
+    const selectedItems = totalItems.filter((item) => selectedIds.includes(item.value));
+
+    // 🔥 unir ambos (sin duplicados)
+    const merged = [...groupItems, ...selectedItems].filter((v, i, a) => a.findIndex((t) => t.value === v.value) === i);
+
+    setFilteredItems(merged);
   };
 
   const itemSchema = [
@@ -172,27 +177,10 @@ export default function Items() {
     },
   ];
 
-  const downloadQR = async (id) => {
-    try {
-      const qrDataUrl = await QRCode.toDataURL(fullUrl + '/' + id.toString(), {
-        width: 300,
-        margin: 2,
-      });
-
-      const link = document.createElement('a');
-      link.href = qrDataUrl;
-      link.download = `QR_item_${id}.png`;
-      link.click();
-    } catch (error) {
-      console.error('Error generando QR', error);
-    }
-  };
-
   const fetchItems = async () => {
     try {
       setLoader(true);
       const res = await axios.get(`/getItem/${sessionStorage.getItem('company')}`);
-
       const ops = {};
 
       setData(
@@ -201,15 +189,7 @@ export default function Items() {
 
           return {
             id: item.id,
-
-            img: <img src={`${BASE_URL}/getItem/image/${item.id}?t=${Date.now()}`} className="w-50 h-30" alt="item" />,
-
-            qr: (
-              <button onClick={() => downloadQR(item.id)} className="">
-                <QrCodeIcon className="h-6 w-6 text-gray-500 hover:h-7 w-7 hover:text-green-500" />
-              </button>
-            ),
-
+            img: <img src={item.img} className="w-50 h-30" />,
             Descripcion: item.description,
             cantidad: item.amount,
             grupo: item.group_name,
@@ -255,8 +235,7 @@ export default function Items() {
       );
 
       setMathOperationMap(ops);
-    } catch (error) {
-      console.error(error);
+    } catch {
       setError(true);
       setMessage('Error cargando items');
     } finally {
