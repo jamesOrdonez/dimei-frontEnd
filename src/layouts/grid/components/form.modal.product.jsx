@@ -19,23 +19,32 @@ const FormModal_product = ({ schema, values, onChange }) => {
             SelectProps={{ multiple: field.multiple || false }}
             name={field.name}
             label={field.label}
-            value={(values[field.name] || []).map((i) => i.id)}
+            value={field.multiple ? (values[field.name] || []).map((i) => i.id) : values[field.name] || ''}
             onChange={(e) => {
-              const selectedIds = e.target.value;
+              if (field.multiple) {
+                const selectedIds = e.target.value;
+                const current = values.net_items || [];
 
-              const current = values.net_items || [];
+                const newItems = selectedIds.map((id) => {
+                  const found = current.find((i) => i.id === id);
+                  return found || { id, quantity: '' };
+                });
 
-              const newItems = selectedIds.map((id) => {
-                const found = current.find((i) => i.id === id);
-                return found || { id, quantity: '' };
-              });
-
-              onChange({
-                target: {
-                  name: 'net_items',
-                  value: newItems,
-                },
-              });
+                onChange({
+                  target: {
+                    name: 'net_items',
+                    value: newItems,
+                  },
+                });
+              } else {
+                // ✅ SELECT SIMPLE
+                onChange({
+                  target: {
+                    name: field.name,
+                    value: e.target.value,
+                  },
+                });
+              }
             }}
           >
             {field.options.map((opt) => (

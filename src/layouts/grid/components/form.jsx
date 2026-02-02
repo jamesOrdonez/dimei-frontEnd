@@ -1,26 +1,55 @@
 import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import FormModal from './form.modal';
+import FormModal_product from './form.modal.product';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const style = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
+
+  width: '90%',
+  maxWidth: 600,
+
+  maxHeight: '90vh',
+  overflowY: 'auto',
+
   bgcolor: 'background.paper',
-  minWidth: 400,
+  borderRadius: 2,
+  boxShadow: 24,
 };
 
-export default function Form({ schema, title = 'Formulario', initialValues = null, onSubmit, onClose }) {
+export default function Form({
+  schema,
+  title = 'Formulario',
+  initialValues = null,
+  onSubmit,
+  onClose,
+  buttonName,
+  color,
+  aditionalSchema = null,
+  onChangeForm,
+}) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({});
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // 🔥 IMPORTANTE: inicializar net_items
+  const [formData, setFormData] = useState({
+    net_items: [],
+  });
 
   /* =========================
      SYNC EDIT MODE
   ========================= */
   useEffect(() => {
     if (initialValues) {
-      setFormData(initialValues);
+      setFormData({
+        ...initialValues,
+        net_items: initialValues.net_items || [],
+      });
       setOpen(true);
     }
   }, [initialValues]);
@@ -29,21 +58,34 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
      HANDLERS
   ========================= */
   const handleOpenNew = () => {
-    setFormData({});
+    setFormData({
+      net_items: [],
+    });
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
-    setFormData({});
+    setFormData({
+      net_items: [],
+    });
     onClose?.();
   };
-
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, type, files, value } = e.target;
+
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === 'file' ? files[0] : value,
+      };
+
+      if (onChangeForm) {
+        onChangeForm(updated);
+      }
+
+      return updated;
+    });
   };
 
   const handleSubmit = () => {
@@ -59,22 +101,28 @@ export default function Form({ schema, title = 'Formulario', initialValues = nul
       {!isEditing && (
         <button
           type="button"
-          className="flex items-center justify-center text-white bg-blue-600 font-medium rounded-lg text-sm px-4 py-2 hover:bg-blue-700"
+          className={`flex items-center justify-center text-white bg-${
+            color || 'blue'
+          }-600 font-medium rounded-lg text-sm px-4 py-2 hover:bg-${color || 'blue'}-700`}
           onClick={handleOpenNew}
         >
-          Nuevo
+          {buttonName || 'Nuevo'}
         </button>
       )}
 
       <Modal open={open} onClose={handleClose}>
         <Box sx={style}>
-          <Card>
-            <CardContent>
+          <Card sx={{ boxShadow: 'none' }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" mb={2}>
                 {isEditing ? `Editar ${title}` : `Nuevo ${title}`} 📝
               </Typography>
 
-              <FormModal schema={schema} values={formData} onChange={handleChange} />
+              {aditionalSchema ? (
+                <FormModal_product schema={schema} values={formData} onChange={handleChange} />
+              ) : (
+                <FormModal schema={schema} values={formData} onChange={handleChange} />
+              )}
 
               {/* BOTONES */}
               <div className="mt-6 flex justify-end gap-3">

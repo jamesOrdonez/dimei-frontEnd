@@ -6,7 +6,6 @@ const FormModal = ({ schema, values, onChange }) => {
     const { field: dependency, value } = field.dependsOn;
     return values[dependency] === value;
   };
-
   const renderField = (field) => {
     switch (field.type) {
       case 'select':
@@ -36,6 +35,18 @@ const FormModal = ({ schema, values, onChange }) => {
             name={field.name}
             label={field.label}
             value={values[field.name] || ''}
+            onChange={onChange}
+          />
+        );
+
+      case 'file': // ✅ CASO ESPECIAL
+        return (
+          <TextField
+            fullWidth
+            type="file"
+            name={field.name}
+            label={field.label}
+            InputLabelProps={{ shrink: true }}
             onChange={onChange}
           />
         );
