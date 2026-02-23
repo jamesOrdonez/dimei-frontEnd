@@ -20,6 +20,7 @@ interface BaseGridProps {
   extraHeaderActions?: React.ReactNode;
   extraHeaders?: (string | { label: string; after?: string })[];
   renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
+  onDataChange?: (data: any[]) => void;
 }
 
 export default function BaseGrid({ 
@@ -33,7 +34,8 @@ export default function BaseGrid({
   excludeKeys = [],
   extraHeaderActions,
   extraHeaders: propExtraHeaders = [],
-  renderExtraCell: propRenderExtraCell
+  renderExtraCell: propRenderExtraCell,
+  onDataChange
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -50,6 +52,7 @@ export default function BaseGrid({
       const result = Array.isArray(response.data) ? response.data : response.data.data || [];
       setData(result);
       setFilteredData(result);
+      if (onDataChange) onDataChange(result);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

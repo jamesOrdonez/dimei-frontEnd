@@ -11,6 +11,7 @@ interface BaseSelectProps {
   name: string;
   label: string;
   value: any;
+  size?: "medium" | "small",
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   options?: Option[];
   fullWidth?: boolean;
@@ -33,6 +34,7 @@ export default function BaseSelect({
   endpoint,
   optionLabel = 'name',
   optionValue = 'id',
+  size = 'medium'
 }: BaseSelectProps) {
   const [items, setItems] = useState<Option[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -67,6 +69,7 @@ export default function BaseSelect({
       required={required}
       disabled={loading}
       variant="outlined"
+      size={size}
     >
       {loading ? (
         <MenuItem disabled value="">

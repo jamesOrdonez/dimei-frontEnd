@@ -82,7 +82,7 @@ export default function GridHeader({ title, search, onSearchChange, onNewClick, 
 
           
           {extraActions}
-
+          
           <Button
             variant="contained"
             disableElevation

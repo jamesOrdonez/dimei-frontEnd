@@ -3,12 +3,13 @@ import { Button, CircularProgress, Box } from '@mui/material';
 import axios from 'axios';
 import BaseDialog from '../dialog/base.dialog.tsx';
 import BaseForm, { BaseField } from './base.form.tsx';
+import { decrypt } from '../../utils/crypto.js';
 
 interface FormDialogProps {
   open: boolean;
   onClose: () => void;
   onSave?: (data: Record<string, any>) => void;
-  onSuccess?: () => void;
+  onSuccess?: (data: Record<string, any>) => void;
   fields: BaseField[];
   mode: 'create' | 'update';
   initialValues?: Record<string, any>;
@@ -25,7 +26,7 @@ export default function FormDialog({
   onSave,
   onSuccess,
   fields,
-  mode,
+  mode = 'create',
   initialValues,
   title,
   endpoint,
@@ -72,7 +73,12 @@ export default function FormDialog({
   const handleSave = async () => {
     const hasFile = Object.values(currentData).some((val) => val instanceof File);
 
-    let payload: any = { ...currentData, state: 1, company: sessionStorage.getItem('company') };
+    let payload: any = { 
+      ...currentData, 
+      state: 1, 
+      fkUser: decrypt(sessionStorage.getItem('userId')),
+      company: sessionStorage.getItem('company') 
+    };
     let headers = {};
 
     if (hasFile) {
@@ -91,8 +97,8 @@ export default function FormDialog({
       if (finalSaveEndpoint) {
         setIsSaving(true);
         try {
-          await axios.post(finalSaveEndpoint, payload, { headers });
-          if (onSuccess) onSuccess();
+          const response = await axios.post(finalSaveEndpoint, payload, { headers });
+          if (onSuccess) onSuccess({ response, payload });
           onClose();
         } catch (error) {
           console.error('Error creating record:', error);
@@ -108,8 +114,8 @@ export default function FormDialog({
         try {
           // Note: some backends prefer POST with _method=PUT for FormData
           // but here we follow the existing pattern of using PUT
-          await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload, { headers });
-          if (onSuccess) onSuccess();
+          const response = await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload, { headers });
+          if (onSuccess) onSuccess({ response, payload });
           onClose();
         } catch (error) {
           console.error('Error updating record:', error);
