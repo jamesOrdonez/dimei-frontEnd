@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Form from './components/form';
 import Search from './components/search';
 import { TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
@@ -40,6 +40,16 @@ export default function DataGrid({
   const endIndex = startIndex + itemsPerPage;
 
   const paginatedData = filteredData.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [totalPages]);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 lg:px-12">
