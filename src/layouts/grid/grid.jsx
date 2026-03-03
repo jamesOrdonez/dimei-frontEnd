@@ -22,6 +22,7 @@ export default function DataGrid({
   aditionalButton,
   aditionalSchema,
   onChangeForm,
+  clienteSchema,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,6 +80,7 @@ export default function DataGrid({
                   onSubmit={onSubmit}
                   initialValues={editingItem}
                   onClose={onCloseForm}
+                  clienteSchema={clienteSchema}
                 />
               </div>
             </div>

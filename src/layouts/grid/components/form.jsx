@@ -2,6 +2,7 @@ import { Modal, Box, Card, CardContent, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import FormModal from './form.modal';
 import FormModal_product from './form.modal.product';
+import FormModal_cliente from './form.modal.cliente';
 import { useTheme, useMediaQuery } from '@mui/material';
 
 const style = {
@@ -31,6 +32,7 @@ export default function Form({
   color,
   aditionalSchema = null,
   onChangeForm,
+  clienteSchema = false,
 }) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
@@ -120,6 +122,8 @@ export default function Form({
 
               {aditionalSchema ? (
                 <FormModal_product schema={schema} values={formData} onChange={handleChange} />
+              ) : clienteSchema ? (
+                <FormModal_cliente schema={schema} values={formData} onChange={handleChange} />
               ) : (
                 <FormModal schema={schema} values={formData} onChange={handleChange} />
               )}
