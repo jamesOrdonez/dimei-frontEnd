@@ -1,88 +1,54 @@
 import { Helmet } from 'react-helmet-async';
-import { DataGrid } from '../../layouts/grid';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import { Loader, LoaderModule } from '../../components/loaders';
-import { options } from 'numeral';
-export default function Usuarios() {
-  const [error, setError] = useState(false);
-  const [message, setMessage] = useState('');
-  const [loader, setLoader] = useState(true);
-  const [data, setData] = useState([]);
-  const [block, setBlock] = useState(false);
+import BaseGrid from '../../components/grid/base.grid.tsx';
 
-  const userSchema = [
+export default function Usuarios() {
+  const fields = [
     {
-      row: 1,
-      columns: [
-        { name: 'name', label: 'Nombre', type: 'text', xs: 12, required: true },
-        {
-          name: 'rol',
-          label: 'Rol asignado',
-          type: 'select',
-          options: [{ label: 'Admin', value: 1 }],
-          xs: 12,
-          md: 12,
-        },
-      ],
+      name: 'name',
+      label: 'Nombre completo',
+      input: 'text',
+      grid: { xs: 12, md: 12 },
+      required: true,
     },
     {
-      row: 2,
-      columns: [
-        { name: 'user', label: 'Usuario', type: 'text', xs: 6, md: 6, required: true },
-        { name: 'password', label: 'Contraseña', type: 'text', xs: 6, md: 6, required: true },
+      name: 'user',
+      label: 'Usuario',
+      input: 'text',
+      grid: { xs: 12, md: 12 },
+      required: true,
+    },
+    {
+      name: 'password',
+      label: 'Contraseña',
+      input: 'password',
+      grid: { xs: 12, md: 6 },
+      required: true,
+      hasToHide: ({ mode }) => mode === 'update',
+    },
+    {
+      name: 'rol',
+      label: 'Rol',
+      input: 'select',
+      options: [
+        { label: 'Administrador', value: 1 },
+        { label: 'Usuario', value: 2 },
       ],
+      grid: { xs: 12, md: 6 },
+      required: true,
+      dynamicProps: ({ mode }) => mode === 'update' ? { grid: { xs: 12, md: 12 } } : {},
     },
   ];
 
-  const saveUser = async (formData) => {
-    const formDataFormated = {
-      ...formData,
-      state: 1,
-      company: sessionStorage.getItem('company'),
-    };
-
-    const saved = await axios.post('/saveUser', formDataFormated);
-
-    if (saved) {
-      AllUser();
-      setBlock(false);
-    }
-  };
-  const AllUser = async () => {
-    try {
-      const respon = await axios.get('/getUser/1');
-      setData(respon.data.data);
-      setLoader(false);
-    } catch (error) {
-      setMessage(error.response.data.message);
-      setError(true);
-      return setLoader(false);
-    }
-  };
-
-  useEffect(() => {
-    AllUser();
-  }, []);
-
-  if (loader) {
-    return <Loader />;
-  }
   return (
-    <>
-      <Helmet>
-        <title> Usuarios</title>
-      </Helmet>
-      <DataGrid
-        datos={data}
-        error={error}
-        message={message}
-        modulo={'Usuario'}
-        block={block}
-        onclick={setBlock}
-        schema={userSchema}
-        onSubmit={saveUser}
-      />
-    </>
+    <BaseGrid
+      title="Usuario"
+      endpoint="/getUser/1"
+      saveEndpoint="/saveUser"
+      updateEndpoint="/updateUser"
+      deleteEndpoint="/deleteUser"
+      fetchOneEndpoint="/getOneUser"
+      fields={fields}
+      excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password']}
+    />
   );
 }
