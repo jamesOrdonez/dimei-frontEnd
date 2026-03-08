@@ -3,12 +3,16 @@ import { Grid } from '@mui/material';
 import BaseText from './inputs/input-text/base.text.tsx';
 import BaseSelect from './inputs/input-select/base.select.tsx';
 import BasePassword from './inputs/input-password/base.password.tsx';
+import BaseNumber from './inputs/input-number/base.number.tsx';
+import BaseFile from './inputs/input-file/base.file.tsx';
 
 // Mapping of input types to their respective components
 const INPUT_COMPONENTS: Record<string, any> = {
   text: BaseText,
   select: BaseSelect,
   password: BasePassword,
+  number: BaseNumber,
+  file: BaseFile,
 };
 
 export interface BaseField {
@@ -23,7 +27,11 @@ export interface BaseField {
     xl?: number;
   };
   required?: boolean;
+  rows?: number;
   options?: { label: string; value: any }[];
+  endpoint?: string;
+  optionLabel?: string;
+  optionValue?: string;
   hasToHide?: (params: { values: any; mode: 'create' | 'update' }) => boolean;
   dynamicProps?: (params: { values: any; mode: 'create' | 'update' }) => Partial<BaseField>;
 }
@@ -45,10 +53,10 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
   }, [initialValues]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, files, type } = e.target;
     const newData = {
       ...formData,
-      [name]: value,
+      [name]: type === 'file' ? files?.[0] : value,
     };
     setFormData(newData);
     if (onChange) {
@@ -94,6 +102,10 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
                 onChange={handleChange}
                 required={currentField.required}
                 options={currentField.options}
+                rows={currentField.rows}
+                endpoint={currentField.endpoint}
+                optionLabel={currentField.optionLabel}
+                optionValue={currentField.optionValue}
               />
             ) : (
               <>No existe el componente</>

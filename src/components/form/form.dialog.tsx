@@ -70,13 +70,28 @@ export default function FormDialog({
   }, [open, initialValues, mode, endpoint, updateEndpoint]);
 
   const handleSave = async () => {
+    const hasFile = Object.values(currentData).some((val) => val instanceof File);
+
+    let payload: any = { ...currentData, state: 1, company: sessionStorage.getItem('company') };
+    let headers = {};
+
+    if (hasFile) {
+      const formData = new FormData();
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] !== null && payload[key] !== undefined) {
+          formData.append(key, payload[key]);
+        }
+      });
+      payload = formData;
+      headers = { 'Content-Type': 'multipart/form-data' };
+    }
+
     if (mode === 'create') {
       const finalSaveEndpoint = saveEndpoint || endpoint;
       if (finalSaveEndpoint) {
         setIsSaving(true);
         try {
-          const payload = { ...currentData, state: 1, company: sessionStorage.getItem('company') };
-          await axios.post(finalSaveEndpoint, payload);
+          await axios.post(finalSaveEndpoint, payload, { headers });
           if (onSuccess) onSuccess();
           onClose();
         } catch (error) {
@@ -91,9 +106,9 @@ export default function FormDialog({
       if (finalUpdateEndpoint) {
         setIsSaving(true);
         try {
-          const payload = { ...currentData, state: 1, company: sessionStorage.getItem('company') };
-          // Append /:id for update
-          await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload);
+          // Note: some backends prefer POST with _method=PUT for FormData
+          // but here we follow the existing pattern of using PUT
+          await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload, { headers });
           if (onSuccess) onSuccess();
           onClose();
         } catch (error) {
@@ -103,7 +118,7 @@ export default function FormDialog({
         }
       }
     }
-    
+
     if (!saveEndpoint && !endpoint && !updateEndpoint && onSave) {
       onSave(currentData);
       onClose();

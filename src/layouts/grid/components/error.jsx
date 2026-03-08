@@ -56,9 +56,9 @@ export default function Error({ message }) {
         </div>
       </div>
       <div>
-        <div class="bg-red-100 text-red-800 p-4 rounded-lg" role="alert">
-          <strong class="font-bold text-sm mr-4">Error!</strong>
-          <span class="block text-sm sm:inline max-sm:mt-2">{message}.</span>
+        <div className="bg-red-100 text-red-800 p-4 rounded-lg" role="alert">
+          <strong className="font-bold text-sm mr-4">Error!</strong>
+          <span className="block text-sm sm:inline max-sm:mt-2">{message}.</span>
         </div>
       </div>
     </div>

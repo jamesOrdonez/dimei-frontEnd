@@ -6,6 +6,7 @@ import FormDialog from '../form/form.dialog.tsx';
 import { BaseField } from '../form/base.form.tsx';
 import GridHeader from './components/grid-header.tsx';
 import GridActions from './components/grid-actions.tsx';
+import { Loader } from '../../components/loaders';
 
 interface BaseGridProps {
   endpoint: string;
@@ -75,6 +76,8 @@ export default function BaseGrid({
       }
     }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <Box>

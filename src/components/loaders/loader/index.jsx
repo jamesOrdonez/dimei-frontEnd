@@ -9,8 +9,8 @@ export default function Loader() {
         justifyContent: 'center',
       }}
     >
-      <div class="loaders" style={{ position: 'relative', right: '30px', color: '#c5c5c5' }} />
-      <div class="loaders" style={{ position: 'absolute' }} />
+      <div className="loaders" style={{ position: 'relative', right: '30px', color: '#c5c5c5' }} />
+      <div className="loaders" style={{ position: 'absolute' }} />
     </div>
   );
 }
