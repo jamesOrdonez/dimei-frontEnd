@@ -8,42 +8,41 @@ const clienteSchema = [
   {
     row: 1,
     columns: [
-      { name: 'nombre',   label: 'Nombre',   type: 'text', xs: 12, md: 6, required: true },
-      { name: 'nit',      label: 'NIT',       type: 'text', xs: 12, md: 6, required: true },
+      { name: 'nombre', label: 'Nombre', type: 'text', xs: 12, md: 6, required: true },
+      { name: 'nit', label: 'NIT', type: 'text', xs: 12, md: 6, required: true },
     ],
   },
   {
     row: 2,
-    columns: [
-      { name: 'direccion', label: 'Dirección', type: 'text', xs: 12 },
-    ],
+    columns: [{ name: 'direccion', label: 'Dirección', type: 'text', xs: 12 }],
   },
 ];
 
 export default function Clientes() {
-  const [error,       setError]       = useState(false);
-  const [message,     setMessage]     = useState('');
-  const [loader,      setLoader]      = useState(true);
-  const [data,        setData]        = useState([]);
-  const [block,       setBlock]       = useState(false);
+  const [error, setError] = useState(false);
+  const [message, setMessage] = useState('');
+  const [loader, setLoader] = useState(true);
+  const [data, setData] = useState([]);
+  const [block, setBlock] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const company = sessionStorage.getItem('company');
 
   /* ── Fetch ─────────────────────────────────────────── */
   const fetchClientes = async () => {
     try {
-      const res = await axios.get('/getClientes');
+      const res = await axios.get(`/getClientes/${company}`);
       // Flatten for table display
       const formatted = res.data.data.map((c) => ({
-        id:        c.id,
-        nombre:    c.nombre,
-        nit:       c.nit,
+        id: c.id,
+        nombre: c.nombre,
+        nit: c.nit,
         direccion: c.direccion,
-        contacto:  c.contacto_principal?.nombre   || '',
-        telefono:  c.contacto_principal?.telefono || '',
-        correo:    c.contacto_principal?.correo   || '',
+        /*         contacto: c.contacto_principal?.nombre || '',
+        telefono: c.contacto_principal?.telefono || '',
+        correo: c.contacto_principal?.correo || '',
         // keep raw data for editing
-        contacto_principal:   c.contacto_principal,
-        contactos_genericos:  c.contactos_genericos,
+        contacto_principal: c.contacto_principal,
+        contactos_genericos: c.contactos_genericos, */
       }));
       setData(formatted);
       setLoader(false);
@@ -54,7 +53,9 @@ export default function Clientes() {
     }
   };
 
-  useEffect(() => { fetchClientes(); }, []);
+  useEffect(() => {
+    fetchClientes();
+  }, []);
 
   /* ── Save ──────────────────────────────────────────── */
   const saveCliente = async (formData) => {
@@ -76,19 +77,23 @@ export default function Clientes() {
   };
 
   /* ── Edit / Delete ─────────────────────────────────── */
-  const handleEdit   = (item) => setEditingItem(item);
+  const handleEdit = (item) => setEditingItem(item);
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/deleteCliente/${id}`);
       fetchClientes();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (loader) return <Loader />;
 
   return (
     <>
-      <Helmet><title>Clientes</title></Helmet>
+      <Helmet>
+        <title>Clientes</title>
+      </Helmet>
       <DataGrid
         datos={data}
         error={error}
