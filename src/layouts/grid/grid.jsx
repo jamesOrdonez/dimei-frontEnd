@@ -23,6 +23,7 @@ export default function DataGrid({
   aditionalSchema,
   onChangeForm,
   clienteSchema,
+  excludeKeys = [],
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,11 +93,13 @@ export default function DataGrid({
                   <thead>
                     <tr>
                       {filteredData.length > 0 &&
-                        Object.keys(filteredData[0]).map((key) => (
-                          <th key={key} className="p-4 text-left text-sm font-semibold">
-                            {key.toUpperCase()}
-                          </th>
-                        ))}
+                        Object.keys(filteredData[0])
+                          .filter((key) => !excludeKeys.includes(key))
+                          .map((key) => (
+                            <th key={key} className="p-4 text-left text-sm font-semibold">
+                              {key.toUpperCase()}
+                            </th>
+                          ))}
                       <th className="p-4 text-left text-sm font-semibold">ACCIONES</th>
                     </tr>
                   </thead>
@@ -104,11 +107,15 @@ export default function DataGrid({
                   <tbody>
                     {paginatedData.map((item) => (
                       <tr key={item.id} className="odd:bg-blue-50">
-                        {Object.keys(item).map((key) => (
-                          <td key={key} className="p-4 text-sm">
-                            {item[key]}
-                          </td>
-                        ))}
+                        {Object.keys(item)
+                          .filter((key) => !excludeKeys.includes(key))
+                          .map((key) => (
+                            <td key={key} className="p-4 text-sm">
+                              {typeof item[key] === 'object' && item[key] !== null
+                                ? '' // Hide nested objects in table view
+                                : item[key]}
+                            </td>
+                          ))}
 
                         <td className="p-4 flex gap-3">
                           {/* EDIT */}

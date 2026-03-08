@@ -31,20 +31,13 @@ export default function Clientes() {
   const fetchClientes = async () => {
     try {
       const res = await axios.get(`/getClientes/${company}`);
-      // Flatten for table display
-      const formatted = res.data.data.map((c) => ({
-        id: c.id,
-        nombre: c.nombre,
-        nit: c.nit,
-        direccion: c.direccion,
-        /*         contacto: c.contacto_principal?.nombre || '',
+      const rawData = res.data.data.map((c) => ({
+        ...c,
+        contacto: c.contacto_principal?.nombre || '',
         telefono: c.contacto_principal?.telefono || '',
         correo: c.contacto_principal?.correo || '',
-        // keep raw data for editing
-        contacto_principal: c.contacto_principal,
-        contactos_genericos: c.contactos_genericos, */
       }));
-      setData(formatted);
+      setData(rawData);
       setLoader(false);
     } catch (err) {
       setMessage(err?.response?.data?.message || 'Error cargando clientes');
@@ -108,6 +101,7 @@ export default function Clientes() {
         onDelete={handleDelete}
         editingItem={editingItem}
         onCloseForm={() => setEditingItem(null)}
+        excludeKeys={['contacto_principal', 'contactos_genericos', 'company_id', 'state', 'created_at', 'updated_at']}
       />
     </>
   );
