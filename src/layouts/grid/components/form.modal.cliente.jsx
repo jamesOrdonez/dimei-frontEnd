@@ -39,10 +39,31 @@ const FormModal_cliente = ({ schema, values, onChange }) => {
     values?.contactos_genericos || []
   );
 
-  // Sync when editing an existing record
+  // Sync when editing an existing record or clearing for a new one
   useEffect(() => {
-    if (values?.contacto_principal) setContactoPrincipal(values.contacto_principal);
-    if (values?.contactos_genericos) setContactosGenericos(values.contactos_genericos);
+    // Sync principal contact
+    let principal = values?.contacto_principal;
+    if (typeof principal === 'string' && principal.trim()) {
+      try {
+        principal = JSON.parse(principal);
+      } catch (e) {
+        console.error('Error parsing contacto_principal:', e);
+        principal = null;
+      }
+    }
+    setContactoPrincipal(principal || { ...emptyContacto });
+
+    // Sync generic contacts
+    let genericos = values?.contactos_genericos;
+    if (typeof genericos === 'string' && genericos.trim()) {
+      try {
+        genericos = JSON.parse(genericos);
+      } catch (e) {
+        console.error('Error parsing contactos_genericos:', e);
+        genericos = [];
+      }
+    }
+    setContactosGenericos(Array.isArray(genericos) ? genericos : []);
   }, [values?.contacto_principal, values?.contactos_genericos]);
 
   /* ── Helpers that emit synthetic onChange events ─── */

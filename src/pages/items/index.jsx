@@ -1,6 +1,23 @@
+import { useState } from 'react';
+import { Button, Tooltip } from '@mui/material';
 import BaseGrid from '../../components/grid/base.grid.tsx';
+import FormDialog from '../../components/form/form.dialog.tsx';
+import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/react/24/outline';
 
 export default function Usuarios() {
+  const [openModal, setOpenModal] = useState(false);
+  const [movementType, setMovementType] = useState('');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [movementKey, setMovementKey] = useState(0);
+
+  const openMovement = (item, type) => {
+    setSelectedItem(item);
+    setMovementType(type);
+    setOpenModal(true);
+    setMovementKey(prev => prev + 1);
+  };
+
   const fields = [
     {
       name: 'description',
@@ -99,16 +116,64 @@ export default function Usuarios() {
     }
   ];
 
+  const movementFields = [
+    {
+      name: 'entranceAmount',
+      label: 'Cantidad',
+      input: 'number',
+      grid: { xs: 12 },
+    },
+  ];
+
   return (
-    <BaseGrid
+    <>
+      <BaseGrid
+      key={refreshKey}
       title="Items"
       endpoint={`/getItem/${sessionStorage.getItem('company')}`}
       saveEndpoint="/saveItem"
       updateEndpoint="/updateItem"
       deleteEndpoint="/deleteItem"
-      fetchOneEndpoint="/getOneItem"
+      fetchOneEndpoint="/oneItem"
       fields={fields}
       excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password']}
+      extraHeaders={[
+        { label: 'ENTRADA/SALIDA' },
+      ]}
+      renderExtraCell={(item, index, headerLabel) => {
+        if (headerLabel === 'ENTRADA/SALIDA') return (
+          <div className="flex items-center gap-2">
+            <Tooltip title="Entrada" placement="top">
+              <span>
+                <Button onClick={() => openMovement(item, 'entrance')}>
+                  <ArrowRightCircleIcon className="h-6 w-6 text-green-600" />
+                </Button>
+              </span>
+            </Tooltip>
+
+            <Tooltip title="Salida" placement="top">
+              <span>
+                <Button onClick={() => openMovement(item, 'exit')}>
+                  <ArrowLeftCircleIcon className="h-6 w-6 text-red-600" />
+                </Button>
+              </span>
+            </Tooltip>
+          </div>
+        );
+      }}
     />
-  );
+
+    <FormDialog
+      key={movementFields}
+      open={openModal}
+      onClose={() => setOpenModal(false)}
+      onSuccess={() => setRefreshKey(prev => prev + 1)}
+      fields={movementFields}
+      mode="update"
+      initialValues={selectedItem ? { id: selectedItem.id } : {}}
+      title={`${movementType === 'entrance' ? 'Entrada' : 'Salida'} de inventario`}
+      saveEndpoint={movementType === 'entrance' ? `/entrance` : `/exit`}
+    />
+  </>
+);
 }

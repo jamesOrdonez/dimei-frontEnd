@@ -17,6 +17,9 @@ interface BaseGridProps {
   fields: BaseField[];
   title: string;
   excludeKeys?: string[];
+  extraHeaderActions?: React.ReactNode;
+  extraHeaders?: (string | { label: string; after?: string })[];
+  renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
 }
 
 export default function BaseGrid({ 
@@ -27,7 +30,10 @@ export default function BaseGrid({
   fetchOneEndpoint,
   fields, 
   title, 
-  excludeKeys = [] 
+  excludeKeys = [],
+  extraHeaderActions,
+  extraHeaders: propExtraHeaders = [],
+  renderExtraCell: propRenderExtraCell
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -90,6 +96,7 @@ export default function BaseGrid({
           setSelectedItem(null);
           setOpenDialog(true);
         }}
+        extraActions={extraHeaderActions}
       />
 
       <Paper 
@@ -108,17 +115,22 @@ export default function BaseGrid({
         <BaseTable
           data={filteredData}
           excludeKeys={excludeKeys}
-          extraHeaders={['ACCIONES']}
-          renderExtraCell={(item) => (
-            <GridActions
-              onEdit={() => {
-                setDialogMode('update');
-                setSelectedItem(item);
-                setOpenDialog(true);
-              }}
-              onDelete={() => handleDelete(item.id)}
-            />
-          )}
+          extraHeaders={[...propExtraHeaders, 'ACCIONES']}
+          renderExtraCell={(item, rowIndex, headerLabel) => {
+            if (headerLabel === 'ACCIONES') {
+              return (
+                <GridActions
+                  onEdit={() => {
+                    setDialogMode('update');
+                    setSelectedItem(item);
+                    setOpenDialog(true);
+                  }}
+                  onDelete={() => handleDelete(item.id)}
+                />
+              );
+            }
+            return propRenderExtraCell ? propRenderExtraCell(item, rowIndex, headerLabel) : null;
+          }}
         />
       </Paper>
 

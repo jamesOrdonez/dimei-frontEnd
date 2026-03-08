@@ -13,10 +13,15 @@ import {
   Typography,
 } from '@mui/material';
 
+interface ExtraHeader {
+  label: string;
+  after?: string;
+}
+
 interface BaseTableProps {
   data: any[];
-  extraHeaders?: string[];
-  renderExtraCell?: (item: any, index: number) => React.ReactNode;
+  extraHeaders?: (string | ExtraHeader)[];
+  renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
   excludeKeys?: string[];
   rowsPerPageOptions?: number[];
 }
@@ -36,9 +41,36 @@ export default function BaseTable({
     return <div>No hay datos disponibles</div>;
   }
 
+  // Normalize extra headers
+  const normalizedExtraHeaders: ExtraHeader[] = extraHeaders.map(eh => 
+    typeof eh === 'string' ? { label: eh } : eh
+  );
+
   // Generate headers from the first item's keys, excluding specified ones
   const dataKeys = Object.keys(data[0]).filter((key) => !excludeKeys.includes(key));
-  const allHeaders = [...dataKeys, ...extraHeaders];
+  
+  // Combine headers with positioning logic
+  const combinedHeaders: { label: string; isExtra: boolean }[] = [];
+  
+  // 1. Add data keys and their associated extra headers
+  dataKeys.forEach(key => {
+    combinedHeaders.push({ label: key, isExtra: false });
+    
+    // Find extra headers that should go after this key
+    normalizedExtraHeaders
+      .filter(eh => eh.after === key)
+      .forEach(eh => {
+        combinedHeaders.push({ label: eh.label, isExtra: true });
+      });
+  });
+
+  // 2. Add remaining extra headers (those without 'after' or with non-existent 'after')
+  normalizedExtraHeaders.forEach(eh => {
+    const isAlreadyAdded = combinedHeaders.some(ch => ch.isExtra && ch.label === eh.label);
+    if (!isAlreadyAdded) {
+      combinedHeaders.push({ label: eh.label, isExtra: true });
+    }
+  });
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -67,9 +99,9 @@ export default function BaseTable({
         <Table stickyHeader aria-label="customized table">
           <TableHead>
             <TableRow>
-              {allHeaders.map((header) => (
+              {combinedHeaders.map((header) => (
                 <TableCell 
-                  key={header} 
+                  key={header.label} 
                   sx={{ 
                     fontWeight: 'bold', 
                     textTransform: 'uppercase', // Uppercase headers
@@ -77,7 +109,7 @@ export default function BaseTable({
                     backgroundColor: '#ffffff'
                   }}
                 >
-                  {header}
+                  {header.label}
                 </TableCell>
               ))}
             </TableRow>
@@ -93,12 +125,16 @@ export default function BaseTable({
                   }
                 }}
               >
-                {dataKeys.map((key) => (
-                  <TableCell key={key}>{item[key]?.toString() || '-'}</TableCell>
-                ))}
-                {extraHeaders.length > 0 && renderExtraCell && (
-                  <TableCell>{renderExtraCell(item, rowIndex)}</TableCell>
-                )}
+                {combinedHeaders.map((header) => {
+                  if (!header.isExtra) {
+                    return <TableCell key={header.label}>{item[header.label]?.toString() || '-'}</TableCell>;
+                  }
+                  return (
+                    <TableCell key={header.label}>
+                      {renderExtraCell ? renderExtraCell(item, rowIndex, header.label) : '-'}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>

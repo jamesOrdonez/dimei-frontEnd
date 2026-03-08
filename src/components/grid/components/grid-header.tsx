@@ -4,11 +4,13 @@ import { Icon } from '@iconify/react';
 interface GridHeaderProps {
   title: string;
   search: string;
+  
   onSearchChange: (value: string) => void;
   onNewClick: () => void;
+  extraActions?: React.ReactNode;
 }
 
-export default function GridHeader({ title, search, onSearchChange, onNewClick }: GridHeaderProps) {
+export default function GridHeader({ title, search, onSearchChange, onNewClick, extraActions }: GridHeaderProps) {
   return (
     <Box>
       {/* Tab Style Title */}
@@ -77,6 +79,9 @@ export default function GridHeader({ title, search, onSearchChange, onNewClick }
                <Icon icon="ic:round-grid-view" width={24} height={24} />
              </IconButton>
           </Stack>
+
+          
+          {extraActions}
 
           <Button
             variant="contained"
