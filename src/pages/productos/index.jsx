@@ -8,6 +8,7 @@ import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, T
 import { decrypt } from '../../utils/crypto';
 import { pdf } from '@react-pdf/renderer';
 import RemisionPDF from './remisionPDF';
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function Items() {
   const [error, setError] = useState(false);
@@ -22,7 +23,8 @@ export default function Items() {
   const [mathOperationMap, setMathOperationMap] = useState({});
   const [totalItems, setTotalItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [selectedGroupRemision, setSelectedGroupRemision] = useState(null);
+  let URL_ORIGIN = window.location.origin;
+  console.log(URL_ORIGIN);
 
   const unitOfMeasureOptions = async () => {
     const res = await axios.get('/unitOfMeasuremet');
@@ -177,6 +179,18 @@ export default function Items() {
     },
   ];
 
+  const downloadQR = (id) => {
+    const canvas = document.getElementById(`qr-${id}`);
+    const pngUrl = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+
+    const link = document.createElement('a');
+    link.href = pngUrl;
+    link.download = `QR_item_${id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const fetchItems = async () => {
     try {
       setLoader(true);
@@ -190,6 +204,25 @@ export default function Items() {
           return {
             id: item.id,
             img: <img src={item.img} className="w-50 h-30" />,
+            qr: (
+              <div className="flex flex-col items-center w-[70px]">
+                <QRCodeCanvas
+                  id={`qr-${item.id}`}
+                  value={`${URL_ORIGIN}/items/${item.id}`}
+                  size={200} // 🔥 calidad alta
+                  level="H"
+                  includeMargin={true}
+                  style={{
+                    width: '70px',
+                    height: '70px',
+                  }}
+                />
+
+                <button className="text-xs mt-1" onClick={() => downloadQR(item.id)}>
+                  Descargar
+                </button>
+              </div>
+            ),
             Descripcion: item.description,
             cantidad: item.amount,
             grupo: item.group_name,

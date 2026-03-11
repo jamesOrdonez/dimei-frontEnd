@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useParams } from 'react-router-dom';
 
 export default function DetalleItems() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { id } = useParams();
 
   const fetchItem = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('/oneItem/42');
+      const res = await axios.get(`/oneItem/${id}`);
       setData(res.data.data);
     } catch (err) {
       setError(err.response?.data || err.message || 'Error al obtener datos');
