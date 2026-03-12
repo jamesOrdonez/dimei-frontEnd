@@ -14,7 +14,7 @@ export default function GridHeader({ title, search, onSearchChange, onNewClick, 
   return (
     <Box>
       {/* Tab Style Title */}
-      <Box sx={{ position: 'relative', mb: -0.5, ml: 2 }}>
+      <Box sx={{ position: 'relative' }}>
         <Box
           sx={{
             display: 'inline-block',

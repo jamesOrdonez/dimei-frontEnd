@@ -12,6 +12,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface ExtraHeader {
   label: string;
@@ -33,6 +35,9 @@ export default function BaseTable({
   excludeKeys = [],
   rowsPerPageOptions = [5, 10, 25],
 }: BaseTableProps) {
+
+  const { t } = useTranslation();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
   const [goToPage, setGoToPage] = useState('');
@@ -109,7 +114,7 @@ export default function BaseTable({
                     backgroundColor: '#ffffff'
                   }}
                 >
-                  {header.label}
+                  {t(header.label)}
                 </TableCell>
               ))}
             </TableRow>

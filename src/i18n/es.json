@@ -1,0 +1,10 @@
+{
+  "description": "Descripción",
+  "amount": "Cantidad",
+  "group_item": "Grupo",
+  "price": "Precio",
+  "mathOperation": "Operación matemática",
+  "unitOfMeasure": "Unidad de medida",
+  "state": "Estado",
+  "name": "Nombre"
+}

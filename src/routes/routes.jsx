@@ -6,8 +6,7 @@ import { LoginForm } from '../Auth';
 import Usuarios from '../pages/Usuarios';
 import ProductsPage from '../pages/ProductsPage';
 import BlogPage from '../pages/BlogPage';
-import OldItems from '../pages/productos/index';
-import ItemProductos from '../pages/productos/itemProductos';
+import ItemProductos from '../pages/productos/index';
 import Configuraciones from '../pages/configuraciones';
 import DetalleItems from '../pages/productos/detalle_items';
 import Clientes from '../pages/clientes';
@@ -72,7 +71,6 @@ export default function Router() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
-        <Route path="/olditems" element={<OldItems />} />
         <Route path="/items/:id" element={<DetalleItems />} />
         <Route path="/itemProductos" element={<ItemProductos />} />
         <Route path="/configuraciones" element={<Configuraciones />} />
