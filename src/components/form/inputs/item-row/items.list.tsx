@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from '@mui/material';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import ItemRow from './item.row.tsx';
 
@@ -38,9 +38,16 @@ export default function ItemsList({
   optionValue = 'id',
 }: ItemsListProps) {
   const [items, setItems] = useState<Option[]>([]);
+  // Cache acumulativo de todas las opciones vistas, para mantener los items
+  // seleccionados visibles aunque cambien las opciones filtradas (ej: cambio de grupo)
+  const allSeenOptionsRef = useRef<Map<any, Option>>(new Map());
 
   useEffect(() => {
     if (options.length > 0) {
+      // Acumular las nuevas opciones en el cache
+      options.forEach((opt) => {
+        allSeenOptionsRef.current.set(opt.value, opt);
+      });
       setItems(options);
     } else if (productEndpoint) {
       axios
@@ -50,6 +57,9 @@ export default function ItemsList({
             label: item[optionLabel],
             value: item[optionValue],
           }));
+          formattedOptions.forEach((opt: Option) => {
+            allSeenOptionsRef.current.set(opt.value, opt);
+          });
           setItems(formattedOptions);
         })
         .catch((error) => console.error('Error fetching items for list:', error));
@@ -92,16 +102,26 @@ export default function ItemsList({
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" className='text-gray-600 font-light text-md'>{label}</Typography>
       </Box>
-      {value.map((item, index) => (
-        <ItemRow
-          key={index}
-          index={index}
-          item={item}
-          onChange={handleItemChange}
-          onRemove={handleRemoveItem}
-          options={items}
-        />
-      ))}
+      {value.map((item, index) => {
+        // Si el item seleccionado no está en las opciones filtradas actuales,
+        // lo añadimos desde el cache para que siga siendo visible
+        const selectedInItems = items.some((opt) => String(opt.value) === String(item.id));
+        const rowOptions =
+          !selectedInItems && item.id && allSeenOptionsRef.current.has(item.id)
+            ? [allSeenOptionsRef.current.get(item.id)!, ...items]
+            : items;
+
+        return (
+          <ItemRow
+            key={index}
+            index={index}
+            item={item}
+            onChange={handleItemChange}
+            onRemove={handleRemoveItem}
+            options={rowOptions}
+          />
+        );
+      })}
       <Button
         fullWidth
         variant="outlined"

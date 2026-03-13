@@ -54,7 +54,7 @@ export default function Usuarios() {
   return (
     <>
       <BaseGrid
-        title="Items"
+        title="Productos"
         endpoint={`/getProduct/${sessionStorage.getItem('company')}`}
         saveEndpoint="/saveProduct"
         updateEndpoint="/updateProduct"

@@ -39,10 +39,10 @@ export default function ItemRow({
         borderRadius: 2,
       }}
     >
-      <Box sx={{ flex: 4 }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <BaseSelect
           name={`product-${index}`}
-          label="Producto"
+          label="Item"
           size='small'
           value={item.id}
           onChange={handleProductChange}
@@ -50,7 +50,7 @@ export default function ItemRow({
           fullWidth
         />
       </Box>
-      <Box sx={{ flex: 2 }}>
+      <Box sx={{ flexShrink: 0, width: 120 }}>
         <BaseNumber
           name={`quantity-${index}`}
           label="Cantidad"

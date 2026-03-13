@@ -34,6 +34,7 @@ export interface BaseField {
   endpoint?: string;
   optionLabel?: string;
   optionValue?: string;
+  selectLabel?: string;
   hasToHide?: (params: { values: any; mode: 'create' | 'update' }) => boolean;
   dynamicProps?: (params: { values: any; mode: 'create' | 'update' }) => Partial<BaseField>;
 }
@@ -108,6 +109,7 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
                 endpoint={currentField.endpoint}
                 optionLabel={currentField.optionLabel}
                 optionValue={currentField.optionValue}
+                selectLabel={currentField.selectLabel}
               />
             ) : (
               <>No existe el componente</>
