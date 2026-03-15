@@ -4,11 +4,13 @@ import { Icon } from '@iconify/react';
 interface GridActionsProps {
   onEdit: () => void;
   onDelete: () => void;
+  extraActions?: React.ReactNode;
 }
 
-export default function GridActions({ onEdit, onDelete }: GridActionsProps) {
+export default function GridActions({ onEdit, onDelete, extraActions }: GridActionsProps) {
   return (
     <Stack direction="row" spacing={1}>
+      {extraActions}
       <IconButton
         sx={{ 
           color: 'primary.main', 

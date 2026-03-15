@@ -6,5 +6,11 @@
   "mathOperation": "Operación matemática",
   "unitOfMeasure": "Unidad de medida",
   "state": "Estado",
-  "name": "Nombre"
+  "name": "Nombre",
+  "elevatorType": "Tipo de elevador",
+  "typeDriveSystem": "Tipo de sistema motriz",
+  "stopNumber": "Número de paradas",
+  "travel": "Recorrido (m)",
+  "capacity": "Capacidad (kg)",
+  "customer": "Cliente"
 }

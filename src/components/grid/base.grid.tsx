@@ -22,6 +22,7 @@ interface BaseGridProps {
   renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
   onDataChange?: (data: any[]) => void;
   formAdditionalValues?: Record<string, any>;
+  renderExtraActions?: (item: any) => React.ReactNode;
 }
 
 export default function BaseGrid({ 
@@ -38,6 +39,7 @@ export default function BaseGrid({
   renderExtraCell: propRenderExtraCell,
   onDataChange,
   formAdditionalValues,
+  renderExtraActions,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -131,6 +133,7 @@ export default function BaseGrid({
                     setOpenDialog(true);
                   }}
                   onDelete={() => handleDelete(item.id)}
+                  extraActions={renderExtraActions ? renderExtraActions(item) : undefined}
                 />
               );
             }
