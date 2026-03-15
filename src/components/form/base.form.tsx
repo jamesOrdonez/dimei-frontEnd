@@ -99,17 +99,13 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
           >
             {InputComponent ? (
               <InputComponent
-                name={currentField.name}
-                label={currentField.label}
+                {...(() => {
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  const { input, grid, hasToHide, dynamicProps, ...fieldProps } = currentField;
+                  return fieldProps;
+                })()}
                 value={formData[currentField.name]}
                 onChange={handleChange}
-                required={currentField.required}
-                options={currentField.options}
-                rows={currentField.rows}
-                endpoint={currentField.endpoint}
-                optionLabel={currentField.optionLabel}
-                optionValue={currentField.optionValue}
-                selectLabel={currentField.selectLabel}
               />
             ) : (
               <>No existe el componente</>

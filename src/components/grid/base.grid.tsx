@@ -21,6 +21,7 @@ interface BaseGridProps {
   extraHeaders?: (string | { label: string; after?: string })[];
   renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
   onDataChange?: (data: any[]) => void;
+  formAdditionalValues?: Record<string, any>;
 }
 
 export default function BaseGrid({ 
@@ -35,7 +36,8 @@ export default function BaseGrid({
   extraHeaderActions,
   extraHeaders: propExtraHeaders = [],
   renderExtraCell: propRenderExtraCell,
-  onDataChange
+  onDataChange,
+  formAdditionalValues,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -148,6 +150,7 @@ export default function BaseGrid({
         fields={fields}
         mode={dialogMode}
         initialValues={selectedItem}
+        additionalValues={formAdditionalValues}
         title={`${dialogMode === 'create' ? 'Nuevo' : 'Editar'} ${title}`}
       />
     </Box>

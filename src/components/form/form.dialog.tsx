@@ -13,6 +13,7 @@ interface FormDialogProps {
   fields: BaseField[];
   mode: 'create' | 'update';
   initialValues?: Record<string, any>;
+  additionalValues?: Record<string, any>;
   title?: string;
   endpoint?: string;
   saveEndpoint?: string;
@@ -28,6 +29,7 @@ export default function FormDialog({
   fields,
   mode = 'create',
   initialValues,
+  additionalValues,
   title,
   endpoint,
   saveEndpoint,
@@ -74,7 +76,8 @@ export default function FormDialog({
     const hasFile = Object.values(currentData).some((val) => val instanceof File);
 
     let payload: any = { 
-      ...currentData, 
+      ...currentData,
+      ...(additionalValues || {}),
       state: 1, 
       fkUser: decrypt(sessionStorage.getItem('userId')),
       company: sessionStorage.getItem('company') 

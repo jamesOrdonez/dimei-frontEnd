@@ -11,6 +11,7 @@ import Configuraciones from '../pages/configuraciones';
 import Clientes from '../pages/clientes';
 import Items from '../pages/items';
 import Proyectos from '../pages/proyectos';
+import DetalleProyecto from '../pages/proyectos/detail';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -75,6 +76,7 @@ export default function Router() {
         <Route path="/configuraciones" element={<Configuraciones />} />
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/proyectos" element={<Proyectos />} />
+        <Route path="/proyectos/:id" element={<DetalleProyecto />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

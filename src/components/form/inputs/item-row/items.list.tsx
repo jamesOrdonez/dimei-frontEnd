@@ -17,6 +17,8 @@ interface Option {
 interface ItemsListProps {
   name: string;
   label?: string;
+  rowLabel?: string;
+  addLabel?: string;
   value: Item[];
   onChange: (e: { target: { name: string; value: Item[] } }) => void;
   options?: Option[];
@@ -30,6 +32,8 @@ const EMPTY_ARRAY: any[] = [];
 export default function ItemsList({
   name,
   label,
+  rowLabel,
+  addLabel = 'AGREGAR OTRO ITEM',
   value = [],
   onChange,
   options = EMPTY_ARRAY,
@@ -116,6 +120,7 @@ export default function ItemsList({
             key={index}
             index={index}
             item={item}
+            label={rowLabel}
             onChange={handleItemChange}
             onRemove={handleRemoveItem}
             options={rowOptions}
@@ -140,7 +145,7 @@ export default function ItemsList({
           borderWidth: 2,
         }}
       >
-        AGREGAR OTRO ITEM
+        {addLabel}
       </Button>
     </Box>
   );

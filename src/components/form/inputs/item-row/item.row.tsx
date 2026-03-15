@@ -5,6 +5,7 @@ import BaseNumber from '../input-number/base.number.tsx';
 
 interface ItemRowProps {
   index: number;
+  label?: string;
   item: {
     id: any;
     quantity: number | string;
@@ -16,6 +17,7 @@ interface ItemRowProps {
 
 export default function ItemRow({
   index,
+  label = 'Item',
   item,
   onChange,
   onRemove,
@@ -42,7 +44,7 @@ export default function ItemRow({
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <BaseSelect
           name={`product-${index}`}
-          label="Item"
+          label={label}
           size='small'
           value={item.id}
           onChange={handleProductChange}

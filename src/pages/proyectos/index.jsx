@@ -1,6 +1,6 @@
 import BaseGrid from '../../components/grid/base.grid.tsx';
 
-export default function Usuarios() {
+export default function Proyectos() {
   const fields = [
     {
       name: 'elevatorType',
