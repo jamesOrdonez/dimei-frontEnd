@@ -1,5 +1,5 @@
 // component
-import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
 
@@ -32,6 +32,11 @@ const navConfig = [
     title: 'Clientes',
     path: '/clientes',
     icon: <UserGroupIcon class="h-6 w-6 text-gray-500" />,
+  },
+  {
+    title: 'Proyectos',
+    path: '/proyectos',
+    icon: <ArchiveBoxIcon class="h-6 w-6 text-gray-500" />,
   },
   {
     title: 'Configuraciones',

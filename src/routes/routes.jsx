@@ -8,9 +8,9 @@ import ProductsPage from '../pages/ProductsPage';
 import BlogPage from '../pages/BlogPage';
 import ItemProductos from '../pages/productos/index';
 import Configuraciones from '../pages/configuraciones';
-import DetalleItems from '../pages/productos/detalle_items';
 import Clientes from '../pages/clientes';
 import Items from '../pages/items';
+import Proyectos from '../pages/proyectos';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -71,10 +71,10 @@ export default function Router() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
-        <Route path="/items/:id" element={<DetalleItems />} />
         <Route path="/itemProductos" element={<ItemProductos />} />
         <Route path="/configuraciones" element={<Configuraciones />} />
         <Route path="/clientes" element={<Clientes />} />
+        <Route path="/proyectos" element={<Proyectos />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />
