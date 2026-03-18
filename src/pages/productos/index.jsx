@@ -33,7 +33,43 @@ export default function Usuarios() {
       input: 'select',
       endpoint: `/getItemGroup/${sessionStorage.getItem('company')}`,
       grid: { xs: 12 },
-
+    },
+    {
+      name: 'variable',
+      label: '¿Es variable?',
+      input: 'select',
+      options: [
+        { label: 'Si', value: '1' },
+        { label: 'No', value: '0' },
+      ],
+      grid: { xs: 12 },
+    },
+    {
+      name: 'value1',
+      label: 'Valor 1',
+      input: 'number',
+      grid: { xs: 12, md: 4 },
+      hasToHide: ({ values }) => values.variable === '0',
+    },
+    {
+      name: 'mathOperation',
+      label: 'Operación matemática',
+      input: 'select',
+      options: [
+        { label: 'Suma', value: '+' },
+        { label: 'Resta', value: '-' },
+        { label: 'Multiplicación', value: '*' },
+        { label: 'División', value: '/' },
+      ],
+      grid: { xs: 12, md: 4 },
+      hasToHide: ({ values }) => values.variable === '0',
+    },
+    {
+      name: 'value2',
+      label: 'Valor 2',
+      input: 'number',
+      grid: { xs: 12, md: 4 },
+      hasToHide: ({ values }) => values.variable === '0',
     },
     {
       name: 'net_items',
