@@ -12,12 +12,20 @@ export default function Usuarios() {
   }, []);
 
   
+  const hasToHide = (values) => values.variable === '0' || !values.variable;
 
   const fields = useMemo(() => [
     {
       name: 'name',
       label: 'Nombre',
       input: 'text',
+      grid: { xs: 12 },
+    },
+    {
+      name: 'group_item',
+      label: 'Grupo al que pertenece',
+      input: 'select',
+      endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
       grid: { xs: 12 },
     },
     {
@@ -29,9 +37,9 @@ export default function Usuarios() {
     },
     {
       name: 'group_item',
-      label: 'Seleccione grupo de items',
+      label: 'Seleccione grupo de productos',
       input: 'select',
-      endpoint: `/getItemGroup/${sessionStorage.getItem('company')}`,
+      endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
       grid: { xs: 12 },
     },
     {
@@ -49,7 +57,7 @@ export default function Usuarios() {
       label: 'Valor 1',
       input: 'number',
       grid: { xs: 12, md: 4 },
-      hasToHide: ({ values }) => values.variable === '0',
+      hasToHide: ({ values }) => hasToHide(values),
     },
     {
       name: 'mathOperation',
@@ -62,14 +70,14 @@ export default function Usuarios() {
         { label: 'División', value: '/' },
       ],
       grid: { xs: 12, md: 4 },
-      hasToHide: ({ values }) => values.variable === '0',
+      hasToHide: ({ values }) => hasToHide(values),
     },
     {
       name: 'value2',
       label: 'Valor 2',
       input: 'number',
       grid: { xs: 12, md: 4 },
-      hasToHide: ({ values }) => values.variable === '0',
+      hasToHide: ({ values }) => hasToHide(values),
     },
     {
       name: 'net_items',
