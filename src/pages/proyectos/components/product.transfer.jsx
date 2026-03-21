@@ -67,12 +67,19 @@ export default function ProductTransfer({ projectId, company, project }) {
     const newSelected = [...selectedList];
 
     if (currentIndex === -1) {
-      newSelected.push(item);
+      // For left side, initialize quantity to 1
+      newSelected.push(side === 'left' ? { ...item, quantity: 1 } : item);
     } else {
       newSelected.splice(currentIndex, 1);
     }
 
     setSelectedList(newSelected);
+  };
+
+  const handleQuantityChange = (itemId, val) => {
+    setLeftSelected(prev => prev.map(item => 
+      String(item.id) === String(itemId) ? { ...item, quantity: parseFloat(val) || 0 } : item
+    ));
   };
 
   const moveRight = async () => {
@@ -88,7 +95,7 @@ export default function ProductTransfer({ projectId, company, project }) {
         projectId,
         company,
         // Using standard mapping from old detail.jsx behavior
-        products: moving.map(p => ({ id: p.id }))
+        products: moving.map(p => ({ id: p.id, quantity: p.quantity }))
       };
       await axios.post('/saveproductProyect', payload);
       // Silent Refetch
@@ -174,15 +181,29 @@ export default function ProductTransfer({ projectId, company, project }) {
                   <ListItemIcon>
                     <Checkbox
                       edge="start"
-                      checked={leftSelected.some(s => s.id === item.id)}
+                      checked={leftSelected.some(s => String(s.id) === String(item.id))}
                       tabIndex={-1}
                       disableRipple
                     />
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.description || item.name} 
-                    secondary={`Grupo: ${productGroups.find(g => g.id == item.fk_group_product)?.name || 'N/A'}`}
+                    secondary={`Grupo: ${productGroups.find(g => String(g.id) === String(item.fk_group_product))?.name || 'N/A'}`}
                   />
+                  {leftSelected.some(s => String(s.id) === String(item.id)) && (
+                    <Box onClick={(e) => e.stopPropagation()}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        label="Cant."
+                        style={{ width: 80 }}
+                        value={leftSelected.find(s => String(s.id) === String(item.id))?.quantity || 1}
+                        onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                        inputProps={{ min: 0, step: "0.01" }}
+                        sx={{ ml: 1 }}
+                      />
+                    </Box>
+                  )}
                 </ListItem>
               ))}
               {availableProducts.length === 0 && (
@@ -239,7 +260,7 @@ export default function ProductTransfer({ projectId, company, project }) {
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.description || item.name || item.product_name} 
-                    secondary={`ID: ${item.id}`}
+                    secondary={`ID: ${item.id} - Cantidad: ${item.quantity || 0}`}
                   />
                 </ListItem>
               ))}
