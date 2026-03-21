@@ -69,8 +69,8 @@ export default function ItemTransfer({ projectId, company, project }) {
     const newSelected = [...selectedList];
 
     if (currentIndex === -1) {
-      // For left side, initialize quantity to 1
-      newSelected.push(side === 'left' ? { ...item, quantity: 1 } : item);
+      // For left side, initialize quantity to 1 and ensure project-side structure
+      newSelected.push(side === 'left' ? { ...item, item_id: item.id, quantity: 1 } : item);
     } else {
       newSelected.splice(currentIndex, 1);
     }
@@ -98,7 +98,7 @@ export default function ItemTransfer({ projectId, company, project }) {
         company,
         items: moving.map(p => ({ id: p.id, quantity: p.quantity }))
       };
-      await axios.post('/saveItemProduct', payload);
+      await axios.post('/saveItemProyect', payload);
       // Silent Refetch
       fetchData(true);
     } catch (err) {
@@ -115,7 +115,7 @@ export default function ItemTransfer({ projectId, company, project }) {
     // Actual API Call to delete instantly for each item or batch
     try {
       await Promise.all(moving.map(item => 
-        axios.delete(`/deleteItemProduct/${item.id || item.project_item_id}`)
+        axios.delete(`/deleteItemProyect/${item.id || item.project_item_id}`)
       ));
       // Silent Refetch
       fetchData(true);
@@ -260,7 +260,7 @@ export default function ItemTransfer({ projectId, company, project }) {
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.description || item.name || item.item_name} 
-                    secondary={`ID: ${item.id} - Cantidad: ${item.quantity || 0}`}
+                    secondary={`ID: ${item.item_id || item.id} - Cantidad: ${item.quantity || 0}`}
                   />
                 </ListItem>
               ))}

@@ -67,8 +67,8 @@ export default function ProductTransfer({ projectId, company, project }) {
     const newSelected = [...selectedList];
 
     if (currentIndex === -1) {
-      // For left side, initialize quantity to 1
-      newSelected.push(side === 'left' ? { ...item, quantity: 1 } : item);
+      // For left side, initialize quantity to 1 and ensure project-side structure
+      newSelected.push(side === 'left' ? { ...item, product_id: item.id, quantity: 1 } : item);
     } else {
       newSelected.splice(currentIndex, 1);
     }
@@ -260,7 +260,7 @@ export default function ProductTransfer({ projectId, company, project }) {
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.description || item.name || item.product_name} 
-                    secondary={`ID: ${item.id} - Cantidad: ${item.quantity || 0}`}
+                    secondary={`ID: ${item.product_id || item.id} - Cantidad: ${item.quantity || 0}`}
                   />
                 </ListItem>
               ))}
