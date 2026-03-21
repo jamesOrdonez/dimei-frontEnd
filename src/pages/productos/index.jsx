@@ -103,7 +103,7 @@ export default function Usuarios() {
         saveEndpoint="/saveProduct"
         updateEndpoint="/updateProduct"
         deleteEndpoint="/deleteProduct"
-        fetchOneEndpoint="/oneProduct"
+        fetchOneEndpoint="/getOneproduct"
         fields={fields}
         excludeKeys={['company', 'user']}
       />
