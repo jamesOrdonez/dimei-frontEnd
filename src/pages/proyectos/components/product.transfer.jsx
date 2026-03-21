@@ -77,9 +77,19 @@ export default function ProductTransfer({ projectId, company, project }) {
   };
 
   const handleQuantityChange = (itemId, val) => {
+    // If the value is empty, keep it as an empty string to allow deletion
+    const numericValue = val === '' ? '' : parseFloat(val);
     setLeftSelected(prev => prev.map(item => 
-      String(item.id) === String(itemId) ? { ...item, quantity: parseFloat(val) || 0 } : item
+      String(item.id) === String(itemId) ? { ...item, quantity: numericValue } : item
     ));
+  };
+
+  const handleQuantityBlur = (itemId, quantity) => {
+    if (quantity === '' || isNaN(quantity) || quantity <= 0) {
+      setLeftSelected(prev => prev.map(item => 
+        String(item.id) === String(itemId) ? { ...item, quantity: 1 } : item
+      ));
+    }
   };
 
   const moveRight = async () => {
@@ -197,8 +207,9 @@ export default function ProductTransfer({ projectId, company, project }) {
                         type="number"
                         label="Cant."
                         style={{ width: 80 }}
-                        value={leftSelected.find(s => String(s.id) === String(item.id))?.quantity || 1}
+                        value={leftSelected.find(s => String(s.id) === String(item.id))?.quantity}
                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                        onBlur={(e) => handleQuantityBlur(item.id, e.target.value)}
                         inputProps={{ min: 0, step: "0.01" }}
                         sx={{ ml: 1 }}
                       />

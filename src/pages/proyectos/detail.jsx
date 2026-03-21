@@ -64,15 +64,15 @@ export default function DetalleProyecto() {
           <Grid container spacing={4}>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Cliente</Typography>
-              <Typography variant="body1" fontWeight="500">{project?.customerData?.nombre || project.customerId || 'N/A'}</Typography>
+              <Typography variant="body1" fontWeight="500">{project?.customer || 'N/A'}</Typography>
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Tipo de Ascensor</Typography>
-              <Typography variant="body1" fontWeight="500">{project?.elevatorTypeData?.elevatorType || project.elevatorType || 'N/A'}</Typography>
+              <Typography variant="body1" fontWeight="500">{project?.elevatorType || 'N/A'}</Typography>
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Sistema Motriz</Typography>
-              <Typography variant="body1" fontWeight="500">{project?.driveSystemData?.typeDriveSystem || project.typeDriveSystem || 'N/A'}</Typography>
+              <Typography variant="body1" fontWeight="500">{project.typeDriveSystem || 'N/A'}</Typography>
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
