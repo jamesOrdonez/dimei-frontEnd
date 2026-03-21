@@ -21,27 +21,27 @@ const navConfig = [
   {
     title: 'Items',
     path: '/items',
-    icon: <TruckIcon class="h-6 w-6 text-gray-500" />,
+    icon: <TruckIcon className="h-6 w-6 text-gray-500" />,
   },
   {
     title: 'Productos',
     path: '/itemProductos',
-    icon: <TagIcon class="h-6 w-6 text-gray-500" />,
+    icon: <TagIcon className="h-6 w-6 text-gray-500" />,
   },
   {
     title: 'Clientes',
     path: '/clientes',
-    icon: <UserGroupIcon class="h-6 w-6 text-gray-500" />,
+    icon: <UserGroupIcon className="h-6 w-6 text-gray-500" />,
   },
   {
     title: 'Proyectos',
     path: '/proyectos',
-    icon: <ArchiveBoxIcon class="h-6 w-6 text-gray-500" />,
+    icon: <ArchiveBoxIcon className="h-6 w-6 text-gray-500" />,
   },
   {
     title: 'Configuraciones',
     path: '/configuraciones',
-    icon: <WrenchScrewdriverIcon class="h-6 w-6 text-gray-500" />,
+    icon: <WrenchScrewdriverIcon className="h-6 w-6 text-gray-500" />,
   },
 
   
