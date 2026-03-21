@@ -22,7 +22,7 @@ export default function Usuarios() {
       grid: { xs: 12 },
     },
     {
-      name: 'group_item',
+      name: 'fk_group_product',
       label: 'Grupo al que pertenece',
       input: 'select',
       endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
@@ -33,13 +33,6 @@ export default function Usuarios() {
       label: 'Descripción',
       input: 'text',
       rows: 4,
-      grid: { xs: 12 },
-    },
-    {
-      name: 'fk_group_product',
-      label: 'Seleccione grupo de productos',
-      input: 'select',
-      endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
       grid: { xs: 12 },
     },
     {
@@ -78,6 +71,13 @@ export default function Usuarios() {
       input: 'number',
       grid: { xs: 12, md: 4 },
       hasToHide: ({ values }) => hasToHide(values),
+    },
+    {
+      name: 'group_item',
+      label: 'Seleccione grupo de productos',
+      input: 'select',
+      endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
+      grid: { xs: 12 },
     },
     {
       name: 'net_items',
