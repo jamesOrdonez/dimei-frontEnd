@@ -36,7 +36,7 @@ export default function Usuarios() {
       grid: { xs: 12 },
     },
     {
-      name: 'group_item',
+      name: 'fk_group_product',
       label: 'Seleccione grupo de productos',
       input: 'select',
       endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
