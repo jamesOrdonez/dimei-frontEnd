@@ -12,7 +12,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 interface ExtraHeader {
@@ -23,7 +22,7 @@ interface ExtraHeader {
 interface BaseTableProps {
   data: any[];
   extraHeaders?: (string | ExtraHeader)[];
-  renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
+  renderExtraCell?: (params: { item: any; rowIndex: number; headerLabel: string }) => React.ReactNode;
   excludeKeys?: string[];
   rowsPerPageOptions?: number[];
 }
@@ -136,7 +135,7 @@ export default function BaseTable({
                   }
                   return (
                     <TableCell key={header.label}>
-                      {renderExtraCell ? renderExtraCell(item, rowIndex, header.label) : '-'}
+                      {renderExtraCell ? renderExtraCell({ item, rowIndex, headerLabel: header.label }) : '-'}
                     </TableCell>
                   );
                 })}

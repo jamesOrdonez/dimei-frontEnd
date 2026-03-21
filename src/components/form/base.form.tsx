@@ -6,6 +6,7 @@ import BasePassword from './inputs/input-password/base.password.tsx';
 import BaseNumber from './inputs/input-number/base.number.tsx';
 import BaseFile from './inputs/input-file/base.file.tsx';
 import ItemsList from './inputs/item-row/items.list.tsx';
+import ClientContacts from './inputs/input-contacts/client.contacts.tsx';
 
 // Mapping of input types to their respective components
 const INPUT_COMPONENTS: Record<string, any> = {
@@ -14,7 +15,8 @@ const INPUT_COMPONENTS: Record<string, any> = {
   password: BasePassword,
   number: BaseNumber,
   file: BaseFile,
-  items: ItemsList
+  items: ItemsList,
+  clientContacts: ClientContacts,
 };
 
 export interface BaseField {

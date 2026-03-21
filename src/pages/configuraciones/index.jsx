@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { Tabs, Tab, Box } from '@mui/material';
-import Grupo from './components/grupo';
+import ItemsGroup from './components/items.group';
 import Unidad_medida from './components/unidad.medida';
-
-// 🔁 TAB PANEL REUTILIZABLE
-function TabPanel({ children, value, index }) {
-  return <div hidden={value !== index}>{value === index && <Box sx={{ pt: 2 }}>{children}</Box>}</div>;
-}
 
 // 🔁 COMPONENTE TABS REUTILIZABLE
 export function ConfigTabs({ tabs }) {
@@ -38,7 +33,7 @@ export function ConfigTabs({ tabs }) {
         ))}
       </Tabs>
 
-      <div className="mt-6 rounded-xl bg-white p-6 shadow-md">{tabs[value]?.component}</div>
+      <div className="mt-6">{tabs[value]?.component}</div>
     </Box>
   );
 }
@@ -46,8 +41,8 @@ export function ConfigTabs({ tabs }) {
 export default function Configuraciones() {
   const tabs = [
     {
-      label: 'Grupo',
-      component: <Grupo />,
+      label: 'Grupo items',
+      component: <ItemsGroup />,
     },
     {
       label: 'Unidad de medida',

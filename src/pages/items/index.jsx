@@ -177,7 +177,7 @@ export default function Usuarios() {
             onClick={() => setOpenModalRemission(true)}
           />
         }
-        renderExtraCell={(item, index, headerLabel) => {
+        renderExtraCell={({ item, headerLabel }) => {
           if (headerLabel === 'ENTRADA/SALIDA') return (
             <div className="flex items-center gap-2">
               <Tooltip title="Entrada" placement="top">

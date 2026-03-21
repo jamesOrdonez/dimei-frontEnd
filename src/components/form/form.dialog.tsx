@@ -19,6 +19,7 @@ interface FormDialogProps {
   saveEndpoint?: string;
   updateEndpoint?: string;
   fetchOneEndpoint?: string;
+  mapPayload?: (payload: any) => any;
 }
 
 export default function FormDialog({
@@ -35,6 +36,7 @@ export default function FormDialog({
   saveEndpoint,
   updateEndpoint,
   fetchOneEndpoint,
+  mapPayload,
 }: FormDialogProps) {
   const [currentData, setCurrentData] = useState<Record<string, any>>(initialValues || {});
   const [isFetching, setIsFetching] = useState(false);
@@ -75,8 +77,13 @@ export default function FormDialog({
   const handleSave = async () => {
     const hasFile = Object.values(currentData).some((val) => val instanceof File);
 
+    let mappedData = currentData;
+    if (mapPayload) {
+      mappedData = mapPayload(currentData);
+    }
+
     let payload: any = { 
-      ...currentData,
+      ...mappedData,
       ...(additionalValues || {}),
       state: 1, 
       fkUser: decrypt(sessionStorage.getItem('userId')),

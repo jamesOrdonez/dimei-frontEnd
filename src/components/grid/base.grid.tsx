@@ -19,10 +19,12 @@ interface BaseGridProps {
   excludeKeys?: string[];
   extraHeaderActions?: React.ReactNode;
   extraHeaders?: (string | { label: string; after?: string })[];
-  renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
+  renderExtraCell?: (params: { item: any; rowIndex: number; headerLabel: string }) => React.ReactNode;
   onDataChange?: (data: any[]) => void;
   formAdditionalValues?: Record<string, any>;
   renderExtraActions?: (item: any) => React.ReactNode;
+  mapData?: (data: any[]) => any[];
+  mapPayload?: (payload: any) => any;
 }
 
 export default function BaseGrid({ 
@@ -40,6 +42,8 @@ export default function BaseGrid({
   onDataChange,
   formAdditionalValues,
   renderExtraActions,
+  mapData,
+  mapPayload,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -53,7 +57,10 @@ export default function BaseGrid({
     setLoading(true);
     try {
       const response = await axios.get(endpoint);
-      const result = Array.isArray(response.data) ? response.data : response.data.data || [];
+      let result = Array.isArray(response.data) ? response.data : response.data.data || [];
+      if (mapData) {
+        result = mapData(result);
+      }
       setData(result);
       setFilteredData(result);
       if (onDataChange) onDataChange(result);
@@ -123,7 +130,7 @@ export default function BaseGrid({
           data={filteredData}
           excludeKeys={excludeKeys}
           extraHeaders={[...propExtraHeaders, 'ACCIONES']}
-          renderExtraCell={(item, rowIndex, headerLabel) => {
+          renderExtraCell={({ item, rowIndex, headerLabel }) => {
             if (headerLabel === 'ACCIONES') {
               return (
                 <GridActions
@@ -137,7 +144,7 @@ export default function BaseGrid({
                 />
               );
             }
-            return propRenderExtraCell ? propRenderExtraCell(item, rowIndex, headerLabel) : null;
+            return propRenderExtraCell ? propRenderExtraCell({ item, rowIndex, headerLabel }) : null;
           }}
         />
       </Paper>
@@ -155,6 +162,7 @@ export default function BaseGrid({
         initialValues={selectedItem}
         additionalValues={formAdditionalValues}
         title={`${dialogMode === 'create' ? 'Nuevo' : 'Editar'} ${title}`}
+        mapPayload={mapPayload}
       />
     </Box>
   );
