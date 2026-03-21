@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Tabs, Tab, Box } from '@mui/material';
 import ItemsGroup from './components/items.group';
-import Unidad_medida from './components/unidad.medida';
+import UnidadMedida from './components/unidad.medida';
+import ElevatorType from './components/elevator.type';
+import TypeDriveSystem from './components/type.drive.system';
+import ProductsGroup from './components/products.groups';
 
 // 🔁 COMPONENTE TABS REUTILIZABLE
 export function ConfigTabs({ tabs }) {
@@ -45,8 +48,20 @@ export default function Configuraciones() {
       component: <ItemsGroup />,
     },
     {
+      label: 'Grupo productos',
+      component: <ProductsGroup />,
+    },
+    {
       label: 'Unidad de medida',
-      component: <Unidad_medida />,
+      component: <UnidadMedida />,
+    },
+    {
+      label: 'Tipo de ascensor',
+      component: <ElevatorType />,
+    },
+    {
+      label: 'Tipo de sistema hidraulico',
+      component: <TypeDriveSystem />,
     },
   ];
 
