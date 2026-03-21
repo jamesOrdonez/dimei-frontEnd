@@ -74,9 +74,9 @@ export default function Usuarios() {
     },
     {
       name: 'group_item',
-      label: 'Seleccione grupo de productos',
+      label: 'Seleccione grupo de items',
       input: 'select',
-      endpoint: `/getProductGroup/${sessionStorage.getItem('company')}`,
+      endpoint: `/getItemGroup/${sessionStorage.getItem('company')}`,
       grid: { xs: 12 },
     },
     {
