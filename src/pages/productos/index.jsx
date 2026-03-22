@@ -82,10 +82,14 @@ export default function Usuarios() {
     {
       name: 'net_items',
       input: 'items',
-      hasToHide: ({ values }) => !values.group_item,
+      hasToHide: ({ values }) => !values.group_item && (!values.net_items || values.net_items.length === 0),
       dynamicProps: ({ values }) => ({
         options: gridData
-          .filter(item => !values.group_item || String(item.group_item) === String(values.group_item))
+          .filter(item => 
+            !values.group_item || 
+            String(item.group_item) === String(values.group_item) ||
+            values.net_items?.some(selected => String(selected.id) === String(item.id))
+          )
           .map(item => ({
             label: item.description,
             value: item.id
