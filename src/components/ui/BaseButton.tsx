@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from '@iconify/react';
 import { Button } from '@mui/material';
 
 /**
@@ -7,6 +8,7 @@ import { Button } from '@mui/material';
  */
 interface BaseButtonProps {
   color?: string;
+  icon?: string;
   text: string;
   onClick: () => void;
 }
@@ -15,15 +17,17 @@ interface BaseButtonProps {
  * BaseButton component that uses Material UI's Button with custom styles.
  * 
  * @param {string} color - The background color of the button (defaults to 'green').
+ * @param {string} icon - The icon for the button.
  * @param {string} text - The label text for the button.
  * @param {() => void} onClick - The callback function to execute on click.
  */
-const BaseButton: React.FC<BaseButtonProps> = ({ color = 'green', text, onClick }) => {
+const BaseButton: React.FC<BaseButtonProps> = ({ color = 'green', icon, text, onClick }) => {
   return (
     <Button
       variant="contained"
       disableElevation
       onClick={onClick}
+      startIcon={icon && <Icon icon={icon} width={20} />}
       sx={{ 
         px: 4, 
         py: 1.5, 

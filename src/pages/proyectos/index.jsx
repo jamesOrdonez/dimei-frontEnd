@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 import { Icon } from '@iconify/react';
 import BaseGrid from '../../components/grid/base.grid.tsx';
+import InventoryComparisonModal from './components/InventoryComparisonModal.jsx';
+import BaseButton from '../../components/ui/BaseButton.tsx';
 
 export default function Proyectos() {
   const navigate = useNavigate();
+  const [openInventoryModal, setOpenInventoryModal] = useState(false);
 
   const handleView = (item) => {
     navigate(`/proyectos/${item.id}`);
@@ -62,28 +66,43 @@ export default function Proyectos() {
   ];
 
   return (
-    <BaseGrid
-      title="Proyectos"
-      endpoint={`/getProjects/${sessionStorage.getItem('company')}`}
-      saveEndpoint="/saveProject"
-      updateEndpoint="/updateProject"
-      deleteEndpoint="/deleteProject"
-      fetchOneEndpoint="/getOneProject"
-      fields={fields}
-      renderExtraActions={(item) => (
-        <IconButton
-          sx={{
-            color: 'info.main',
-            border: '1.5px solid',
-            borderColor: 'info.light',
-            borderRadius: 1.5,
-          }}
-          onClick={() => handleView(item)}
-        >
-          <Icon icon="lucide:eye" width={20} />
-        </IconButton>
-      )}
-      excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password']}
-    />
+    <>
+      <BaseGrid
+        title="Proyectos"
+        endpoint={`/getProjects/${sessionStorage.getItem('company')}`}
+        saveEndpoint="/saveProject"
+        updateEndpoint="/updateProject"
+        deleteEndpoint="/deleteProject"
+        fetchOneEndpoint="/getOneProject"
+        fields={fields}
+        extraHeaderActions={
+          <BaseButton
+            icon={<Icon icon="lucide:bar-chart-2" />}
+            onClick={() => setOpenInventoryModal(true)}
+            color="orange"
+            text="Stock"
+          />
+
+        }
+        renderExtraActions={(item) => (
+          <IconButton
+            sx={{
+              color: 'info.main',
+              border: '1.5px solid',
+              borderColor: 'info.light',
+              borderRadius: 1.5,
+            }}
+            onClick={() => handleView(item)}
+          >
+            <Icon icon="lucide:eye" width={20} />
+          </IconButton>
+        )}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password']}
+      />
+      <InventoryComparisonModal
+        open={openInventoryModal}
+        onClose={() => setOpenInventoryModal(false)}
+      />
+    </>
   );
 }
