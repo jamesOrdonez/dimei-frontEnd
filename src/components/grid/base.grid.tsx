@@ -6,6 +6,7 @@ import FormDialog from '../form/form.dialog.tsx';
 import { BaseField } from '../form/base.form.tsx';
 import GridHeader from './components/grid-header.tsx';
 import GridActions from './components/grid-actions.tsx';
+import BaseCardView from './components/base-card-view.tsx';
 import { Loader } from '../../components/loaders';
 
 interface BaseGridProps {
@@ -52,6 +53,7 @@ export default function BaseGrid({
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'update'>('create');
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const fetchData = async () => {
     setLoading(true);
@@ -104,6 +106,8 @@ export default function BaseGrid({
       <GridHeader
         title={title}
         search={search}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         onSearchChange={setSearch}
         onNewClick={() => {
           setDialogMode('create');
@@ -116,37 +120,58 @@ export default function BaseGrid({
       <Paper 
         elevation={0} 
         sx={{ 
-          p: 3, 
-          mt: -3, // Offset to integrate with header box
-          borderRadius: '0 16px 16px 16px', 
-          border: '1px solid',
+          p: viewMode === 'list' ? 3 : 0, 
+          mt: viewMode === 'list' ? -3 : 3, // Offset to integrate with header box
+          borderRadius: viewMode === 'list' ? '0 0 16px 16px' : 0, 
+          border: viewMode === 'list' ? '1px solid' : 'none',
           borderColor: 'divider',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          boxShadow: viewMode === 'list' ? '0 4px 20px rgba(0,0,0,0.05)' : 'none',
           position: 'relative',
-          zIndex: 1
+          zIndex: 1,
+          backgroundColor: viewMode === 'list' ? '#ffffff' : 'transparent'
         }}
       >
-        <BaseTable
-          data={filteredData}
-          excludeKeys={excludeKeys}
-          extraHeaders={[...propExtraHeaders, 'ACCIONES']}
-          renderExtraCell={({ item, rowIndex, headerLabel }) => {
-            if (headerLabel === 'ACCIONES') {
-              return (
-                <GridActions
-                  onEdit={() => {
-                    setDialogMode('update');
-                    setSelectedItem(item);
-                    setOpenDialog(true);
-                  }}
-                  onDelete={() => handleDelete(item.id)}
-                  extraActions={renderExtraActions ? renderExtraActions(item) : undefined}
-                />
-              );
-            }
-            return propRenderExtraCell ? propRenderExtraCell({ item, rowIndex, headerLabel }) : null;
-          }}
-        />
+        {viewMode === 'list' ? (
+          <BaseTable
+            data={filteredData}
+            excludeKeys={excludeKeys}
+            extraHeaders={[...propExtraHeaders, 'ACCIONES']}
+            renderExtraCell={({ item, rowIndex, headerLabel }) => {
+              if (headerLabel === 'ACCIONES') {
+                return (
+                  <GridActions
+                    onEdit={() => {
+                      setDialogMode('update');
+                      setSelectedItem(item);
+                      setOpenDialog(true);
+                    }}
+                    onDelete={() => handleDelete(item.id)}
+                    extraActions={renderExtraActions ? renderExtraActions(item) : undefined}
+                  />
+                );
+              }
+              return propRenderExtraCell ? propRenderExtraCell({ item, rowIndex, headerLabel }) : null;
+            }}
+          />
+        ) : (
+          <BaseCardView
+            data={filteredData}
+            excludeKeys={excludeKeys}
+            extraHeaders={propExtraHeaders}
+            renderExtraCell={propRenderExtraCell}
+            renderActions={(item) => (
+              <GridActions
+                onEdit={() => {
+                  setDialogMode('update');
+                  setSelectedItem(item);
+                  setOpenDialog(true);
+                }}
+                onDelete={() => handleDelete(item.id)}
+                extraActions={renderExtraActions ? renderExtraActions(item) : undefined}
+              />
+            )}
+          />
+        )}
       </Paper>
 
       <FormDialog
