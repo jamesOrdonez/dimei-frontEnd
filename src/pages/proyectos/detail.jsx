@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { Loader } from '../../components/loaders';
 import ProductTransfer from './components/product.transfer.jsx';
 import ItemTransfer from './components/item.transfer.jsx';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import ProjectReportPdf from './components/ProjectReportPdf.jsx';
 
 export default function DetalleProyecto() {
   const { id: projectId } = useParams();
@@ -49,9 +51,28 @@ export default function DetalleProyecto() {
         >
           Volver
         </Button>
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant="h5" fontWeight="bold" sx={{ flexGrow: 1 }}>
           Proyecto #{projectId}
         </Typography>
+
+        {project && (
+           <PDFDownloadLink
+              document={<ProjectReportPdf project={project} />}
+              fileName={`presupuesto_proyecto_${projectId}.pdf`}
+              style={{ textDecoration: 'none' }}
+           >
+              {({ loading }) => (
+                 <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={loading}
+                    sx={{ borderRadius: 2 }}
+                 >
+                    {loading ? 'Generando PDF...' : 'Descargar Presupuesto PDF'}
+                 </Button>
+              )}
+           </PDFDownloadLink>
+        )}
       </Box>
 
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
