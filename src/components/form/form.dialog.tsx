@@ -4,6 +4,23 @@ import axios from 'axios';
 import BaseDialog from '../dialog/base.dialog.tsx';
 import BaseForm, { BaseField } from './base.form.tsx';
 import { decrypt } from '../../utils/crypto.js';
+import Swal from 'sweetalert2';
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+    const container = Swal.getContainer();
+    if (container) {
+      container.style.zIndex = '9999';
+    }
+  }
+});
 
 interface FormDialogProps {
   open: boolean;
@@ -109,9 +126,11 @@ export default function FormDialog({
         try {
           const response = await axios.post(finalSaveEndpoint, payload, { headers });
           if (onSuccess) onSuccess({ response, payload });
+          Toast.fire({ icon: 'success', title: 'Registro creado exitosamente' });
           onClose();
         } catch (error) {
           console.error('Error creating record:', error);
+          Toast.fire({ icon: 'error', title: 'Error al crear el registro' });
         } finally {
           setIsSaving(false);
         }
@@ -126,9 +145,11 @@ export default function FormDialog({
           // but here we follow the existing pattern of using PUT
           const response = await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload, { headers });
           if (onSuccess) onSuccess({ response, payload });
+          Toast.fire({ icon: 'success', title: 'Registro actualizado exitosamente' });
           onClose();
         } catch (error) {
           console.error('Error updating record:', error);
+          Toast.fire({ icon: 'error', title: 'Error al actualizar el registro' });
         } finally {
           setIsSaving(false);
         }

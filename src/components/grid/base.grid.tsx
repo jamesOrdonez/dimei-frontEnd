@@ -8,6 +8,23 @@ import GridHeader from './components/grid-header.tsx';
 import GridActions from './components/grid-actions.tsx';
 import BaseCardView from './components/base-card-view.tsx';
 import { Loader } from '../../components/loaders';
+import Swal from 'sweetalert2';
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+    const container = Swal.getContainer();
+    if (container) {
+      container.style.zIndex = '9999';
+    }
+  }
+});
 
 interface BaseGridProps {
   endpoint: string;
@@ -92,9 +109,11 @@ export default function BaseGrid({
         const url = deleteEndpoint || endpoint;
         // Append /:id for delete
         await axios.delete(`${url}/${id}`, { data: { id, state: 0 } });
+        Toast.fire({ icon: 'success', title: 'Registro eliminado exitosamente' });
         fetchData();
       } catch (error) {
         console.error('Error deleting item:', error);
+        Toast.fire({ icon: 'error', title: 'Error al eliminar el registro' });
       }
     }
   };
