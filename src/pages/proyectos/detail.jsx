@@ -11,6 +11,7 @@ import ItemTransfer from './components/item.transfer.jsx';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ProjectReportPdf from './components/ProjectReportPdf.jsx';
 import Swal from 'sweetalert2';
+import RemisionModal from './components/RemisionModal.jsx';
 
 export default function DetalleProyecto() {
   const { id: projectId } = useParams();
@@ -18,6 +19,7 @@ export default function DetalleProyecto() {
   const [project, setProject] = useState(null);
   const [showItems, setShowItems] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [openRemision, setOpenRemision] = useState(false);
   const company = sessionStorage.getItem('company');
 
   const fetchProject = () => {
@@ -105,6 +107,17 @@ export default function DetalleProyecto() {
                 sx={{ borderRadius: 2, color: '#fff' }}
               >
                 {updatingStatus ? 'Iniciando...' : 'Iniciar Proyecto'}
+              </Button>
+            )}
+
+            {project.state === 'Iniciado' && (
+              <Button
+                variant="contained"
+                color="info"
+                onClick={() => setOpenRemision(true)}
+                sx={{ borderRadius: 2 }}
+              >
+                Remisionar
               </Button>
             )}
 
@@ -206,6 +219,18 @@ export default function DetalleProyecto() {
             <ItemTransfer projectId={projectId} company={company} project={project} />
           </CardContent>
         </Card>
+      )}
+
+      {project && (
+        <RemisionModal 
+          open={openRemision} 
+          onClose={() => setOpenRemision(false)} 
+          project={project} 
+          projectId={projectId}
+          company={company}
+          showItemsTab={showItems}
+          onSuccess={fetchProject}
+        />
       )}
 
     </div>
