@@ -42,22 +42,37 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
   const [selectedItems, setSelectedItems] = useState([]); // Right side
   const [leftItemSelected, setLeftItemSelected] = useState([]); // Toggle selection left
   const [rightItemSelected, setRightItemSelected] = useState([]); // Toggle selection right
+  
+  // New state for quantities on the left side
+  const [leftQuantities, setLeftQuantities] = useState({}); // { id: value }
 
-  // Pre-populate with already remitted items from the project
+  // Reset form when opening
   React.useEffect(() => {
-    if (project) {
+    if (open && project) {
+      setDescription('');
+      setTabIndex(0);
+      setFilterText('');
+      setLeftProductSelected([]);
+      setRightProductSelected([]);
+      setLeftItemSelected([]);
+      setRightItemSelected([]);
+      setLeftQuantities({});
+      
+      const generateRowId = (id) => `${id}_${Date.now()}_${Math.random()}`;
+
+      // Pre-populate with already remitted items from the project
       const initialProducts = (project.products || [])
         .filter(p => p.remitted_quantity > 0)
-        .map(p => ({ ...p, remisionQty: p.remitted_quantity, stored: true }));
+        .map(p => ({ ...p, remisionQty: p.remitted_quantity, stored: true, rowId: `stored_${p.product_id}` }));
       
       const initialItems = (project.items || [])
         .filter(i => i.remitted_quantity > 0)
-        .map(i => ({ ...i, remisionQty: i.remitted_quantity, stored: true }));
+        .map(i => ({ ...i, remisionQty: i.remitted_quantity, stored: true, rowId: `stored_${i.item_id}` }));
 
       setSelectedProducts(initialProducts);
       setSelectedItems(initialItems);
     }
-  }, [project]);
+  }, [open, project]);
 
   // Filters
   const [filterText, setFilterText] = useState('');
@@ -66,70 +81,128 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
   // Available Products (those in project but not yet moved to right side)
   const availableProducts = useMemo(() => {
-    return (project?.products || []).filter(
-      (p) => !selectedProducts.some((sp) => sp.product_id === p.product_id)
-    ).filter(p => (p.quantity - p.remitted_quantity) > 0) // Solo mostrar si queda cantidad disponible
-     .filter(p => p.product_name.toLowerCase().includes(filterText.toLowerCase()));
+    return (project?.products || []).filter(p => {
+      // Sum all quantities on the right for this product
+      const rightQty = selectedProducts
+        .filter(sp => sp.product_id === p.product_id)
+        .reduce((sum, item) => sum + Number(item.remisionQty || 0), 0);
+        
+      const remitted = Number(p.remitted_quantity || 0);
+      const total = Number(p.quantity || 0);
+      return (total - remitted - rightQty) > 0;
+    }).filter(p => p.product_name.toLowerCase().includes(filterText.toLowerCase()));
   }, [project, selectedProducts, filterText]);
 
   // Available Items
   const availableItems = useMemo(() => {
-    return (project?.items || []).filter(
-      (i) => !selectedItems.some((si) => si.item_id === i.item_id)
-    ).filter(i => (i.quantity - i.remitted_quantity) > 0) // Solo mostrar si queda cantidad disponible
-     .filter(i => i.item_name.toLowerCase().includes(filterText.toLowerCase()));
+    return (project?.items || []).filter(i => {
+      const rightQty = selectedItems
+        .filter(si => si.item_id === i.item_id)
+        .reduce((sum, item) => sum + Number(item.remisionQty || 0), 0);
+
+      const remitted = Number(i.remitted_quantity || 0);
+      const total = Number(i.quantity || 0);
+      return (total - remitted - rightQty) > 0;
+    }).filter(i => i.item_name.toLowerCase().includes(filterText.toLowerCase()));
   }, [project, selectedItems, filterText]);
 
   const handleToggle = (item, side, type) => {
+    const idField = type === 'product' ? 'product_id' : 'item_id';
+    const id = item[idField];
+
     if (type === 'product') {
       const selected = side === 'left' ? leftProductSelected : rightProductSelected;
       const setSelected = side === 'left' ? setLeftProductSelected : setRightProductSelected;
-      const index = selected.indexOf(item);
+      
+      // Left side still uses product_id since it represents "available"
+      // Right side uses rowId since it represents individual instances
+      const index = side === 'left' 
+        ? selected.findIndex(i => i.product_id === id)
+        : selected.findIndex(i => i.rowId === item.rowId);
+
       const newSelected = [...selected];
-      if (index === -1) newSelected.push(item);
+      if (index === -1) {
+        newSelected.push(item);
+        if (side === 'left' && !leftQuantities[id]) {
+           setLeftQuantities(prev => ({ ...prev, [id]: 1 }));
+        }
+      }
       else newSelected.splice(index, 1);
       setSelected(newSelected);
     } else {
       const selected = side === 'left' ? leftItemSelected : rightItemSelected;
       const setSelected = side === 'left' ? setLeftItemSelected : setRightItemSelected;
-      const index = selected.indexOf(item);
+      
+      const index = side === 'left'
+        ? selected.findIndex(i => i.item_id === id)
+        : selected.findIndex(i => i.rowId === item.rowId);
+
       const newSelected = [...selected];
-      if (index === -1) newSelected.push(item);
+      if (index === -1) {
+        newSelected.push(item);
+        if (side === 'left' && !leftQuantities[id]) {
+           setLeftQuantities(prev => ({ ...prev, [id]: 1 }));
+        }
+      }
       else newSelected.splice(index, 1);
       setSelected(newSelected);
     }
   };
 
   const moveRight = () => {
+    const generateRowId = (id) => `${id}_${Date.now()}_${Math.random()}`;
+
     if (tabIndex === 0) {
-      setSelectedProducts([...selectedProducts, ...leftProductSelected.map(p => ({ ...p, remisionQty: p.quantity }))]);
+      const newSelected = [...selectedProducts];
+      leftProductSelected.forEach(p => {
+        const qtyToMove = Number(leftQuantities[p.product_id] || 1);
+        const existingIdx = newSelected.findIndex(sp => sp.product_id === p.product_id && !sp.stored);
+        
+        if (existingIdx > -1) {
+          newSelected[existingIdx] = { 
+            ...newSelected[existingIdx], 
+            remisionQty: Number(newSelected[existingIdx].remisionQty) + qtyToMove 
+          };
+        } else {
+          newSelected.push({ ...p, remisionQty: qtyToMove, rowId: generateRowId(p.product_id) });
+        }
+      });
+      setSelectedProducts(newSelected);
       setLeftProductSelected([]);
     } else {
-      setSelectedItems([...selectedItems, ...leftItemSelected.map(i => ({ ...i, remisionQty: i.quantity }))]);
+      const newSelected = [...selectedItems];
+      leftItemSelected.forEach(i => {
+        const qtyToMove = Number(leftQuantities[i.item_id] || 1);
+        const existingIdx = newSelected.findIndex(si => si.item_id === i.item_id && !si.stored);
+        
+        if (existingIdx > -1) {
+          newSelected[existingIdx] = { 
+            ...newSelected[existingIdx], 
+            remisionQty: Number(newSelected[existingIdx].remisionQty) + qtyToMove 
+          };
+        } else {
+          newSelected.push({ ...i, remisionQty: qtyToMove, rowId: generateRowId(i.item_id) });
+        }
+      });
+      setSelectedItems(newSelected);
       setLeftItemSelected([]);
     }
   };
 
   const moveLeft = () => {
     if (tabIndex === 0) {
-      // No permitir mover a la izquierda los que ya están guardados
-      const toMove = rightProductSelected.filter(p => !p.stored);
-      setSelectedProducts(selectedProducts.filter(p => !toMove.includes(p)));
+      // Filtering out only the rows selected in the right list which AREN'T stored
+      const toRemoveIds = rightProductSelected.filter(p => !p.stored).map(p => p.rowId);
+      setSelectedProducts(selectedProducts.filter(p => !toRemoveIds.includes(p.rowId)));
       setRightProductSelected([]);
     } else {
-      const toMove = rightItemSelected.filter(i => !i.stored);
-      setSelectedItems(selectedItems.filter(i => !toMove.includes(i)));
+      const toRemoveIds = rightItemSelected.filter(i => !i.stored).map(i => i.rowId);
+      setSelectedItems(selectedItems.filter(i => !toRemoveIds.includes(i.rowId)));
       setRightItemSelected([]);
     }
   };
 
-  const handleRemisionQtyChange = (id, val, type) => {
-    const setter = type === 'product' ? setSelectedProducts : setSelectedItems;
-    const idField = type === 'product' ? 'product_id' : 'item_id';
-    setter(prev => prev.map(item => 
-      (item[idField] === id && !item.stored) ? { ...item, remisionQty: val } : item
-    ));
-  };
+  // handleRemisionQtyChange removed because right-side editing is disabled
  
   const makeAndDownloadPDF = async (remisionId) => {
     try {
@@ -138,18 +211,44 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
         fecha: new Date().toLocaleDateString(),
         description: description,
         projectId: projectId,
-        products: selectedProducts.filter(p => !p.stored).map(p => ({
-          name: p.product_name,
-          cantidad: p.remisionQty,
-          components: (p.items || []).map(comp => ({
-            name: comp.item_name,
-            totalQuantity: (Number(comp.quantity) * Number(p.remisionQty))
+        products: selectedProducts.filter(p => !p.stored).reduce((acc, p) => {
+          // Aggregate by product_id
+          const existing = acc.find(x => x.product_id === p.product_id);
+          if (existing) {
+             existing.cantidad = Number(existing.cantidad) + Number(p.remisionQty);
+          } else {
+             acc.push({
+               product_id: p.product_id,
+               name: p.product_name,
+               cantidad: p.remisionQty,
+               components: (p.items || []).map(comp => ({
+                 name: comp.item_name,
+                 quantity: comp.quantity, // reference quantity
+               }))
+             });
+          }
+          return acc;
+        }, []).map(p => ({
+          ...p,
+          components: p.components.map(comp => ({
+            name: comp.name,
+            totalQuantity: (Number(comp.quantity) * Number(p.cantidad))
           }))
         })),
-        items: selectedItems.filter(i => !i.stored).map(i => ({
-          description: i.item_name,
-          cantidad: i.remisionQty
-        })),
+        items: selectedItems.filter(i => !i.stored).reduce((acc, i) => {
+          // Aggregate by item_id
+          const existing = acc.find(x => x.item_id === i.item_id);
+          if (existing) {
+             existing.cantidad = Number(existing.cantidad) + Number(i.remisionQty);
+          } else {
+             acc.push({
+               item_id: i.item_id,
+               description: i.item_name,
+               cantidad: i.remisionQty
+             });
+          }
+          return acc;
+        }, []),
         elaboradoPor: decrypt(sessionStorage.getItem('user')) || ' ', 
         aprobadoPor: ' ',
       };
@@ -175,13 +274,24 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
     setSaving(true);
     try {
+      // Aggregate quantities by ID before saving
+      const aggregate = (list, idField) => list.filter(x => !x.stored).reduce((acc, x) => {
+        const id = x[idField];
+        if (!acc[id]) acc[id] = 0;
+        acc[id] += Number(x.remisionQty);
+        return acc;
+      }, {});
+
+      const aggregatedProducts = aggregate(selectedProducts, 'product_id');
+      const aggregatedItems = aggregate(selectedItems, 'item_id');
+
       const payload = {
         description,
         company,
         fkUser: decrypt(sessionStorage.getItem('userId')),
         fk_proyect: projectId,
-        net_products: selectedProducts.map(p => ({ id: p.product_id, quantity: p.remisionQty })),
-        net_items: selectedItems.map(i => ({ id: i.item_id, quantity: i.remisionQty }))
+        net_products: Object.entries(aggregatedProducts).map(([id, qty]) => ({ id: Number(id), quantity: qty })),
+        net_items: Object.entries(aggregatedItems).map(([id, qty]) => ({ id: Number(id), quantity: qty }))
       };
 
       const response = await axios.post('/saveRemision', payload);
@@ -219,15 +329,43 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             {available.map((item) => {
               const id = type === 'product' ? item.product_id : item.item_id;
               const name = type === 'product' ? item.product_name : item.item_name;
+              
+              const currentOnRightSum = selected.filter(s => (type === 'product' ? s.product_id : s.item_id) === id)
+                .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+              
+              const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
+
               return (
-                <ListItem key={id} button onClick={() => handleToggle(item, 'left', type)}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Checkbox checked={leftSel.includes(item)} size="small" />
+                <ListItem key={id} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
+                    <Checkbox checked={leftSel.some(i => (type === 'product' ? i.product_id : i.item_id) === id)} size="small" />
                   </ListItemIcon>
                   <ListItemText 
                     primary={name} 
-                    secondary={`Cant. Proyecto: ${item.quantity}`} 
+                    secondary={`Queda: ${maxAvailable}`} 
                     primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                  />
+                  <TextField 
+                    size="small"
+                    type="number"
+                    value={leftQuantities[id] || ''}
+                    placeholder="Cant."
+                    onChange={(e) => {
+                      const val = Math.max(1, Math.min(maxAvailable, Number(e.target.value)));
+                      setLeftQuantities(prev => ({ ...prev, [id]: val }));
+                    }}
+                    sx={{ 
+                      width: 65, 
+                      ml: 1, 
+                      '& .MuiInputBase-root': {
+                        backgroundColor: '#fff',
+                        fontSize: '0.75rem'
+                      },
+                      '& .MuiInputBase-input': { 
+                        p: '6px 8px',
+                        textAlign: 'center'
+                      } 
+                    }}
                   />
                 </ListItem>
               );
@@ -252,13 +390,12 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
           </Box>
           <List dense sx={{ flex: 1, overflow: 'auto' }}>
             {selected.map((item) => {
-              const id = type === 'product' ? item.product_id : item.item_id;
               const name = type === 'product' ? item.product_name : item.item_name;
               return (
-                <ListItem key={id} dense sx={{ borderBottom: '1px solid #f1f5f9', opacity: item.stored ? 0.7 : 1 }}>
+                <ListItem key={item.rowId} dense sx={{ borderBottom: '1px solid #f1f5f9', opacity: item.stored ? 0.7 : 1 }}>
                   <ListItemIcon sx={{ minWidth: 40 }} onClick={() => !item.stored && handleToggle(item, 'right', type)}>
                     <Checkbox 
-                      checked={rightSel.includes(item)} 
+                      checked={rightSel.some(i => i.rowId === item.rowId)} 
                       size="small" 
                       disabled={item.stored}
                     />
@@ -272,9 +409,20 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                     size="small"
                     type="number"
                     value={item.remisionQty}
-                    disabled={item.stored}
-                    onChange={(e) => handleRemisionQtyChange(id, e.target.value, type)}
-                    sx={{ width: 70, ml: 1, '& .MuiInputBase-input': { fontSize: '0.75rem', p: 0.5 } }}
+                    disabled={true}
+                    sx={{ 
+                      width: 65, 
+                      ml: 1, 
+                      '& .MuiInputBase-root': {
+                        backgroundColor: '#f1f5f9',
+                        fontSize: '0.75rem'
+                      },
+                      '& .MuiInputBase-input': { 
+                        p: '6px 8px',
+                        textAlign: 'center',
+                        color: '#475569'
+                      } 
+                    }}
                   />
                 </ListItem>
               );
