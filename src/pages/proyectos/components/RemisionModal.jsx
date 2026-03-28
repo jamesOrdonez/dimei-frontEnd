@@ -25,6 +25,8 @@ import {
 import { ChevronRightIcon, ChevronLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import RemisionPDF from '../../productos/remisionPDF.jsx';
+import { pdf } from '@react-pdf/renderer';
 
 export default function RemisionModal({ open, onClose, project, projectId, company, showItemsTab, onSuccess }) {
   const [tabIndex, setTabIndex] = useState(0);
@@ -128,6 +130,42 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       (item[idField] === id && !item.stored) ? { ...item, remisionQty: val } : item
     ));
   };
+ 
+  const makeAndDownloadPDF = async (remisionId) => {
+    try {
+      const remisionData = {
+        remisionId,
+        fecha: new Date().toLocaleDateString(),
+        description: description,
+        projectId: projectId,
+        products: selectedProducts.filter(p => !p.stored).map(p => ({
+          name: p.product_name,
+          cantidad: p.remisionQty,
+          components: (p.items || []).map(comp => ({
+            name: comp.item_name,
+            totalQuantity: (Number(comp.quantity) * Number(p.remisionQty))
+          }))
+        })),
+        items: selectedItems.filter(i => !i.stored).map(i => ({
+          description: i.item_name,
+          cantidad: i.remisionQty
+        })),
+        elaboradoPor: decrypt(sessionStorage.getItem('user')) || ' ', 
+        aprobadoPor: ' ',
+      };
+
+      const blob = await pdf(<RemisionPDF remision={remisionData} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `remision_${remisionId}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+      Swal.fire('Error', 'No se pudo generar el PDF de la remisión.', 'error');
+    }
+  };
 
   const handleSave = async () => {
     if (selectedProducts.length === 0 && selectedItems.length === 0) {
@@ -146,9 +184,14 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
         net_items: selectedItems.map(i => ({ id: i.item_id, quantity: i.remisionQty }))
       };
 
-      await axios.post('/saveRemision', payload);
+      const response = await axios.post('/saveRemision', payload);
       
       Swal.fire('Éxito', 'Remisión creada correctamente.', 'success');
+      
+      // Generar y descargar PDF
+      if (response.data && response.data.remisionId) {
+        await makeAndDownloadPDF(response.data.remisionId);
+      }
       
       // Marcar ítems actuales como guardados
       setSelectedProducts(prev => prev.map(p => ({ ...p, stored: true })));

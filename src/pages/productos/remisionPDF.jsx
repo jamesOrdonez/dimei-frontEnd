@@ -1,113 +1,163 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
-  page: { padding: 30, fontSize: 11 },
+  page: { padding: 40, fontSize: 10, fontFamily: 'Helvetica', color: '#334155' },
 
-  section: { marginBottom: 12 },
+  section: { marginBottom: 15 },
 
   row: {
     flexDirection: 'row',
-    borderBottom: '1 solid #ccc',
-    paddingVertical: 6,
+    borderBottom: '0.5 solid #e2e8f0',
+    paddingVertical: 5,
+    alignItems: 'center',
   },
 
   tableHeader: {
-    backgroundColor: '#eee',
+    backgroundColor: '#f1f5f9',
     fontWeight: 'bold',
+    color: '#0f172a',
+    borderBottom: '1.5 solid #cbd5e1',
   },
 
-  col1: { width: '70%', textAlign: 'center' },
-  col3: { width: '30%', textAlign: 'center' },
+  colMain: { width: '75%', textAlign: 'left', paddingLeft: 5 },
+  colQty: { width: '25%', textAlign: 'center' },
 
-  // Encabezado
+  // Sub-items (Components)
+  subRow: {
+    flexDirection: 'row',
+    paddingVertical: 3,
+    paddingLeft: 20,
+    backgroundColor: '#f8fafc',
+    fontSize: 9,
+    fontStyle: 'italic',
+    color: '#64748b',
+    borderBottom: '0.5 solid #f1f5f9',
+  },
+
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 15,
+    marginBottom: 8,
+    color: '#1e293b',
+    textDecoration: 'underline',
+  },
+
   headerContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+    borderBottom: '2 solid #3b82f6',
+    paddingBottom: 10,
   },
 
-  logo: {
-    width: 120,
-    height: 50,
-  },
+  logo: { width: 100, height: 40 },
 
   headerText: {
-    flex: 1,
-    textAlign: 'center',
+    textAlign: 'right',
     fontSize: 14,
     fontWeight: 'bold',
+    color: '#1e40af',
   },
 
   // Firmas
   firmasContainer: {
-    marginTop: 40,
+    marginTop: 50,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
 
   firmaBox: {
-    width: '40%',
+    width: '35%',
     alignItems: 'center',
-  },
-
-  firmaNombre: {
-    marginBottom: 5,
-    fontSize: 11,
   },
 
   firmaLinea: {
     marginTop: 10,
-    borderTop: '1 solid #000',
+    borderTop: '1 solid #475569',
     width: '100%',
     textAlign: 'center',
     paddingTop: 5,
-    fontSize: 10,
+    fontSize: 9,
+    fontWeight: 'bold',
   },
 });
 
 export default function RemisionPDF({ remision }) {
   return (
-    <Document>
+    <Document title={`Remisión ${remision.remisionId}`}>
       <Page size="A4" style={styles.page}>
         {/* ENCABEZADO */}
         <View style={styles.headerContainer}>
           <Image style={styles.logo} src={{ uri: '/img/logo.png' }} />
-
-          <Text style={styles.headerText}>REMISIÓN DE INVENTARIO{'\n'}DIMEI</Text>
-        </View>
-
-        {/* DATOS */}
-        <View style={styles.section}>
-          <Text>Remisión #: {remision.remisionId}</Text>
-          <Text>Fecha: {remision.fecha}</Text>
-          <Text>Descripción: {remision.description}</Text>
-        </View>
-
-        {/* TABLA */}
-        <View style={[styles.row, styles.tableHeader]}>
-          <Text style={styles.col1}>Item</Text>
-          <Text style={styles.col3}>Cantidad</Text>
-        </View>
-
-        {remision.items.map((item, index) => (
-          <View key={index} style={styles.row}>
-            <Text style={styles.col1}>{item.description}</Text>
-            <Text style={styles.col3}>{item.cantidad}</Text>
+          <View>
+            <Text style={styles.headerText}>REMISIÓN DE INVENTARIO</Text>
+            <Text style={{ textAlign: 'right', fontSize: 10, color: '#64748b' }}>Remisión #: {remision.remisionId}</Text>
           </View>
-        ))}
+        </View>
+
+        {/* DATOS GENERALES */}
+        <View style={styles.section}>
+          <Text style={{ fontWeight: 'bold' }}>Fecha: <Text style={{ fontWeight: 'normal' }}>{remision.fecha}</Text></Text>
+          <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Descripción: <Text style={{ fontWeight: 'normal' }}>{remision.description}</Text></Text>
+          <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Proyecto: <Text style={{ fontWeight: 'normal' }}>#{remision.projectId}</Text></Text>
+        </View>
+
+        {/* SECCIÓN DE PRODUCTOS */}
+        {remision.products && remision.products.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Productos en Remisión</Text>
+            <View style={[styles.row, styles.tableHeader]}>
+              <Text style={styles.colMain}>Producto / Componente</Text>
+              <Text style={styles.colQty}>Cantidad</Text>
+            </View>
+
+            {remision.products.map((prod, pIdx) => (
+              <View key={`prod-${pIdx}`}>
+                <View style={styles.row}>
+                  <Text style={[styles.colMain, { fontWeight: 'bold' }]}>{prod.name}</Text>
+                  <Text style={[styles.colQty, { fontWeight: 'bold' }]}>{prod.cantidad}</Text>
+                </View>
+                {/* COMPONENTES DEL PRODUCTO */}
+                {(prod.components || []).map((comp, cIdx) => (
+                  <View key={`comp-${pIdx}-${cIdx}`} style={styles.subRow}>
+                    <Text style={styles.colMain}>• {comp.name}</Text>
+                    <Text style={styles.colQty}>{comp.totalQuantity}</Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* SECCIÓN DE ITEMS INDIVIDUALES */}
+        {remision.items && remision.items.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Items Adicionales</Text>
+            <View style={[styles.row, styles.tableHeader]}>
+              <Text style={styles.colMain}>Item</Text>
+              <Text style={styles.colQty}>Cantidad</Text>
+            </View>
+
+            {remision.items.map((item, index) => (
+              <View key={`item-${index}`} style={styles.row}>
+                <Text style={styles.colMain}>{item.description}</Text>
+                <Text style={styles.colQty}>{item.cantidad}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* FIRMAS */}
         <View style={styles.firmasContainer}>
-          {/* Elaborado */}
           <View style={styles.firmaBox}>
-            <Text style={styles.firmaNombre}>{remision.elaboradoPor}</Text>
+            <Text style={{ marginBottom: 2 }}>{remision.elaboradoPor || ' '}</Text>
             <Text style={styles.firmaLinea}>Elaborado por</Text>
           </View>
-
-          {/* Aprobado */}
           <View style={styles.firmaBox}>
-            <Text style={styles.firmaNombre}>{remision.aprobadoPor}</Text>
-            <Text style={styles.firmaLinea}>Aprobado por</Text>
+            <Text style={{ marginBottom: 2 }}>{remision.aprobadoPor || ' '}</Text>
+            <Text style={styles.firmaLinea}>Recibido conforme</Text>
           </View>
         </View>
       </Page>
