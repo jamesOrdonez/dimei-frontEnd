@@ -10,15 +10,17 @@ import ProductTransfer from './components/product.transfer.jsx';
 import ItemTransfer from './components/item.transfer.jsx';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ProjectReportPdf from './components/ProjectReportPdf.jsx';
+import Swal from 'sweetalert2';
 
 export default function DetalleProyecto() {
   const { id: projectId } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [showItems, setShowItems] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const company = sessionStorage.getItem('company');
 
-  useEffect(() => {
+  const fetchProject = () => {
     axios.get(`/getOneProject/${projectId}`)
       .then(res => {
         const raw = res.data.data ?? res.data;
@@ -31,7 +33,44 @@ export default function DetalleProyecto() {
         }
       })
       .catch(err => console.error('Error cargando proyecto:', err));
+  };
+
+  useEffect(() => {
+    fetchProject();
   }, [projectId]);
+
+  const handleStartProject = () => {
+    Swal.fire({
+      title: '¿Iniciar Proyecto?',
+      text: "Esto cambiará el estado del proyecto a 'Iniciado'.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, iniciar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setUpdatingStatus(true);
+        axios.patch(`/updateProjectStatus/${projectId}`, { state: 'Iniciado' })
+          .then(() => {
+            Swal.fire({
+              title: '¡Iniciado!',
+              text: 'El proyecto ha sido iniciado correctamente.',
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false
+            });
+            fetchProject();
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+          })
+          .finally(() => setUpdatingStatus(false));
+      }
+    });
+  };
 
   if (!project) return <Loader />;
 
@@ -56,22 +95,36 @@ export default function DetalleProyecto() {
         </Typography>
 
         {project && (
-           <PDFDownloadLink
-              document={<ProjectReportPdf project={project} />}
-              fileName={`presupuesto_proyecto_${projectId}.pdf`}
-              style={{ textDecoration: 'none' }}
-           >
-              {({ loading }) => (
-                 <Button
-                    variant="contained"
-                    color="primary"
-                    disabled={loading}
-                    sx={{ borderRadius: 2 }}
-                 >
-                    {loading ? 'Generando PDF...' : 'Descargar Presupuesto PDF'}
-                 </Button>
-              )}
-           </PDFDownloadLink>
+          <Box display="flex" gap={1}>
+            {project.state === 'Creado' && (
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleStartProject}
+                disabled={updatingStatus}
+                sx={{ borderRadius: 2, color: '#fff' }}
+              >
+                {updatingStatus ? 'Iniciando...' : 'Iniciar Proyecto'}
+              </Button>
+            )}
+
+             <PDFDownloadLink
+                document={<ProjectReportPdf project={project} />}
+                fileName={`presupuesto_proyecto_${projectId}.pdf`}
+                style={{ textDecoration: 'none' }}
+             >
+                {({ loading }) => (
+                   <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={loading}
+                      sx={{ borderRadius: 2 }}
+                   >
+                      {loading ? 'Generando PDF...' : 'Descargar Presupuesto PDF'}
+                   </Button>
+                )}
+             </PDFDownloadLink>
+          </Box>
         )}
       </Box>
 
