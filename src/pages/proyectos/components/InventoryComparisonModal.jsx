@@ -140,7 +140,7 @@ export default function InventoryComparisonModal({ open, onClose }) {
 
   // Aggregates for summary cards
   const summary = useMemo(() => {
-    return data.reduce((acc, item) => {
+    return filteredData.reduce((acc, item) => {
       acc.totalItems += 1;
       acc.committed += Math.max(0, item.separated_inventory);
       if (item.available_inventory > 0) {
@@ -153,7 +153,7 @@ export default function InventoryComparisonModal({ open, onClose }) {
       }
       return acc;
     }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
-  }, [data]);
+  }, [filteredData]);
 
   const handleExportExcel = () => {
     handleExportClose();
