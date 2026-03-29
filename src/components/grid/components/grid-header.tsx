@@ -1,5 +1,11 @@
-import { Box, TextField, Stack, InputAdornment, IconButton, Button } from '@mui/material';
+import { Box, TextField, Stack, InputAdornment, IconButton, Button, MenuItem } from '@mui/material';
 import { Icon } from '@iconify/react';
+
+export interface CustomFilter {
+  key: string;
+  label: string;
+  options: { value: any; label: string }[];
+}
 
 interface GridHeaderProps {
   title: string;
@@ -9,9 +15,23 @@ interface GridHeaderProps {
   onSearchChange: (value: string) => void;
   onNewClick: () => void;
   extraActions?: React.ReactNode;
+  customFilters?: CustomFilter[];
+  activeFilters?: Record<string, any>;
+  onFilterChange?: (key: string, value: any) => void;
 }
 
-export default function GridHeader({ title, search, viewMode = 'list', onViewModeChange, onSearchChange, onNewClick, extraActions }: GridHeaderProps) {
+export default function GridHeader({ 
+  title, 
+  search, 
+  viewMode = 'list', 
+  onViewModeChange, 
+  onSearchChange, 
+  onNewClick, 
+  extraActions,
+  customFilters = [],
+  activeFilters = {},
+  onFilterChange
+}: GridHeaderProps) {
   return (
     <Box>
       {/* Tab Style Title */}
@@ -49,10 +69,10 @@ export default function GridHeader({ title, search, viewMode = 'list', onViewMod
           alignItems={{ xs: 'stretch', md: 'center' }} 
           sx={{ mb: 4 }}
         >
-          <Box sx={{ flexGrow: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ flexGrow: 1 }}>
             <TextField
               fullWidth
-              placeholder="Search"
+              placeholder="Buscar..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               InputProps={{
@@ -69,7 +89,33 @@ export default function GridHeader({ title, search, viewMode = 'list', onViewMod
                 },
               }}
             />
-          </Box>
+
+            {customFilters.map((filter) => (
+              <TextField
+                key={filter.key}
+                select
+                label={filter.label}
+                value={activeFilters[filter.key] || ''}
+                onChange={(e) => onFilterChange && onFilterChange(filter.key, e.target.value)}
+                sx={{ 
+                  minWidth: { xs: '100%', sm: 160 },
+                  '& .MuiInputBase-root': {
+                    borderRadius: 2,
+                    bgcolor: '#F4F6F8',
+                    height: 50,
+                    '& fieldset': { border: 'none' },
+                  }
+                }}
+              >
+                <MenuItem value=""><em>Todos</em></MenuItem>
+                {filter.options.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ))}
+          </Stack>
           
           <Stack 
             direction="row" 

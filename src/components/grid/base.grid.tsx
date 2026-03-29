@@ -4,7 +4,7 @@ import { Box, Paper } from '@mui/material';
 import BaseTable from '../table/base.table.tsx';
 import FormDialog from '../form/form.dialog.tsx';
 import { BaseField } from '../form/base.form.tsx';
-import GridHeader from './components/grid-header.tsx';
+import GridHeader, { CustomFilter } from './components/grid-header.tsx';
 import GridActions from './components/grid-actions.tsx';
 import BaseCardView from './components/base-card-view.tsx';
 import { Loader } from '../../components/loaders';
@@ -43,6 +43,7 @@ interface BaseGridProps {
   renderExtraActions?: (item: any) => React.ReactNode;
   mapData?: (data: any[]) => any[];
   mapPayload?: (payload: any) => any;
+  customFilters?: CustomFilter[];
 }
 
 export default function BaseGrid({ 
@@ -62,10 +63,12 @@ export default function BaseGrid({
   renderExtraActions,
   mapData,
   mapPayload,
+  customFilters = [],
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'update'>('create');
@@ -95,13 +98,37 @@ export default function BaseGrid({
   }, [endpoint]);
 
   useEffect(() => {
-    const filtered = data.filter((item) =>
-      Object.values(item).some(
-        (val) => val && val.toString().toLowerCase().includes(search.toLowerCase())
-      )
-    );
+    let filtered = data;
+
+    // 1. Text search
+    if (search) {
+      filtered = filtered.filter((item) =>
+        Object.values(item).some(
+          (val) => val && val.toString().toLowerCase().includes(search.toLowerCase())
+        )
+      );
+    }
+
+    // 2. Custom filters
+    Object.entries(activeFilters).forEach(([key, value]) => {
+      if (value) {
+        filtered = filtered.filter(item => {
+          // Flexible match (direct or nested)
+          const itemValue = item[key];
+          return itemValue === value || itemValue?.toString() === value?.toString();
+        });
+      }
+    });
+
     setFilteredData(filtered);
-  }, [search, data]);
+  }, [search, data, activeFilters]);
+
+  const handleFilterChange = (key: string, value: any) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
   const handleDelete = async (id: any) => {
     if (window.confirm('¿Estás seguro de eliminar este registro?')) {
@@ -134,6 +161,9 @@ export default function BaseGrid({
           setOpenDialog(true);
         }}
         extraActions={extraHeaderActions}
+        customFilters={customFilters}
+        activeFilters={activeFilters}
+        onFilterChange={handleFilterChange}
       />
 
       <Paper 

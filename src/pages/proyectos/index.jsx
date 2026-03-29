@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconButton } from '@mui/material';
+import { IconButton, Chip } from '@mui/material';
 import { Icon } from '@iconify/react';
+import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import InventoryComparisonModal from './components/InventoryComparisonModal.jsx';
 import BaseButton from '../../components/ui/BaseButton.tsx';
@@ -9,10 +10,45 @@ import BaseButton from '../../components/ui/BaseButton.tsx';
 export default function Proyectos() {
   const navigate = useNavigate();
   const [openInventoryModal, setOpenInventoryModal] = useState(false);
+  const [customers, setCustomers] = useState([]);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const company = sessionStorage.getItem('company');
+        const response = await axios.get(`/getClientes/${company}`);
+        const result = Array.isArray(response.data) ? response.data : response.data.data || [];
+        setCustomers(result);
+      } catch (error) {
+        console.error('Error fetching customers for filter:', error);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
   const handleView = (item) => {
     navigate(`/proyectos/${item.id}`);
   };
+
+  const statusOptions = useMemo(() => [
+    { value: 'Creado', label: 'Creado' },
+    { value: 'Iniciado', label: 'Iniciado' },
+    { value: 'Finalizado', label: 'Finalizado' },
+    { value: 'Cancelado', label: 'Cancelado' },
+  ], []);
+
+  const customerOptions = useMemo(() => {
+    if (!Array.isArray(customers)) return [];
+    return customers.map(c => ({
+      value: c.nombre, 
+      label: c.nombre
+    }));
+  }, [customers]);
+
+  const customFilters = useMemo(() => [
+    { key: 'state', label: 'Estado', options: statusOptions },
+    { key: 'customerName', label: 'Cliente', options: customerOptions },
+  ], [statusOptions, customerOptions]);
 
   const fields = [
     {
@@ -84,6 +120,27 @@ export default function Proyectos() {
           />
 
         }
+        extraHeaders={[{ label: 'Estado', after: 'customerId' }]}
+        renderExtraCell={({ item, headerLabel }) => {
+          if (headerLabel === 'Estado') {
+            const stateColors = {
+              Creado: 'default',
+              Iniciado: 'info',
+              Finalizado: 'success',
+              Cancelado: 'error',
+            };
+            return (
+              <Chip 
+                label={item.state} 
+                color={stateColors[item.state] || 'default'} 
+                size="small" 
+                variant="outlined"
+                sx={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.65rem' }}
+              />
+            );
+          }
+          return null;
+        }}
         renderExtraActions={(item) => (
           <IconButton
             sx={{
@@ -97,7 +154,8 @@ export default function Proyectos() {
             <Icon icon="lucide:eye" width={20} />
           </IconButton>
         )}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act']}
+        customFilters={customFilters}
       />
       <InventoryComparisonModal
         open={openInventoryModal}

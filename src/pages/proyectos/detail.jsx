@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
-import { Card, CardContent, Typography, Grid, Divider, Box, Button, Alert, AlertTitle } from '@mui/material';
+import { Card, CardContent, Typography, Grid, Divider, Box, Button, Alert, AlertTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import { ArrowLeftIcon, CloudArrowUpIcon, DocumentCheckIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from '../../components/loaders';
@@ -392,44 +392,121 @@ export default function DetalleProyecto() {
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" fontWeight="bold" color="primary.main" mb={2}>
-            Asignar Productos
+            {project.state === 'Finalizado' ? 'Lista de Productos del Proyecto' : 'Asignar Productos'}
           </Typography>
           <Divider sx={{ mb: 3 }} />
           
-          {/* TRANSFER LIST FOR PRODUCTS */}
-          <ProductTransfer projectId={projectId} company={company} project={project} />
+          {project.state === 'Finalizado' ? (
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Cantidad</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {project.products && project.products.length > 0 ? (
+                    project.products.map((p) => (
+                      <Fragment key={p.id}>
+                        <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.01)' }}>
+                          <TableCell sx={{ fontWeight: '600' }}>{p.product_name}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: '600' }}>{p.quantity}</TableCell>
+                        </TableRow>
+                        {p.items && p.items.length > 0 && (
+                          p.items.map((item, idx) => (
+                             <TableRow key={`${p.id}-item-${idx}`}>
+                                <TableCell sx={{ pl: 4, py: 0.5 }}>
+                                   <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
+                                      <span style={{ marginRight: '8px', opacity: 0.5 }}>•</span>
+                                      {item.item_name}
+                                   </Typography>
+                                </TableCell>
+                                <TableCell align="center" sx={{ py: 0.5 }}>
+                                   <Typography variant="caption" color="text.secondary">
+                                      {item.quantity} por unidad
+                                   </Typography>
+                                </TableCell>
+                             </TableRow>
+                          ))
+                        )}
+                      </Fragment>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                        No hay productos asignados a este proyecto.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <ProductTransfer projectId={projectId} company={company} project={project} />
+          )}
         </CardContent>
       </Card>
 
-      {!showItems ? (
-        <Box textAlign="center" mb={6}>
-          <Button 
-            fullWidth
-            variant="outlined" 
-            color="primary" 
-            onClick={() => setShowItems(true)}
-            sx={{ borderRadius: 2, py: 1.5, borderStyle: 'dashed', borderWidth: 2 }}
-          >
-            + Habilitar asignación de Items adicionales
-          </Button>
-        </Box>
-      ) : (
-        <Card sx={{ mb: 6, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" fontWeight="bold" color="secondary.main">
-                Asignar Items Adicionales
+      {project.state === 'Finalizado' ? (
+        project.items && project.items.length > 0 && (
+          <Card sx={{ mb: 6, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" fontWeight="bold" color="secondary.main" mb={2}>
+                Lista de Items Adicionales
               </Typography>
-              <Button size="small" color="error" onClick={() => setShowItems(false)}>
-                Ocultar
-              </Button>
-            </Box>
-            <Divider sx={{ mb: 3 }} />
-            
-            {/* TRANSFER LIST FOR ITEMS */}
-            <ItemTransfer projectId={projectId} company={company} project={project} />
-          </CardContent>
-        </Card>
+              <Divider sx={{ mb: 3 }} />
+              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                <Table size="small">
+                  <TableHead sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Item</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold' }}>Cantidad</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {project.items.map((i) => (
+                      <TableRow key={i.id}>
+                        <TableCell>{i.item_name}</TableCell>
+                        <TableCell align="center">{i.quantity}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )
+      ) : (
+        !showItems ? (
+          <Box textAlign="center" mb={6}>
+            <Button 
+              fullWidth
+              variant="outlined" 
+              color="primary" 
+              onClick={() => setShowItems(true)}
+              sx={{ borderRadius: 2, py: 1.5, borderStyle: 'dashed', borderWidth: 2 }}
+            >
+              + Habilitar asignación de Items adicionales
+            </Button>
+          </Box>
+        ) : (
+          <Card sx={{ mb: 6, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6" fontWeight="bold" color="secondary.main">
+                  Asignar Items Adicionales
+                </Typography>
+                <Button size="small" color="error" onClick={() => setShowItems(false)}>
+                  Ocultar
+                </Button>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              
+              <ItemTransfer projectId={projectId} company={company} project={project} />
+            </CardContent>
+          </Card>
+        )
       )}
 
       {project && (

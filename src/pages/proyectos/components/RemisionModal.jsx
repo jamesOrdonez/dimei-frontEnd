@@ -482,51 +482,68 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             <Box p={2} bgcolor="#f8fafc" borderBottom="1px solid #e2e8f0">
               <Typography variant="subtitle2" fontWeight={700}>{titleLeft}</Typography>
             </Box>
-            <List dense sx={{ flex: 1, overflow: 'auto' }}>
-              {available.map((item, availIdx) => {
-                const id = type === 'product' ? item.product_id : item.item_id;
-                const name = type === 'product' ? item.product_name : item.item_name;
-                
-                const currentOnRightSum = selected.filter(s => (type === 'product' ? s.product_id : s.item_id) === id)
-                  .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
-                
-                const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
+            <List dense sx={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {available.length === 0 ? (
+                <Box 
+                  display="flex" 
+                  flexDirection="column" 
+                  alignItems="center" 
+                  justifyContent="center" 
+                  flex={1} 
+                  p={3} 
+                  textAlign="center"
+                >
+                  <CheckCircleIcon className="w-12 h-12 text-green-500 mb-2 opacity-20" />
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontWeight: 500 }}>
+                    Todos los {type === 'product' ? 'productos' : 'ítems'} del proyecto ya se encuentran en proceso de remisión o han sido remitidos.
+                  </Typography>
+                </Box>
+              ) : (
+                available.map((item, availIdx) => {
+                  const id = type === 'product' ? item.product_id : item.item_id;
+                  const name = type === 'product' ? item.product_name : item.item_name;
+                  
+                  const currentOnRightSum = selected.filter(s => (type === 'product' ? s.product_id : s.item_id) === id)
+                    .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+                  
+                  const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
 
-                return (
-                  <ListItem key={`${id}-${availIdx}`} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
-                      <Checkbox checked={leftSel.some(i => (type === 'product' ? i.product_id : i.item_id) === id)} size="small" />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={name} 
-                      secondary={`Queda: ${maxAvailable}`} 
-                      primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                    />
-                    <TextField 
-                      size="small"
-                      type="number"
-                      value={leftQuantities[id] || ''}
-                      placeholder="Cant."
-                      onChange={(e) => {
-                        const val = Math.max(1, Math.min(maxAvailable, Number(e.target.value)));
-                        setLeftQuantities(prev => ({ ...prev, [id]: val }));
-                      }}
-                      sx={{ 
-                        width: 65, 
-                        ml: 1, 
-                        '& .MuiInputBase-root': {
-                          backgroundColor: '#fff',
-                          fontSize: '0.75rem'
-                        },
-                        '& .MuiInputBase-input': { 
-                          p: '6px 8px',
-                          textAlign: 'center'
-                        } 
-                      }}
-                    />
-                  </ListItem>
-                );
-              })}
+                  return (
+                    <ListItem key={`${id}-${availIdx}`} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
+                        <Checkbox checked={leftSel.some(i => (type === 'product' ? i.product_id : i.item_id) === id)} size="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={name} 
+                        secondary={`Queda: ${maxAvailable}`} 
+                        primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                      />
+                      <TextField 
+                        size="small"
+                        type="number"
+                        value={leftQuantities[id] || ''}
+                        placeholder="Cant."
+                        onChange={(e) => {
+                          const val = Math.max(1, Math.min(maxAvailable, Number(e.target.value)));
+                          setLeftQuantities(prev => ({ ...prev, [id]: val }));
+                        }}
+                        sx={{ 
+                          width: 65, 
+                          ml: 1, 
+                          '& .MuiInputBase-root': {
+                            backgroundColor: '#fff',
+                            fontSize: '0.75rem'
+                          },
+                          '& .MuiInputBase-input': { 
+                            p: '6px 8px',
+                            textAlign: 'center'
+                          } 
+                        }}
+                      />
+                    </ListItem>
+                  );
+                })
+              )}
             </List>
           </Paper>
         </Grid>
