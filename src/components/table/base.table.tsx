@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { PhotoIcon } from '@heroicons/react/24/outline';
 
 interface ExtraHeader {
   label: string;
@@ -142,18 +143,32 @@ export default function BaseTable({
                   if (!header.isExtra) {
                     const value = item[header.label];
                     // Render image if header is named img or Imagen
-                    if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase()) && value) {
-                      const src = typeof value === 'string' && value.startsWith('http') 
+                    if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase())) {
+                      const src = value && typeof value === 'string' && value.startsWith('http') 
                         ? value 
-                        : `${axios.defaults.baseURL}/getItem/image/${item.id}`;
+                        : value ? `${axios.defaults.baseURL}/getItem/image/${item.id}` : null;
                       return (
                         <TableCell key={header.label}>
-                          <Box 
-                            component="img" 
-                            src={src} 
-                            sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover' }} 
-                            alt={header.label}
-                          />
+                          {src ? (
+                            <Box 
+                              component="img" 
+                              src={src} 
+                              sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover' }} 
+                              alt={header.label}
+                            />
+                          ) : (
+                            <Box sx={{ 
+                              width: 50, 
+                              height: 50, 
+                              borderRadius: 1, 
+                              bgcolor: 'rgba(59, 130, 246, 0.05)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <PhotoIcon className="h-6 w-6 text-blue-200" />
+                            </Box>
+                          )}
                         </TableCell>
                       );
                     }

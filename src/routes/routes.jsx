@@ -12,6 +12,7 @@ import Clientes from '../pages/clientes';
 import Items from '../pages/items';
 import Proyectos from '../pages/proyectos';
 import DetalleProyecto from '../pages/proyectos/detail';
+import PublicItemView from '../pages/items/public-view';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -81,6 +82,7 @@ export default function Router() {
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />
       </Route>
+      <Route path="/public/item/:id" element={<PublicItemView />} />
       <Route path="/" element={<LoginForm />} />
       <Route path="*" element={<Page404 />} />
     </Routes>

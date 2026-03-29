@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { Button, Tooltip } from '@mui/material';
+import { Button, Tooltip, Box, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import FormDialog from '../../components/form/form.dialog.tsx';
-import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftCircleIcon, ArrowRightCircleIcon, EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import BaseButton from '../../components/ui/BaseButton.tsx';
 import RemisionPDF from '../productos/remisionPDF.jsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function Usuarios() {
   const [openModal, setOpenModal] = useState(false);
@@ -17,6 +18,9 @@ export default function Usuarios() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [gridData, setGridData] = useState([]);
+  const [qrMenuAnchor, setQrMenuAnchor] = useState(null);
+  const [selectedQRItem, setSelectedQRItem] = useState(null);
+
   const movementInitialValues = useMemo(() => (selectedItem ? { id: selectedItem.id } : {}), [selectedItem]);
 
   const openMovement = (item, type) => {
@@ -24,8 +28,32 @@ export default function Usuarios() {
     setMovementType(type);
     setOpenModal(true);
   };
+  const handleQRClick = (event, item) => {
+    setQrMenuAnchor(event.currentTarget);
+    setSelectedQRItem(item);
+  };
 
-  const fields = [
+  const handleQRMenuClose = () => {
+    setQrMenuAnchor(null);
+    setSelectedQRItem(null);
+  };
+
+  const handleDownloadQR = () => {
+    if (!selectedQRItem) return;
+    
+    const canvas = document.getElementById('qr-canvas-download');
+    if (!canvas) return;
+
+    const pngUrl = canvas.toDataURL('image/png');
+    const downloadLink = document.createElement('a');
+    downloadLink.href = pngUrl;
+    downloadLink.download = `QR_${selectedQRItem.description || selectedQRItem.id}.png`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    handleQRMenuClose();
+  };
+   const fields = [
     {
       name: 'description',
       label: 'Descripción del item',
@@ -191,6 +219,7 @@ export default function Usuarios() {
         updateEndpoint="/updateItem"
         deleteEndpoint="/deleteItem"
         fetchOneEndpoint="/oneItem"
+        firstHeader="QR"
         fields={fields}
         onDataChange={setGridData}
         mapData={mapItemsData}
@@ -206,6 +235,22 @@ export default function Usuarios() {
           />
         }
         renderExtraCell={({ item, headerLabel }) => {
+          if (headerLabel === 'QR') return (
+            <Tooltip title="Opciones de QR" placement="top">
+              <Box 
+                onClick={(e) => handleQRClick(e, item)}
+                sx={{ cursor: 'pointer', display: 'flex', justifyContent: 'center' }}
+              >
+                <QRCodeCanvas 
+                  id={`qr-canvas-${item.id}`}
+                  value={`${window.location.origin}/public/item/${item.id}`} 
+                  size={48}
+                  level="H"
+                  includeMargin={true}
+                />
+              </Box>
+            </Tooltip>
+          );
           if (headerLabel === 'ENTRADA/SALIDA') return (
             <div className="flex items-center gap-2">
               <Tooltip title="Entrada" placement="top">
@@ -250,6 +295,47 @@ export default function Usuarios() {
         title={`${movementType === 'entrance' ? 'Entrada' : 'Salida'} de inventario`}
         saveEndpoint={movementType === 'entrance' ? `/entrance` : `/exit`}
       />
+
+      <Menu
+        anchorEl={qrMenuAnchor}
+        open={Boolean(qrMenuAnchor)}
+        onClose={handleQRMenuClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            minWidth: 180,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          }
+        }}
+      >
+        <MenuItem onClick={() => {
+          window.open(`${window.location.origin}/public/item/${selectedQRItem?.id}`, '_blank');
+          handleQRMenuClose();
+        }}>
+          <ListItemIcon>
+            <EyeIcon className="h-5 w-5 text-blue-500" />
+          </ListItemIcon>
+          <ListItemText primary="Ver vista pública" />
+        </MenuItem>
+        
+        <MenuItem onClick={handleDownloadQR}>
+          <ListItemIcon>
+            <ArrowDownTrayIcon className="h-5 w-5 text-green-500" />
+          </ListItemIcon>
+          <ListItemText primary="Descargar QR" />
+        </MenuItem>
+      </Menu>
+
+      {/* Hidden high-res QR for download */}
+      <Box sx={{ display: 'none' }}>
+        <QRCodeCanvas 
+          id="qr-canvas-download"
+          value={selectedQRItem ? `${window.location.origin}/public/item/${selectedQRItem?.id}` : ''} 
+          size={1024}
+          level="H"
+          includeMargin={true}
+        />
+      </Box>
     </>
     );
 }

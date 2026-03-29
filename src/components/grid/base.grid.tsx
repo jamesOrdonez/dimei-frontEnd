@@ -44,6 +44,7 @@ interface BaseGridProps {
   mapData?: (data: any[]) => any[];
   mapPayload?: (payload: any) => any;
   customFilters?: CustomFilter[];
+  firstHeader?: string | { label: string; after?: string };
 }
 
 export default function BaseGrid({ 
@@ -64,6 +65,7 @@ export default function BaseGrid({
   mapData,
   mapPayload,
   customFilters = [],
+  firstHeader,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -184,6 +186,7 @@ export default function BaseGrid({
           <BaseTable
             data={filteredData}
             excludeKeys={excludeKeys}
+            firstHeader={firstHeader}
             extraHeaders={[...propExtraHeaders, 'ACCIONES']}
             renderExtraCell={({ item, rowIndex, headerLabel }) => {
               if (headerLabel === 'ACCIONES') {

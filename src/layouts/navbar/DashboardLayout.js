@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { styled } from '@mui/material/styles';
 import Header from './header';
 import Nav from './nav';
+import Footer from '../../components/ui/Footer';
 
 // ----------------------------------------------------------------------
 
@@ -17,7 +18,9 @@ const StyledRoot = styled('div')({
 const Main = styled('div')(({ theme }) => ({
   flexGrow: 1,
   overflow: 'auto',
-  minHeight: '100%',
+  minHeight: '100vh', // Ensure layout covers the full screen
+  display: 'flex',
+  flexDirection: 'column',
   paddingTop: APP_BAR_MOBILE + 24,
   paddingBottom: theme.spacing(10),
   [theme.breakpoints.up('lg')]: {
@@ -38,7 +41,10 @@ export default function Layouts({ children }) {
 
       <Nav openNav={open} onCloseNav={() => setOpen(false)} />
 
-      <Main>{children}</Main>
+      <Main>
+        {children}
+        <Footer />
+      </Main>
     </StyledRoot>
   );
 }
