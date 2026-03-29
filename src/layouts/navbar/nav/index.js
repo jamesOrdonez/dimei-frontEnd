@@ -53,12 +53,7 @@ export default function Nav({ openNav, onCloseNav }) {
       style={{ background: '#fff' }}
     >
       <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
-        <img
-          src="https://www.ingenieria.unam.mx/dimei/images/logos/logo_dimei22.png"
-          alt="logo"
-          height="20px"
-          width="140px"
-        />
+        <img src="/img/logo.png" alt="Logo" style={{ borderRadius: '10px' }} />
       </Box>
 
       <Box sx={{ mb: 5, mx: 2.5 }}>

@@ -4,7 +4,7 @@ import { encrypt } from '../../utils/crypto';
 import Swealert from '../../components/Swealert';
 
 /* const logo = 'https://readymadeui.com/signin-image.webp'; */
-const logo = 'https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png';
+const logo = '/assets/logo-dimei.png';
 
 export default function Login() {
   const [formData, setFormData] = useState({
