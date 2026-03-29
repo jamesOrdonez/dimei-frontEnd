@@ -3,7 +3,10 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
-import { Box, Link, Drawer, Typography, Avatar } from '@mui/material';
+import { Box, Link, Drawer, Typography, Avatar, Button } from '@mui/material';
+import Iconify from '../../../components/iconify';
+
+
 import useResponsive from '../../../hooks/useResponsive';
 // components
 import Scrollbar from '../../../components/scrollbar';
@@ -34,7 +37,6 @@ Nav.propTypes = {
 export default function Nav({ openNav, onCloseNav }) {
   const { pathname } = useLocation();
   const usuario = decrypt(sessionStorage.getItem('user'));
-  const rol = decrypt(sessionStorage.getItem('rol'));
   const rolName = decrypt(sessionStorage.getItem('rolName'));
 
 
@@ -44,7 +46,8 @@ export default function Nav({ openNav, onCloseNav }) {
     if (openNav) {
       onCloseNav();
     }
-  }, [pathname]);
+  }, [pathname, openNav, onCloseNav]);
+
 
   const renderContent = (
     <Scrollbar
@@ -63,8 +66,7 @@ export default function Nav({ openNav, onCloseNav }) {
           <StyledAccount>
             <Avatar sx={{ bgcolor: 'primary.main' }}>{usuario?.charAt(0).toUpperCase()}</Avatar>
 
-
-            <Box sx={{ ml: 2 }}>
+            <Box sx={{ ml: 2, flexGrow: 1 }}>
               <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
                 {usuario}
               </Typography>
@@ -72,13 +74,39 @@ export default function Nav({ openNav, onCloseNav }) {
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {rolName}
               </Typography>
-
             </Box>
           </StyledAccount>
         </Link>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          component={Link}
+          href="/"
+          onClick={() => sessionStorage.clear()}
+          startIcon={<Iconify icon="eva:log-out-fill" />}
+          sx={{
+            mt: 2,
+            bgcolor: (theme) => alpha(theme.palette.error.main, 0.1),
+            justifyContent: 'flex-start',
+            px: 2,
+            '&:hover': {
+              bgcolor: (theme) => alpha(theme.palette.error.main, 0.2),
+            },
+          }}
+        >
+          Cerrar sesión
+        </Button>
+
       </Box>
 
+
+      <Typography variant="overline" sx={{ px: 5, color: 'text.disabled', display: 'block', mb: 1 }}>
+        Menú
+      </Typography>
       <NavSection data={navConfig} />
+
 
       <Box sx={{ flexGrow: 1 }} />
     </Scrollbar>

@@ -104,7 +104,8 @@ export default function FormDialog({
     if (open) {
       fetchData();
     }
-  }, [open, initialValues?.id, mode, endpoint, updateEndpoint, fetchOneEndpoint]);
+  }, [open, initialValues, mode, endpoint, updateEndpoint, fetchOneEndpoint]);
+
 
   const handleSave = async () => {
     const hasFile = Object.values(currentData).some((val) => val instanceof File);

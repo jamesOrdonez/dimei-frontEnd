@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import { 
   MapPinIcon, 
-  TagIcon, 
   CurrencyDollarIcon, 
   ArchiveBoxIcon,
   IdentificationIcon,

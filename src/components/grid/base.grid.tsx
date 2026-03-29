@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+
 import axios from 'axios';
 import { Box, Paper } from '@mui/material';
 import BaseTable from '../table/base.table.tsx';
@@ -77,27 +79,38 @@ export default function BaseGrid({
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
-  const fetchData = async () => {
+  // Use refs for props that are often unmemoized in parent components to avoid infinite loops
+  const mapDataRef = useRef(mapData);
+  const onDataChangeRef = useRef(onDataChange);
+
+  useEffect(() => {
+    mapDataRef.current = mapData;
+    onDataChangeRef.current = onDataChange;
+  });
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(endpoint);
       let result = Array.isArray(response.data) ? response.data : response.data.data || [];
-      if (mapData) {
-        result = mapData(result);
+      if (mapDataRef.current) {
+        result = mapDataRef.current(result);
       }
       setData(result);
       setFilteredData(result);
-      if (onDataChange) onDataChange(result);
+      if (onDataChangeRef.current) onDataChangeRef.current(result);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint]);
+
 
   useEffect(() => {
     fetchData();
-  }, [endpoint]);
+  }, [fetchData]);
+
 
   useEffect(() => {
     let filtered = data;
