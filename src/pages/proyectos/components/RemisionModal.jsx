@@ -22,8 +22,9 @@ import {
   IconButton,
   Divider,
   Chip,
+  Tooltip,
 } from '@mui/material';
-import { ChevronRightIcon, ChevronLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, ChevronLeftIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import RemisionPDF from '../../productos/remisionPDF.jsx';
@@ -334,174 +335,312 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       };
 
       const response = await axios.post('/saveRemision', payload);
-      
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        icon: 'success',
-        title: 'Remisión creada correctamente.'
-      });
-      
-      // Generar y descargar PDF
-      if (response.data && response.data.remisionId) {
-        await makeAndDownloadPDF(response.data.remisionId);
+      const resData = response.data || {};
+      const pendingItems = resData.pending || [];
+
+      if (pendingItems.length > 0) {
+        let htmlStr = '<div style="text-align: left; font-size: 0.9rem;">La remisión se guardó, pero estos elementos quedaron <b>pendientes</b>:<br/><br/>';
+        pendingItems.forEach(e => {
+          htmlStr += `<b>${e.type}: ${e.name}</b><ul>`;
+          (e.missing || []).forEach(m => { htmlStr += `<li>${m}</li>`; });
+          htmlStr += '</ul>';
+        });
+        htmlStr += '</div>';
+
+        await Swal.fire({
+          title: 'Remisión con pendientes',
+          html: htmlStr,
+          icon: 'warning',
+          didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+        });
+      } else {
+        await Swal.fire({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          icon: 'success',
+          title: 'Remisión guardada correctamente',
+          didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+        });
       }
-      
-      // Marcar ítems actuales como guardados
+
+      if (resData.remisionId) {
+        await makeAndDownloadPDF(resData.remisionId);
+      }
+
       setSelectedProducts(prev => prev.map(p => ({ ...p, stored: true })));
       setSelectedItems(prev => prev.map(i => ({ ...i, stored: true })));
-      
       onSuccess?.();
-      // No cerramos el modal para que se vea el bloqueo
-      // onClose(); 
+      onClose();
     } catch (err) {
-      console.error(err);
-      Swal.fire('Error', 'No se pudo crear la remisión.', 'error');
+      console.error('Error al guardar remision:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'No se pudo guardar la remisión';
+      Swal.fire({
+        title: 'Error',
+        text: errorMsg,
+        icon: 'error',
+        didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const renderTransferList = (titleLeft, titleRight, available, selected, leftSel, rightSel, type) => (
-    <Grid container spacing={2} alignItems="stretch">
-      <Grid item xs={12} md={5.5}>
-        <Paper variant="outlined" sx={{ height: 400, display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
-          <Box p={2} bgcolor="#f8fafc" borderBottom="1px solid #e2e8f0">
-            <Typography variant="subtitle2" fontWeight={700}>{titleLeft}</Typography>
-          </Box>
-          <List dense sx={{ flex: 1, overflow: 'auto' }}>
-            {available.map((item) => {
-              const id = type === 'product' ? item.product_id : item.item_id;
-              const name = type === 'product' ? item.product_name : item.item_name;
-              
-              const currentOnRightSum = selected.filter(s => (type === 'product' ? s.product_id : s.item_id) === id)
-                .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
-              
-              const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
+  const handleComplete = async () => {
+    const pendingProducts = rightProductSelected.filter(p => p.stored && p.status === 'Pendiente');
+    const pendingItems = rightItemSelected.filter(i => i.stored && i.status === 'Pendiente');
+    if (pendingProducts.length === 0 && pendingItems.length === 0) return;
 
-              return (
-                <ListItem key={id} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
-                    <Checkbox checked={leftSel.some(i => (type === 'product' ? i.product_id : i.item_id) === id)} size="small" />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={name} 
-                    secondary={`Queda: ${maxAvailable}`} 
-                    primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                  />
-                  <TextField 
-                    size="small"
-                    type="number"
-                    value={leftQuantities[id] || ''}
-                    placeholder="Cant."
-                    onChange={(e) => {
-                      const val = Math.max(1, Math.min(maxAvailable, Number(e.target.value)));
-                      setLeftQuantities(prev => ({ ...prev, [id]: val }));
-                    }}
-                    sx={{ 
-                      width: 65, 
-                      ml: 1, 
-                      '& .MuiInputBase-root': {
-                        backgroundColor: '#fff',
-                        fontSize: '0.75rem'
-                      },
-                      '& .MuiInputBase-input': { 
-                        p: '6px 8px',
-                        textAlign: 'center'
-                      } 
-                    }}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-        </Paper>
-      </Grid>
+    setSaving(true);
+    try {
+      const payload = {
+        fk_proyect: projectId,
+        productFks: [...new Set(pendingProducts.map(p => p.product_id))],
+        itemFks: [...new Set(pendingItems.map(i => i.item_id))]
+      };
 
-      <Grid item xs={12} md={1} display="flex" flexDirection="column" justifyContent="center" gap={1}>
-        <Button size="small" variant="outlined" onClick={moveRight} disabled={(tabIndex === 0 ? leftProductSelected : leftItemSelected).length === 0}>
-           <ChevronRightIcon className="w-4 h-4" />
-        </Button>
-        <Button size="small" variant="outlined" onClick={moveLeft} disabled={(tabIndex === 0 ? rightProductSelected : rightItemSelected).length === 0}>
-           <ChevronLeftIcon className="w-4 h-4" />
-        </Button>
-      </Grid>
+      const response = await axios.post('/completeRemission', payload);
+      const resData = response.data || {};
+      const errorsList = resData.errors || [];
 
-      <Grid item xs={12} md={5.5}>
-        <Paper variant="outlined" sx={{ height: 400, display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
-          <Box p={2} bgcolor="#f8fafc" borderBottom="1px solid #e2e8f0">
-            <Typography variant="subtitle2" fontWeight={700}>{titleRight}</Typography>
-          </Box>
-          <List dense sx={{ flex: 1, overflow: 'auto' }}>
-            {selected.map((item) => {
-              const name = type === 'product' ? item.product_name : item.item_name;
-              return (
-                <ListItem key={item.rowId} dense sx={{ borderBottom: '1px solid #f1f5f9', opacity: item.stored ? 0.7 : 1 }}>
-                  <ListItemIcon sx={{ minWidth: 40 }} onClick={() => !item.stored && handleToggle(item, 'right', type)}>
-                    <Checkbox 
-                      checked={rightSel.some(i => i.rowId === item.rowId)} 
-                      size="small" 
-                      disabled={item.stored}
+      if (errorsList.length > 0) {
+        let htmlStr = '<div style="text-align: left; font-size: 0.9rem;">Se procesó, pero algunos siguen <b>pendientes</b>:<br/><br/>';
+        errorsList.forEach(e => {
+          htmlStr += `<b>${e.type}: ${e.name}</b><ul>`;
+          (e.missing || []).forEach(m => { htmlStr += `<li>${m}</li>`; });
+          htmlStr += '</ul>';
+        });
+        htmlStr += '</div>';
+
+        await Swal.fire({ 
+            title: 'Proceso con pendientes', 
+            html: htmlStr, 
+            icon: 'warning',
+            didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+        });
+      } else {
+        await Swal.fire({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          icon: 'success',
+          title: 'Acción completada con éxito.',
+          didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+        });
+      }
+
+      onSuccess?.();
+      setRightProductSelected([]);
+      setRightItemSelected([]);
+    } catch (err) {
+      console.error('Error en handleComplete:', err);
+      const data = err.response?.data || {};
+      const msg = data.message || err.message || 'No se pudo completar la acción.';
+      const errors = data.errors || [];
+      
+      if (Array.isArray(errors) && errors.length > 0) {
+        let htmlStr = `<div style="text-align: left; font-size: 0.9rem;">${msg}<br/><br/>`;
+        errors.forEach(e => {
+          htmlStr += `<b>${e.type}: ${e.name}</b><ul>`;
+          (e.missing || []).forEach(m => { htmlStr += `<li>${m}</li>`; });
+          htmlStr += '</ul>';
+        });
+        htmlStr += '</div>';
+
+        await Swal.fire({ 
+            title: 'Stock Insuficiente', 
+            html: htmlStr, 
+            icon: 'error',
+            didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+        });
+      } else {
+        await Swal.fire({
+            title: 'Error',
+            text: msg,
+            icon: 'error',
+            didOpen: () => { Swal.getContainer().style.zIndex = "3000"; }
+        });
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderTransferList = (titleLeft, titleRight, available, selected, leftSel, rightSel, type) => {
+    const hasPendingStored = selected.some(i => i.stored && i.status === 'Pendiente');
+    const currentCheckedPending = (type === 'product' ? rightProductSelected : rightItemSelected)
+      .filter(i => i.stored && i.status === 'Pendiente').length;
+
+    return (
+      <Grid container spacing={2} alignItems="stretch">
+        <Grid item xs={12} md={5.5}>
+          <Paper variant="outlined" sx={{ height: 400, display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
+            <Box p={2} bgcolor="#f8fafc" borderBottom="1px solid #e2e8f0">
+              <Typography variant="subtitle2" fontWeight={700}>{titleLeft}</Typography>
+            </Box>
+            <List dense sx={{ flex: 1, overflow: 'auto' }}>
+              {available.map((item) => {
+                const id = type === 'product' ? item.product_id : item.item_id;
+                const name = type === 'product' ? item.product_name : item.item_name;
+                
+                const currentOnRightSum = selected.filter(s => (type === 'product' ? s.product_id : s.item_id) === id)
+                  .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+                
+                const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
+
+                return (
+                  <ListItem key={id} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
+                      <Checkbox checked={leftSel.some(i => (type === 'product' ? i.product_id : i.item_id) === id)} size="small" />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={name} 
+                      secondary={`Queda: ${maxAvailable}`} 
+                      primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                     />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={name} 
-                    secondary={
-                      item.stored ? (
-                        <Chip 
-                          label={item.status} 
-                          size="small" 
-                          sx={{ 
-                            mt: 0.5, 
-                            height: 20, 
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            backgroundColor: item.status === 'Completo' ? '#dbeafe' : '#fef3c7',
-                            color: item.status === 'Completo' ? '#1e40af' : '#92400e',
-                            border: `1px solid ${item.status === 'Completo' ? '#bfdbfe' : '#fde68a'}`
-                          }} 
-                        />
-                      ) : (
-                        <Typography variant="caption" color="primary" fontWeight={700}>Pendiente por guardar</Typography>
-                      )
-                    }
-                    primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                  />
-                  <TextField 
-                    size="small"
-                    type="number"
-                    value={item.remisionQty}
-                    disabled={true}
-                    sx={{ 
-                      width: 65, 
-                      ml: 1, 
-                      '& .MuiInputBase-root': {
-                        backgroundColor: '#f1f5f9',
-                        fontSize: '0.75rem'
-                      },
-                      '& .MuiInputBase-input': { 
-                        p: '6px 8px',
-                        textAlign: 'center',
-                        color: '#475569'
-                      } 
-                    }}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-        </Paper>
+                    <TextField 
+                      size="small"
+                      type="number"
+                      value={leftQuantities[id] || ''}
+                      placeholder="Cant."
+                      onChange={(e) => {
+                        const val = Math.max(1, Math.min(maxAvailable, Number(e.target.value)));
+                        setLeftQuantities(prev => ({ ...prev, [id]: val }));
+                      }}
+                      sx={{ 
+                        width: 65, 
+                        ml: 1, 
+                        '& .MuiInputBase-root': {
+                          backgroundColor: '#fff',
+                          fontSize: '0.75rem'
+                        },
+                        '& .MuiInputBase-input': { 
+                          p: '6px 8px',
+                          textAlign: 'center'
+                        } 
+                      }}
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={1} display="flex" flexDirection="column" justifyContent="center" gap={1}>
+          <Button size="small" variant="outlined" onClick={moveRight} disabled={(tabIndex === 0 ? leftProductSelected : leftItemSelected).length === 0}>
+             <ChevronRightIcon className="w-4 h-4" />
+          </Button>
+          <Button 
+            size="small" 
+            variant="outlined" 
+            onClick={moveLeft} 
+            disabled={
+              (tabIndex === 0 ? rightProductSelected : rightItemSelected).length === 0 || 
+              (tabIndex === 0 ? rightProductSelected : rightItemSelected).some(i => i.stored && i.status === 'Pendiente')
+            }
+          >
+             <ChevronLeftIcon className="w-4 h-4" />
+          </Button>
+        </Grid>
+
+        <Grid item xs={12} md={5.5}>
+          <Paper variant="outlined" sx={{ height: 400, display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
+            <Box p={2} bgcolor="#f8fafc" borderBottom="1px solid #e2e8f0" display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="subtitle2" fontWeight={700}>{titleRight}</Typography>
+              {hasPendingStored && (
+                <Tooltip title={currentCheckedPending === 0 ? "Marca algún ítem pendiente para habilitar" : ""}>
+                   <span>
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      color="success" 
+                      onClick={handleComplete}
+                      disabled={saving || currentCheckedPending === 0}
+                      startIcon={<CheckCircleIcon className="w-4 h-4 text-white" />}
+                      sx={{ fontSize: '0.65rem', py: 0.5, borderRadius: 1.5, textTransform: 'none', fontWeight: 700 }}
+                    >
+                      Completar
+                    </Button>
+                   </span>
+                </Tooltip>
+              )}
+            </Box>
+            <List dense sx={{ flex: 1, overflow: 'auto' }}>
+              {selected.map((item) => {
+                const name = type === 'product' ? item.product_name : item.item_name;
+                const canSelectOnRight = !item.stored || item.status === 'Pendiente';
+
+                return (
+                  <ListItem key={item.rowId} dense sx={{ borderBottom: '1px solid #f1f5f9', opacity: item.stored && item.status !== 'Pendiente' ? 0.7 : 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40 }} onClick={() => canSelectOnRight && handleToggle(item, 'right', type)}>
+                      <Checkbox 
+                        checked={rightSel.some(i => i.rowId === item.rowId)} 
+                        size="small" 
+                        disabled={item.stored && item.status !== 'Pendiente'}
+                      />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={name} 
+                      secondaryTypographyProps={{ component: 'div' }}
+                      secondary={
+                        item.stored ? (
+                          <Chip 
+                            label={item.status} 
+                            size="small" 
+                            sx={{ 
+                              mt: 0.5, 
+                              height: 20, 
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              backgroundColor: item.status === 'Completo' ? '#dbeafe' : '#fef3c7',
+                              color: item.status === 'Completo' ? '#1e40af' : '#92400e',
+                              border: `1px solid ${item.status === 'Completo' ? '#bfdbfe' : '#fde68a'}`
+                            }} 
+                          />
+                        ) : (
+                          <Typography variant="caption" color="primary" fontWeight={700}>Pendiente por guardar</Typography>
+                        )
+                      }
+                      primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                    />
+                    <TextField 
+                      size="small"
+                      type="number"
+                      value={item.remisionQty}
+                      disabled={true}
+                      sx={{ 
+                        width: 65, 
+                        ml: 1, 
+                        '& .MuiInputBase-root': {
+                          backgroundColor: '#f1f5f9',
+                          fontSize: '0.75rem'
+                        },
+                        '& .MuiInputBase-input': { 
+                          p: '6px 8px',
+                          textAlign: 'center',
+                          color: '#475569'
+                        } 
+                      }}
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Paper>
+        </Grid>
       </Grid>
-    </Grid>
-  );
+    );
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-      <DialogTitle sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" fontWeight={800}>Nueva Remisión - Proyecto #{projectId}</Typography>
+      <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" fontWeight={800} component="div">Nueva Remisión - Proyecto #{projectId}</Typography>
         <IconButton onClick={onClose} size="small"><XMarkIcon className="w-5 h-5" /></IconButton>
       </DialogTitle>
       <Divider />
@@ -560,7 +699,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
           variant="contained" 
           color="primary" 
           onClick={handleSave} 
-          disabled={saving}
+          disabled={saving || (!selectedProducts.some(p => !p.stored) && !selectedItems.some(i => !i.stored))}
           sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}
         >
           {saving ? 'Guardando...' : 'Guardar Remisión'}

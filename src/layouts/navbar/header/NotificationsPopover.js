@@ -34,7 +34,7 @@ const NOTIFICATIONS = [
     description: 'sent from Guido Padberg',
     avatar: null,
     type: 'mail',
-    createdAt: '07/07/24',
+    createdAt: new Date('2024-07-07'),
     isUnRead: false,
   },
   {
@@ -43,7 +43,7 @@ const NOTIFICATIONS = [
     description: 'Your order is being shipped',
     avatar: null,
     type: 'order_shipped',
-    createdAt: '07/07/24',
+    createdAt: new Date('2024-07-07'),
     isUnRead: false,
   },
 ];
@@ -142,7 +142,7 @@ export default function NotificationsPopover() {
 
 NotificationItem.propTypes = {
   notification: PropTypes.shape({
-    createdAt: PropTypes.instanceOf(Date),
+    createdAt: PropTypes.oneOfType([PropTypes.instanceOf(Date), PropTypes.string, PropTypes.number]),
     id: PropTypes.string,
     isUnRead: PropTypes.bool,
     title: PropTypes.string,
