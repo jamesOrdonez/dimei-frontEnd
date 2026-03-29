@@ -21,6 +21,7 @@ import {
   Tab,
   IconButton,
   Divider,
+  Chip,
 } from '@mui/material';
 import { ChevronRightIcon, ChevronLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -61,13 +62,51 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       const generateRowId = (id) => `${id}_${Date.now()}_${Math.random()}`;
 
       // Pre-populate with already remitted items from the project
-      const initialProducts = (project.products || [])
-        .filter(p => p.remitted_quantity > 0)
-        .map(p => ({ ...p, remisionQty: p.remitted_quantity, stored: true, rowId: `stored_${p.product_id}` }));
+      const initialProducts = [];
+      (project.products || []).forEach(p => {
+        if (p.remitted_details && p.remitted_details.length > 0) {
+          p.remitted_details.forEach((detail, idx) => {
+            initialProducts.push({ 
+              ...p, 
+              remisionQty: detail.quantity, 
+              status: detail.status, 
+              stored: true, 
+              rowId: `stored_${p.product_id}_${detail.status}_${idx}` 
+            });
+          });
+        } else if (p.remitted_quantity > 0) {
+          initialProducts.push({ 
+            ...p, 
+            remisionQty: p.remitted_quantity, 
+            status: 'Completo', 
+            stored: true, 
+            rowId: `stored_${p.product_id}_legacy` 
+          });
+        }
+      });
       
-      const initialItems = (project.items || [])
-        .filter(i => i.remitted_quantity > 0)
-        .map(i => ({ ...i, remisionQty: i.remitted_quantity, stored: true, rowId: `stored_${i.item_id}` }));
+      const initialItems = [];
+      (project.items || []).forEach(i => {
+        if (i.remitted_details && i.remitted_details.length > 0) {
+          i.remitted_details.forEach((detail, idx) => {
+            initialItems.push({ 
+              ...i, 
+              remisionQty: detail.quantity, 
+              status: detail.status, 
+              stored: true, 
+              rowId: `stored_${i.item_id}_${detail.status}_${idx}` 
+            });
+          });
+        } else if (i.remitted_quantity > 0) {
+          initialItems.push({ 
+            ...i, 
+            remisionQty: i.remitted_quantity, 
+            status: 'Completo', 
+            stored: true, 
+            rowId: `stored_${i.item_id}_legacy` 
+          });
+        }
+      });
 
       setSelectedProducts(initialProducts);
       setSelectedItems(initialItems);
@@ -296,7 +335,15 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
       const response = await axios.post('/saveRemision', payload);
       
-      Swal.fire('Éxito', 'Remisión creada correctamente.', 'success');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        icon: 'success',
+        title: 'Remisión creada correctamente.'
+      });
       
       // Generar y descargar PDF
       if (response.data && response.data.remisionId) {
@@ -402,7 +449,25 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                   </ListItemIcon>
                   <ListItemText 
                     primary={name} 
-                    secondary={item.stored ? "Almacenado" : ""}
+                    secondary={
+                      item.stored ? (
+                        <Chip 
+                          label={item.status} 
+                          size="small" 
+                          sx={{ 
+                            mt: 0.5, 
+                            height: 20, 
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            backgroundColor: item.status === 'Completo' ? '#dbeafe' : '#fef3c7',
+                            color: item.status === 'Completo' ? '#1e40af' : '#92400e',
+                            border: `1px solid ${item.status === 'Completo' ? '#bfdbfe' : '#fde68a'}`
+                          }} 
+                        />
+                      ) : (
+                        <Typography variant="caption" color="primary" fontWeight={700}>Pendiente por guardar</Typography>
+                      )
+                    }
                     primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                   />
                   <TextField 
