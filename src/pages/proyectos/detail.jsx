@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
-import { Card, CardContent, Typography, Grid, Divider, Box, Button } from '@mui/material';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Card, CardContent, Typography, Grid, Divider, Box, Button, Alert, AlertTitle } from '@mui/material';
+import { ArrowLeftIcon, CloudArrowUpIcon, DocumentCheckIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from '../../components/loaders';
 import ProductTransfer from './components/product.transfer.jsx';
@@ -12,6 +12,10 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import ProjectReportPdf from './components/ProjectReportPdf.jsx';
 import Swal from 'sweetalert2';
 import RemisionModal from './components/RemisionModal.jsx';
+import DeliveryActPdf from './components/DeliveryActPdf.jsx';
+import { decrypt } from '../../utils/crypto.js';
+import { useMemo } from 'react';
+import { pdf } from '@react-pdf/renderer';
 
 export default function DetalleProyecto() {
   const { id: projectId } = useParams();
@@ -20,7 +24,10 @@ export default function DetalleProyecto() {
   const [showItems, setShowItems] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [openRemision, setOpenRemision] = useState(false);
+  const [closingProject, setClosingProject] = useState(false);
+  const [uploadingSignedAct, setUploadingSignedAct] = useState(false);
   const company = sessionStorage.getItem('company');
+  const user = decrypt(sessionStorage.getItem('user')) || ' ';
 
   const fetchProject = () => {
     axios.get(`/getOneProject/${projectId}`)
@@ -74,6 +81,112 @@ export default function DetalleProyecto() {
     });
   };
 
+  const isFullyRemitted = useMemo(() => {
+    if (!project) return false;
+    const projectProducts = project.products || [];
+    const projectItems = project.items || [];
+    
+    if (projectProducts.length === 0 && projectItems.length === 0) return false;
+
+    // Check products: quantity matched and no 'Pendiente' status
+    const allProducts = projectProducts.every(p => {
+      const quantityMatched = Number(p.remitted_quantity) >= Number(p.quantity);
+      const nonePending = (p.remitted_details || []).every(d => d.status !== 'Pendiente');
+      return quantityMatched && nonePending;
+    });
+
+    // Check items: quantity matched and no 'Pendiente' status
+    const allItems = projectItems.every(i => {
+      const quantityMatched = Number(i.remitted_quantity) >= Number(i.quantity);
+      const nonePending = (i.remitted_details || []).every(d => d.status !== 'Pendiente');
+      return quantityMatched && nonePending;
+    });
+    
+    return allProducts && allItems;
+  }, [project]);
+
+  const handleCloseProject = async () => {
+    const result = await Swal.fire({
+      title: '¿Cerrar Proyecto?',
+      text: "Esto cambiará el estado a 'Finalizado' y generará el Acta de Entrega.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, cerrar proyecto',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      setClosingProject(true);
+      try {
+        // 1. Generate and Download PDF
+        const blob = await pdf(<DeliveryActPdf project={project} user={user} />).toBlob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `acta_entrega_proyecto_${projectId}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        // 2. Update status in backend
+        await axios.patch(`/updateProjectStatus/${projectId}`, { state: 'Finalizado' });
+        
+        await Swal.fire({
+          title: '¡Proyecto Cerrado!',
+          text: 'El proyecto ha sido finalizado y el acta de entrega generada.',
+          icon: 'success',
+          timer: 3000,
+          showConfirmButton: false
+        });
+        
+        fetchProject();
+      } catch (err) {
+        console.error('Error al cerrar proyecto:', err);
+        Swal.fire('Error', 'No se pudo cerrar el proyecto correctamente.', 'error');
+      } finally {
+        setClosingProject(false);
+      }
+    }
+  };
+  
+  const handleUploadSignedAct = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      Swal.fire('Error', 'Solo se permiten archivos PDF.', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('signed_act', file);
+
+    setUploadingSignedAct(true);
+    axios.post(`/uploadSignedAct/${projectId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+      .then(() => {
+        Swal.fire({
+          title: '¡Cargado!',
+          text: 'El acta firmada se ha cargado correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        fetchProject();
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire('Error', 'No se pudo cargar el archivo.', 'error');
+      })
+      .finally(() => setUploadingSignedAct(false));
+  };
+
+  const handleViewSignedAct = () => {
+    window.open(`${axios.defaults.baseURL}/getSignedAct/${projectId}`, '_blank');
+  };
+
   if (!project) return <Loader />;
 
   return (
@@ -111,14 +224,45 @@ export default function DetalleProyecto() {
             )}
 
             {project.state === 'Iniciado' && (
-              <Button
-                variant="contained"
-                color="info"
-                onClick={() => setOpenRemision(true)}
-                sx={{ borderRadius: 2 }}
-              >
-                Remisionar
-              </Button>
+              !isFullyRemitted ? (
+                <Button
+                  variant="contained"
+                  color="info"
+                  onClick={() => setOpenRemision(true)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Remisionar
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="warning"
+                  onClick={handleCloseProject}
+                  disabled={closingProject}
+                  sx={{ borderRadius: 2, color: '#fff' }}
+                >
+                  {closingProject ? 'Cerrando...' : 'Cerrar Proyecto'}
+                </Button>
+              )
+            )}
+
+            {project.state === 'Finalizado' && (
+               <PDFDownloadLink
+                  document={<DeliveryActPdf project={project} user={user} />}
+                  fileName={`acta_entrega_proyecto_${projectId}.pdf`}
+                  style={{ textDecoration: 'none' }}
+               >
+                  {({ loading }) => (
+                     <Button
+                        variant="contained"
+                        color="success"
+                        disabled={loading}
+                        sx={{ borderRadius: 2 }}
+                     >
+                        {loading ? 'Generando Acta...' : 'Descargar Acta de Entrega'}
+                     </Button>
+                  )}
+               </PDFDownloadLink>
             )}
 
              <PDFDownloadLink
@@ -174,6 +318,73 @@ export default function DetalleProyecto() {
               <Typography variant="caption" color="text.secondary" display="block">Capacidad (kg)</Typography>
               <Typography variant="body1" fontWeight="500">{project.capacity || 0} kg</Typography>
             </Grid>
+
+            {project.state === 'Finalizado' && (
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
+                <Box mt={2}>
+                  <Typography variant="subtitle2" fontWeight="bold" mb={1}>
+                    Acta de Entrega Final Firmada
+                  </Typography>
+                  
+                  {!project.signed_act ? (
+                    <Alert severity="warning" variant="outlined" sx={{ borderRadius: 2 }}>
+                      <AlertTitle>Pendiente por cargar</AlertTitle>
+                      Aún no se ha cargado el acta de entrega final firmada por el cliente.
+                      <Box mt={2}>
+                        <Button
+                          variant="contained"
+                          color="warning"
+                          component="label"
+                          startIcon={<CloudArrowUpIcon className="w-5 h-5" />}
+                          disabled={uploadingSignedAct}
+                          sx={{ borderRadius: 2, color: '#fff' }}
+                        >
+                          {uploadingSignedAct ? 'Subiendo...' : 'Cargar Acta Firmada'}
+                          <input
+                            type="file"
+                            hidden
+                            accept="application/pdf"
+                            onChange={handleUploadSignedAct}
+                          />
+                        </Button>
+                      </Box>
+                    </Alert>
+                  ) : (
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Alert severity="success" icon={<DocumentCheckIcon className="w-5 h-5" />} sx={{ borderRadius: 2, flexGrow: 1 }}>
+                        El acta de entrega firmada ya ha sido cargada.
+                      </Alert>
+                      <Box display="flex" gap={1}>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={handleViewSignedAct}
+                          startIcon={<EyeIcon className="w-5 h-5" />}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          Ver
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="inherit"
+                          component="label"
+                          sx={{ borderRadius: 2 }}
+                        >
+                          Actualizar
+                          <input
+                            type="file"
+                            hidden
+                            accept="application/pdf"
+                            onChange={handleUploadSignedAct}
+                          />
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Grid>
+            )}
           </Grid>
         </CardContent>
       </Card>

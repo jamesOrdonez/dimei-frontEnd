@@ -64,15 +64,15 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
       // Pre-populate with already remitted items from the project
       const initialProducts = [];
-      (project.products || []).forEach(p => {
+      (project.products || []).forEach((p, pIdx) => {
         if (p.remitted_details && p.remitted_details.length > 0) {
-          p.remitted_details.forEach((detail, idx) => {
+          p.remitted_details.forEach((detail, dIdx) => {
             initialProducts.push({ 
               ...p, 
               remisionQty: detail.quantity, 
               status: detail.status, 
               stored: true, 
-              rowId: `stored_${p.product_id}_${detail.status}_${idx}` 
+              rowId: `stored_p${pIdx}_${p.product_id}_${detail.status}_${dIdx}` 
             });
           });
         } else if (p.remitted_quantity > 0) {
@@ -81,21 +81,21 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             remisionQty: p.remitted_quantity, 
             status: 'Completo', 
             stored: true, 
-            rowId: `stored_${p.product_id}_legacy` 
+            rowId: `stored_p${pIdx}_${p.product_id}_legacy` 
           });
         }
       });
       
       const initialItems = [];
-      (project.items || []).forEach(i => {
+      (project.items || []).forEach((i, iIdx) => {
         if (i.remitted_details && i.remitted_details.length > 0) {
-          i.remitted_details.forEach((detail, idx) => {
+          i.remitted_details.forEach((detail, dIdx) => {
             initialItems.push({ 
               ...i, 
               remisionQty: detail.quantity, 
               status: detail.status, 
               stored: true, 
-              rowId: `stored_${i.item_id}_${detail.status}_${idx}` 
+              rowId: `stored_i${iIdx}_${i.item_id}_${detail.status}_${dIdx}` 
             });
           });
         } else if (i.remitted_quantity > 0) {
@@ -104,7 +104,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             remisionQty: i.remitted_quantity, 
             status: 'Completo', 
             stored: true, 
-            rowId: `stored_${i.item_id}_legacy` 
+            rowId: `stored_i${iIdx}_${i.item_id}_legacy` 
           });
         }
       });
@@ -483,7 +483,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
               <Typography variant="subtitle2" fontWeight={700}>{titleLeft}</Typography>
             </Box>
             <List dense sx={{ flex: 1, overflow: 'auto' }}>
-              {available.map((item) => {
+              {available.map((item, availIdx) => {
                 const id = type === 'product' ? item.product_id : item.item_id;
                 const name = type === 'product' ? item.product_name : item.item_name;
                 
@@ -493,7 +493,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                 const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
 
                 return (
-                  <ListItem key={id} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <ListItem key={`${id}-${availIdx}`} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
                     <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
                       <Checkbox checked={leftSel.some(i => (type === 'product' ? i.product_id : i.item_id) === id)} size="small" />
                     </ListItemIcon>
