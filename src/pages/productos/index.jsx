@@ -109,7 +109,7 @@ export default function Usuarios() {
         deleteEndpoint="/deleteProduct"
         fetchOneEndpoint="/getOneproduct"
         fields={fields}
-        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
+        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
         extraHeaders={[
           { label: 'Grupo', after: 'name' },
           { label: '¿Es Variable?', after: 'description' },
