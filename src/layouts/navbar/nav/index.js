@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
-import { Box, Link, Button, Drawer, Typography, Avatar, Stack } from '@mui/material';
+import { Box, Link, Drawer, Typography, Avatar } from '@mui/material';
 import useResponsive from '../../../hooks/useResponsive';
 // components
 import Scrollbar from '../../../components/scrollbar';
@@ -35,6 +35,8 @@ export default function Nav({ openNav, onCloseNav }) {
   const { pathname } = useLocation();
   const usuario = decrypt(sessionStorage.getItem('user'));
   const rol = decrypt(sessionStorage.getItem('rol'));
+  const rolName = decrypt(sessionStorage.getItem('rolName'));
+
 
   const isDesktop = useResponsive('up', 'lg');
 
@@ -59,7 +61,8 @@ export default function Nav({ openNav, onCloseNav }) {
       <Box sx={{ mb: 5, mx: 2.5 }}>
         <Link underline="none">
           <StyledAccount>
-            <Avatar src={'./img/profile/pngfind.com-pirate-flag-png-2847145.png'} alt="photoURL" />
+            <Avatar sx={{ bgcolor: 'primary.main' }}>{usuario?.charAt(0).toUpperCase()}</Avatar>
+
 
             <Box sx={{ ml: 2 }}>
               <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
@@ -67,12 +70,9 @@ export default function Nav({ openNav, onCloseNav }) {
               </Typography>
 
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {rol == 1 && 'Desarrollador'}
-                {rol == 2 && 'Almacenista'}
-                {rol == 3 && 'Proyectos'}
-                {rol == 4 && 'Mantenimientos'}
-                {rol == 5 && 'Administrador'}
+                {rolName}
               </Typography>
+
             </Box>
           </StyledAccount>
         </Link>
@@ -81,30 +81,6 @@ export default function Nav({ openNav, onCloseNav }) {
       <NavSection data={navConfig} />
 
       <Box sx={{ flexGrow: 1 }} />
-
-      {/*  <Box sx={{ px: 2.5, pb: 3, mt: 10 }}>
-        <Stack alignItems="center" spacing={3} sx={{ pt: 5, borderRadius: 2, position: 'relative' }}>
-          <Box
-            component="img"
-            src="/assets/illustrations/illustration_avatar.png"
-            sx={{ width: 100, position: 'absolute', top: -50 }}
-          />
-
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography gutterBottom variant="h6">
-              Get more?
-            </Typography>
-
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              From only $69
-            </Typography>
-          </Box>
-
-          <Button href="https://material-ui.com/store/items/minimal-dashboard/" target="_blank" variant="contained">
-            Upgrade to Pro
-          </Button>
-        </Stack>
-      </Box> */}
     </Scrollbar>
   );
 

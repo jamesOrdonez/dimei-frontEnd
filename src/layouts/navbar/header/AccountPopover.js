@@ -55,8 +55,9 @@ export default function AccountPopover() {
           }),
         }}
       >
-        <Avatar src={'./img/profile/pngfind.com-pirate-flag-png-2847145.png'} alt="photoURL" />
+        <Avatar sx={{ bgcolor: 'secondary.main' }}>{usuario?.charAt(0).toUpperCase()}</Avatar>
       </IconButton>
+
 
       <Popover
         open={Boolean(open)}
@@ -80,9 +81,6 @@ export default function AccountPopover() {
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
             {usuario}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            whoaomi11@gmail.com
           </Typography>
         </Box>
 
