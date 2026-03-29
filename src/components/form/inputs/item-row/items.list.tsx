@@ -47,7 +47,7 @@ export default function ItemsList({
   const allSeenOptionsRef = useRef<Map<any, Option>>(new Map());
 
   useEffect(() => {
-    if (options.length > 0) {
+    if (options && options !== items) {
       // Acumular las nuevas opciones en el cache
       options.forEach((opt) => {
         allSeenOptionsRef.current.set(opt.value, opt);

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import {
   Table,
   TableBody,
@@ -25,6 +26,7 @@ interface BaseTableProps {
   renderExtraCell?: (params: { item: any; rowIndex: number; headerLabel: string }) => React.ReactNode;
   excludeKeys?: string[];
   rowsPerPageOptions?: number[];
+  firstHeader?: string | ExtraHeader; // New prop for first column
 }
 
 export default function BaseTable({
@@ -33,6 +35,7 @@ export default function BaseTable({
   renderExtraCell,
   excludeKeys = [],
   rowsPerPageOptions = [5, 10, 25],
+  firstHeader,
 }: BaseTableProps) {
 
   const { t } = useTranslation();
@@ -56,6 +59,12 @@ export default function BaseTable({
   // Combine headers with positioning logic
   const combinedHeaders: { label: string; isExtra: boolean }[] = [];
   
+  // 0. Add first header if provided
+  if (firstHeader) {
+    const fh = typeof firstHeader === 'string' ? { label: firstHeader } : firstHeader;
+    combinedHeaders.push({ label: fh.label, isExtra: true });
+  }
+
   // 1. Add data keys and their associated extra headers
   dataKeys.forEach(key => {
     combinedHeaders.push({ label: key, isExtra: false });
@@ -131,7 +140,24 @@ export default function BaseTable({
               >
                 {combinedHeaders.map((header) => {
                   if (!header.isExtra) {
-                    return <TableCell key={header.label}>{item[header.label]?.toString() || '-'}</TableCell>;
+                    const value = item[header.label];
+                    // Render image if header is named img or Imagen
+                    if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase()) && value) {
+                      const src = typeof value === 'string' && value.startsWith('http') 
+                        ? value 
+                        : `${axios.defaults.baseURL}/getItem/image/${item.id}`;
+                      return (
+                        <TableCell key={header.label}>
+                          <Box 
+                            component="img" 
+                            src={src} 
+                            sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover' }} 
+                            alt={header.label}
+                          />
+                        </TableCell>
+                      );
+                    }
+                    return <TableCell key={header.label}>{value?.toString() || '-'}</TableCell>;
                   }
                   return (
                     <TableCell key={header.label}>

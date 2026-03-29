@@ -22,6 +22,16 @@ const Toast = Swal.mixin({
   }
 });
 
+const Alert = Swal.mixin({
+  confirmButtonColor: '#3b82f6',
+  didOpen: () => {
+    const container = Swal.getContainer();
+    if (container) {
+      container.style.zIndex = '9999';
+    }
+  }
+});
+
 interface FormDialogProps {
   open: boolean;
   onClose: () => void;
@@ -82,14 +92,19 @@ export default function FormDialog({
           } finally {
             setIsFetching(false);
           }
+        } else {
+          // If no fetch URL, just use initialValues when opening
+          setCurrentData(initialValues || {});
         }
       } else if (open) {
         setCurrentData(initialValues || {});
       }
     };
 
-    fetchData();
-  }, [open, initialValues, mode, endpoint, updateEndpoint]);
+    if (open) {
+      fetchData();
+    }
+  }, [open, initialValues?.id, mode, endpoint, updateEndpoint, fetchOneEndpoint]);
 
   const handleSave = async () => {
     const hasFile = Object.values(currentData).some((val) => val instanceof File);
@@ -128,9 +143,25 @@ export default function FormDialog({
           if (onSuccess) onSuccess({ response, payload });
           Toast.fire({ icon: 'success', title: 'Registro creado exitosamente' });
           onClose();
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error creating record:', error);
-          Toast.fire({ icon: 'error', title: 'Error al crear el registro' });
+          const errorMessage = error.response?.data?.message || 'Error al crear el registro';
+          const status = error.response?.status;
+
+          if (status === 400) {
+            Alert.fire({
+              icon: 'error',
+              title: 'Stock Insuficiente',
+              html: `<div style="text-align: left;">${errorMessage.replace(/\n/g, '<br/>')}</div>`,
+              confirmButtonText: 'Entendido'
+            });
+          } else {
+            Toast.fire({ 
+              icon: 'error', 
+              title: errorMessage,
+              timer: 5000 
+            });
+          }
         } finally {
           setIsSaving(false);
         }
@@ -147,9 +178,25 @@ export default function FormDialog({
           if (onSuccess) onSuccess({ response, payload });
           Toast.fire({ icon: 'success', title: 'Registro actualizado exitosamente' });
           onClose();
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error updating record:', error);
-          Toast.fire({ icon: 'error', title: 'Error al actualizar el registro' });
+          const errorMessage = error.response?.data?.message || 'Error al actualizar el registro';
+          const status = error.response?.status;
+
+          if (status === 400) {
+            Alert.fire({
+              icon: 'error',
+              title: 'Inconsistencia en la operación',
+              html: `<div style="text-align: left;">${errorMessage.replace(/\n/g, '<br/>')}</div>`,
+              confirmButtonText: 'Entendido'
+            });
+          } else {
+            Toast.fire({ 
+              icon: 'error', 
+              title: errorMessage,
+              timer: 5000
+            });
+          }
         } finally {
           setIsSaving(false);
         }

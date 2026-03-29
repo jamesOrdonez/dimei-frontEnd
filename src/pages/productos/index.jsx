@@ -109,7 +109,36 @@ export default function Usuarios() {
         deleteEndpoint="/deleteProduct"
         fetchOneEndpoint="/getOneproduct"
         fields={fields}
-        excludeKeys={['company', 'user']}
+        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
+        extraHeaders={[
+          { label: 'Grupo', after: 'name' },
+          { label: '¿Es Variable?', after: 'description' },
+          { label: 'Valor 1', after: '¿Es Variable?' },
+          { label: 'Operación', after: 'Valor 1' },
+          { label: 'Valor 2', after: 'Operación' },
+        ]}
+        renderExtraCell={({ item, headerLabel }) => {
+          switch (headerLabel) {
+            case 'Grupo':
+              return item.group_product?.name || '-';
+            case '¿Es Variable?':
+              return item.variable === '1' || item.variable === 1 ? 'Si' : 'No';
+            case 'Valor 1':
+              return item.value1 ?? '-';
+            case 'Operación':
+              const opMap = {
+                '+': 'Suma',
+                '-': 'Resta',
+                '*': 'Multiplicación',
+                '/': 'División'
+              };
+              return opMap[item.mathOperation] || item.mathOperation || '-';
+            case 'Valor 2':
+              return item.value2 ?? '-';
+            default:
+              return null;
+          }
+        }}
       />
     </>
     );
