@@ -57,6 +57,7 @@ export default function BaseSelect({
     } else if (items !== options) {
       setItems(options || []);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint, options, optionLabel, optionValue]);
 
   const selectedOption = items.find((opt) => String(opt.value) === String(value)) || null;

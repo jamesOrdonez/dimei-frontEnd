@@ -68,6 +68,7 @@ export default function ItemsList({
         })
         .catch((error) => console.error('Error fetching items for list:', error));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, productEndpoint, optionLabel, optionValue]);
 
   const handleItemChange = (index: number, field: string, newValue: any) => {

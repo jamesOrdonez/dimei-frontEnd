@@ -10,7 +10,6 @@ import {
   ArrowDownTrayIcon, 
   DocumentTextIcon,
   CalendarDaysIcon,
-  InboxStackIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import BaseButton from '../../components/ui/BaseButton.tsx';
