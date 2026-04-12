@@ -262,6 +262,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                name: p.product_name,
                cantidad: p.remisionQty,
                components: (p.items || []).map(comp => ({
+                 id: comp.item_id,
                  name: comp.item_name,
                  quantity: comp.quantity, // reference quantity
                }))
@@ -271,6 +272,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
         }, []).map(p => ({
           ...p,
           components: p.components.map(comp => ({
+            id: comp.id,
             name: comp.name,
             totalQuantity: (Number(comp.quantity) * Number(p.cantidad))
           }))

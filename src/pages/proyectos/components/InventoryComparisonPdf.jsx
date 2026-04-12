@@ -27,7 +27,8 @@ const styles = StyleSheet.create({
   table: { display: 'flex', flexDirection: 'column', width: 'auto', marginTop: 10, borderStyle: 'solid', borderWidth: 1, borderColor: '#e2e8f0' },
   tableHeader: { flexDirection: 'row', backgroundColor: '#f8fafc', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
-  colItem: { width: '30%' },
+  colId: { width: '6%', textAlign: 'center' },
+  colItem: { width: '24%' },
   colTotalInv: { width: '10%', textAlign: 'center' },
   colComp: { width: '10%', textAlign: 'center' },
   colLibre: { width: '10%', textAlign: 'center' },
@@ -82,6 +83,7 @@ export default function InventoryComparisonPdf({ data, categories, summary }) {
 
         <View style={styles.table}>
           <View style={styles.tableHeader}>
+            <Text style={[styles.colId, styles.colHeader]}>ID</Text>
             <Text style={[styles.colItem, styles.colHeader]}>ÍTEM</Text>
             <Text style={[styles.colTotalInv, styles.colHeader]}>TOTAL INV.</Text>
             <Text style={[styles.colComp, styles.colHeader]}>COMPROMETIDO</Text>
@@ -103,6 +105,7 @@ export default function InventoryComparisonPdf({ data, categories, summary }) {
 
             return (
               <View key={index} style={styles.tableRow} wrap={false}>
+                <Text style={[styles.colId, styles.rowText]}>{row.id}</Text>
                 <View style={styles.colItem}>
                   <Text style={styles.rowTextBold}>{row.item_name}</Text>
                   <Text style={{ fontSize: 8, color: '#94a3b8' }}>{catName}</Text>

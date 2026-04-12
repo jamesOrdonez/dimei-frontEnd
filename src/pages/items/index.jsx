@@ -188,6 +188,7 @@ export default function Usuarios() {
       items: (payload.net_items || []).map(item => {
         const gItem = gridData.find(gItem => gItem.id === item.id);
         return {
+          id: gItem.id,
           description: gItem.description,
           grupo: gItem.group,
           cantidad: item.quantity
