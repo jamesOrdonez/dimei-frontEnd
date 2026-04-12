@@ -29,7 +29,7 @@ export default function BaseCardView({
 }: BaseCardViewProps) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]);
+  const [itemsPerPage] = useState(itemsPerPageOptions[0]);
 
   if (!data || data.length === 0) {
     return <Box p={3} textAlign="center" color="text.secondary">No hay datos disponibles</Box>;

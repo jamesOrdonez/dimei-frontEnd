@@ -30,7 +30,7 @@ export default function DetalleProyecto() {
   const [uploadingSignedAct, setUploadingSignedAct] = useState(false);
   const company = sessionStorage.getItem('company');
   const user = decrypt(sessionStorage.getItem('user')) || ' ';
-  const { hasPermission, isAdmin } = usePermissions();
+  const { hasPermission } = usePermissions();
 
 
   const fetchProject = useCallback(() => {
