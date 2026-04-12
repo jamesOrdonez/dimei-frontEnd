@@ -19,7 +19,7 @@ import {
 import axios from 'axios';
 import { Loader } from '../../../components/loaders';
 
-export default function ProductTransfer({ projectId, company, project }) {
+export default function ProductTransfer({ projectId, company, project, onSuccess }) {
   const [products, setProducts] = useState([]);
   // If the project object already has the array, use it. Otherwise, assume empty array initially.
   const [projectProducts, setProjectProducts] = useState(
@@ -39,6 +39,15 @@ export default function ProductTransfer({ projectId, company, project }) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Sync internal state if parent project changes
+  useEffect(() => {
+    if (project) {
+      setProjectProducts(
+        Array.isArray(project.products) ? project.products : (Array.isArray(project.projectItems) ? project.projectItems : [])
+      );
+    }
+  }, [project]);
 
   const fetchData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -110,6 +119,7 @@ export default function ProductTransfer({ projectId, company, project }) {
       await axios.post('/saveproductProyect', payload);
       // Silent Refetch
       fetchData(true);
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error('Failed to add products:', err);
     }
@@ -128,6 +138,7 @@ export default function ProductTransfer({ projectId, company, project }) {
       ));
       // Silent Refetch
       fetchData(true);
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error('Failed to remove products:', err);
     }

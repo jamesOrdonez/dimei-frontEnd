@@ -443,7 +443,7 @@ export default function DetalleProyecto() {
               </Table>
             </TableContainer>
           ) : (
-            <ProductTransfer projectId={projectId} company={company} project={project} />
+            <ProductTransfer projectId={projectId} company={company} project={project} onSuccess={fetchProject} />
           )}
         </CardContent>
       </Card>
@@ -503,7 +503,7 @@ export default function DetalleProyecto() {
               </Box>
               <Divider sx={{ mb: 3 }} />
               
-              <ItemTransfer projectId={projectId} company={company} project={project} />
+              <ItemTransfer projectId={projectId} company={company} project={project} onSuccess={fetchProject} />
             </CardContent>
           </Card>
         )

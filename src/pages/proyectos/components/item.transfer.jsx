@@ -19,7 +19,7 @@ import {
 import axios from 'axios';
 import { Loader } from '../../../components/loaders';
 
-export default function ItemTransfer({ projectId, company, project }) {
+export default function ItemTransfer({ projectId, company, project, onSuccess }) {
   const [items, setItems] = useState([]);
   
   // If the project object already has the array, use it. Otherwise, assume empty array initially.
@@ -41,6 +41,13 @@ export default function ItemTransfer({ projectId, company, project }) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Sync internal state if parent project changes
+  useEffect(() => {
+    if (project) {
+      setProjectItems(Array.isArray(project.items) ? project.items : []);
+    }
+  }, [project]);
 
   const fetchData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -111,6 +118,7 @@ export default function ItemTransfer({ projectId, company, project }) {
       await axios.post('/saveItemProyect', payload);
       // Silent Refetch
       fetchData(true);
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error('Failed to add items:', err);
     }
@@ -129,6 +137,7 @@ export default function ItemTransfer({ projectId, company, project }) {
       ));
       // Silent Refetch
       fetchData(true);
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error('Failed to remove items:', err);
     }
