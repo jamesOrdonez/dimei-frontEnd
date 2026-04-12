@@ -173,8 +173,7 @@ export default function Usuarios() {
       Grupo: item.ItemGroup?.name || 'S/N',
       Unidad: item.UnitOfMeasure?.unitOfMeasure || 'S/N',
       price: item.price,
-      position1: item.position1,
-      position2: item.position2,
+      location: [item.position1, item.position2, item.position3].filter(Boolean).join(' - ') || '-',
       group_item: item.group_item || item.ItemGroup?.id, // Keep for filtering in remission modal
       unitOfMeasure: item.unitOfMeasure || item.UnitOfMeasure?.id, // Keep for reference
     }));

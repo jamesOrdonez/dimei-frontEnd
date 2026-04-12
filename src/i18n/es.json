@@ -12,5 +12,6 @@
   "stopNumber": "Número de paradas",
   "travel": "Recorrido (m)",
   "capacity": "Capacidad (kg)",
-  "customer": "Cliente"
+  "customer": "Cliente",
+  "location": "Ubicación"
 }
