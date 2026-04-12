@@ -166,6 +166,7 @@ export default function InventoryComparisonModal({ open, onClose }) {
       const totalComprar = deficit * (row.price || 0);
       
       return {
+        "ID": row.id,
         "Ítem": row.item_name,
         "Categoría": catName,
         "Total Inv.": Math.max(0, row.total_inventory),
