@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   summaryValueRed: { fontSize: 12, color: '#e11d48', fontFamily: 'Helvetica-Bold' },
 });
 
-export default function InventoryComparisonPdf({ data, categories, summary }) {
+export default function InventoryComparisonPdf({ data, categories, summary, projectName }) {
   if (!data) return null;
 
   return (
@@ -55,6 +55,11 @@ export default function InventoryComparisonPdf({ data, categories, summary }) {
         <View style={styles.headerContainer}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.title}>Reporte de Comparativa de Inventario</Text>
+            {projectName && (
+              <Text style={[styles.subtitle, { fontFamily: 'Helvetica-Bold', color: '#1e293b', fontSize: 11, marginBottom: 4 }]}>
+                Proyecto: {projectName}
+              </Text>
+            )}
             <Text style={styles.subtitle}>Stock total, comprometido en proyectos, libre y déficit de compras.</Text>
             <Text style={styles.subtitle}>Generado el {new Date().toLocaleDateString()}</Text>
           </View>

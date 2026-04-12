@@ -65,6 +65,8 @@ export default function InventoryComparisonModal({ open, onClose }) {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('all');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'cards'
 
   // Export Menu State
@@ -79,7 +81,8 @@ export default function InventoryComparisonModal({ open, onClose }) {
     if (open) {
       setLoading(true);
       // Fetch inventory comparison
-      axios.get(`/getInventoryComparison/${company}`)
+      const params = selectedProject !== 'all' ? { projectId: selectedProject } : {};
+      axios.get(`/getInventoryComparison/${company}`, { params })
         .then(res => {
           const result = res.data.data || [];
           setData(result);
@@ -97,8 +100,15 @@ export default function InventoryComparisonModal({ open, onClose }) {
           setCategories(res.data.data || res.data || []);
         })
         .catch(err => console.error("Error fetching categories", err));
+
+      // Fetch projects
+      axios.get(`/getProjects/${company}`)
+        .then(res => {
+          setProjects(res.data.data || []);
+        })
+        .catch(err => console.error("Error fetching projects", err));
     }
-  }, [open, company]);
+  }, [open, company, selectedProject]);
 
   const handleViewChange = (event, newMode) => {
     if (newMode !== null) {
@@ -128,15 +138,18 @@ export default function InventoryComparisonModal({ open, onClose }) {
         if (ratio < 0.3) return false;
       } else if (selectedStatus === 'low') {
         if (ratio >= 0.3 || available <= 0) return false;
-      } else if (selectedStatus === 'none') {
-        if (available !== 0) return false;
       } else if (selectedStatus === 'buy') {
-        if (available >= 0) return false;
+        if (available > 0) return false;
       }
       
+      // Project usage filter: if a project is selected, show only items it uses
+      if (selectedProject !== 'all' && item.separated_inventory <= 0) {
+        return false;
+      }
+
       return true;
     });
-  }, [data, searchText, selectedCategory, selectedStatus]);
+  }, [data, searchText, selectedCategory, selectedStatus, selectedProject]);
 
   // Aggregates for summary cards
   const summary = useMemo(() => {
@@ -146,14 +159,21 @@ export default function InventoryComparisonModal({ open, onClose }) {
       if (item.available_inventory > 0) {
         acc.available += item.available_inventory;
       }
-      if (item.available_inventory < 0) {
+      if (item.available_inventory <= 0) {
         acc.toBuyItems += 1;
-        acc.toBuyUnits += Math.abs(item.available_inventory);
-        acc.toBuyCost += Math.abs(item.available_inventory) * (item.price || 0);
+        const deficit = Math.abs(Math.min(0, item.available_inventory));
+        if (deficit > 0) {
+          acc.toBuyUnits += deficit;
+          acc.toBuyCost += deficit * (item.price || 0);
+        }
       }
       return acc;
     }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
   }, [filteredData]);
+
+  const selectedProjectObj = useMemo(() => {
+    return projects.find(p => String(p.id) === String(selectedProject));
+  }, [projects, selectedProject]);
 
   const handleExportExcel = () => {
     handleExportClose();
@@ -181,24 +201,34 @@ export default function InventoryComparisonModal({ open, onClose }) {
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
-    XLSX.writeFile(workbook, "reporte_inventario.xlsx");
+    
+    const fileName = selectedProjectObj 
+      ? `reporte_inventario_${selectedProjectObj.id}_${selectedProjectObj.customer}.xlsx`
+      : "reporte_inventario.xlsx";
+      
+    XLSX.writeFile(workbook, fileName);
   };
 
   const handleExportPDF = async () => {
     handleExportClose();
     
+    const projectName = selectedProjectObj 
+      ? `${selectedProjectObj.id} - ${selectedProjectObj.customer}`
+      : null;
+
     const blob = await pdf(
       <InventoryComparisonPdf 
         data={filteredData} 
         categories={categories} 
         summary={summary} 
+        projectName={projectName}
       />
     ).toBlob();
     
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = "reporte_inventario.pdf";
+    link.download = projectName ? `reporte_inventario_${projectName}.pdf` : "reporte_inventario.pdf";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -485,13 +515,12 @@ export default function InventoryComparisonModal({ open, onClose }) {
                 <Typography variant="caption" fontWeight={700} color="#94a3b8" letterSpacing={1}>DISPONIBILIDAD:</Typography>
                 <Chip size="small" variant="outlined" label="● Buena disponibilidad (≥ 30%)" sx={{ borderColor: '#86efac', color: '#16a34a', bgcolor: '#fff', '& .MuiChip-label': { fontWeight: 500 } }} />
                 <Chip size="small" variant="outlined" label="● Stock bajo (< 30%)" sx={{ borderColor: '#fde047', color: '#d97706', bgcolor: '#fff', '& .MuiChip-label': { fontWeight: 500 } }} />
-                <Chip size="small" variant="outlined" label="● Agotado" sx={{ borderColor: '#fca5a5', color: '#e11d48', bgcolor: '#fff', '& .MuiChip-label': { fontWeight: 500 } }} />
-                <Chip size="small" variant="outlined" label="● Requiere Compra" sx={{ borderColor: '#ef4444', color: '#b91c1c', bgcolor: '#fef2f2', '& .MuiChip-label': { fontWeight: 600 } }} />
+                <Chip size="small" variant="outlined" label="● Requiere Compra (≤ 0)" sx={{ borderColor: '#ef4444', color: '#b91c1c', bgcolor: '#fef2f2', '& .MuiChip-label': { fontWeight: 600 } }} />
               </Box>
 
               {/* Filters */}
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={4}>
+              <Grid container spacing={1.5} alignItems="center">
+                <Grid item xs={12} md={3}>
                   <TextField 
                     fullWidth 
                     size="small" 
@@ -504,36 +533,52 @@ export default function InventoryComparisonModal({ open, onClose }) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.5}>
+                  <Select 
+                    fullWidth 
+                    size="small" 
+                    value={selectedProject}
+                    onChange={(e) => setSelectedProject(e.target.value)}
+                    sx={{ bgcolor: '#fff', borderRadius: 2 }}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">Proyecto: Todos</MenuItem>
+                    {projects.map((p, i) => (
+                      <MenuItem key={i} value={p.id}>{p.id} - {p.customer}</MenuItem>
+                    ))}
+                  </Select>
+                </Grid>
+                <Grid item xs={12} md={2.5}>
                   <Select 
                     fullWidth 
                     size="small" 
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     sx={{ bgcolor: '#fff', borderRadius: 2 }}
+                    displayEmpty
                   >
-                    <MenuItem value="all">Todas las categorías</MenuItem>
+                    <MenuItem value="all">Categorías: Todas</MenuItem>
                     {categories.map((c, i) => (
                       <MenuItem key={i} value={c.id || c.value}>{c.description || c.label || c.name || `Categoría ${c.id}`}</MenuItem>
                     ))}
                   </Select>
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.5}>
                   <Select 
                     fullWidth 
                     size="small" 
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
                     sx={{ bgcolor: '#fff', borderRadius: 2 }}
+                    displayEmpty
                   >
-                    <MenuItem value="all">Todos los estados</MenuItem>
+                    <MenuItem value="all">Estados: Todos</MenuItem>
                     <MenuItem value="good">Buena disponibilidad</MenuItem>
                     <MenuItem value="low">Stock bajo</MenuItem>
-                    <MenuItem value="none">Agotado (0 libre)</MenuItem>
-                    <MenuItem value="buy">A comprar (En negativo)</MenuItem>
+                    <MenuItem value="buy">A comprar (Stock ≤ 0)</MenuItem>
                   </Select>
                 </Grid>
-                <Grid item xs={12} md={2} display="flex" justifyContent="flex-end">
+                <Grid item xs={12} md={1.5} display="flex" justifyContent="flex-end">
                   <ToggleButtonGroup
                     value={viewMode}
                     exclusive
