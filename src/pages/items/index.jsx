@@ -100,6 +100,9 @@ export default function Items() {
       label: 'Cantidad que ingresa',
       input: 'number',
       grid: { xs: 12, md: 6 },
+      dynamicProps: ({ mode }) => ({
+        disabled: mode === 'update' && !isAdmin
+      })
     },
     {
       name: 'group_item',
@@ -300,7 +303,7 @@ export default function Items() {
         mapData={mapItemsData}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure']}
         hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
-        hideEdit={!isAdmin}
+        hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideDelete={!isAdmin}
         extraHeaders={[
           { label: 'ENTRADA/SALIDA' },

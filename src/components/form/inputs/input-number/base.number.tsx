@@ -8,6 +8,7 @@ interface BaseTextProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fullWidth?: boolean;
   required?: boolean;
+  disabled?: boolean;
 }
 
 export default function BaseText({
@@ -18,6 +19,7 @@ export default function BaseText({
   onChange,
   fullWidth = true,
   required = false,
+  disabled = false,
 }: BaseTextProps) {
   return (
     <TextField
@@ -27,6 +29,7 @@ export default function BaseText({
       onChange={onChange}
       fullWidth={fullWidth}
       required={required}
+      disabled={disabled}
       size={size}
       variant="outlined"
       type="number"
