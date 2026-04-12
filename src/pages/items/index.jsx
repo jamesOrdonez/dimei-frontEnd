@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import axios from 'axios';
 import { Button, Tooltip, Box, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import FormDialog from '../../components/form/form.dialog.tsx';
@@ -18,6 +19,7 @@ export default function Usuarios() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [gridData, setGridData] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [qrMenuAnchor, setQrMenuAnchor] = useState(null);
   const [selectedQRItem, setSelectedQRItem] = useState(null);
 
@@ -37,6 +39,14 @@ export default function Usuarios() {
     setQrMenuAnchor(null);
     setSelectedQRItem(null);
   };
+
+  const company = sessionStorage.getItem('company');
+
+  useEffect(() => {
+    axios.get(`/getProjects/${company}`).then(res => {
+      setProjects(res.data.data || []);
+    }).catch(err => console.error("Error fetching projects", err));
+  }, [company]);
 
   const handleDownloadQR = () => {
     if (!selectedQRItem) return;
@@ -180,9 +190,11 @@ export default function Usuarios() {
   };
 
   const makeAndDownloadPDF = async (response, payload) => {
+    const project = projects.find(p => String(p.id) === String(payload.fk_proyect));
     const remisionPDF = {
       remisionId: response.data.remisionId,
       projectId: payload.fk_proyect,
+      cliente: project?.customer || 'S/N',
       fecha: new Date().toLocaleDateString(),
       description: payload.description,
       items: (payload.net_items || []).map(item => {

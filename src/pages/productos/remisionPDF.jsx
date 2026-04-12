@@ -100,6 +100,7 @@ export default function RemisionPDF({ remision }) {
         {/* DATOS GENERALES */}
         <View style={styles.section}>
           <Text style={{ fontWeight: 'bold' }}>Fecha: <Text style={{ fontWeight: 'normal' }}>{remision.fecha}</Text></Text>
+          <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Cliente: <Text style={{ fontWeight: 'normal' }}>{remision.cliente || 'S/N'}</Text></Text>
           <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Descripción: <Text style={{ fontWeight: 'normal' }}>{remision.description}</Text></Text>
           <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Proyecto: <Text style={{ fontWeight: 'normal' }}>#{remision.projectId}</Text></Text>
         </View>
