@@ -1,16 +1,30 @@
 import { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Tooltip, Box, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Button, Tooltip, Box, Menu, MenuItem, ListItemIcon, ListItemText, Grid } from '@mui/material';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import FormDialog from '../../components/form/form.dialog.tsx';
-import { ArrowLeftCircleIcon, ArrowRightCircleIcon, EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { 
+  ArrowLeftCircleIcon, 
+  ArrowRightCircleIcon, 
+  EyeIcon, 
+  ArrowDownTrayIcon, 
+  DocumentTextIcon,
+  CalendarDaysIcon,
+  InboxStackIcon,
+  CurrencyDollarIcon
+} from '@heroicons/react/24/outline';
 import BaseButton from '../../components/ui/BaseButton.tsx';
 import RemisionPDF from '../productos/remisionPDF.jsx';
+import InventoryReportPDF from './InventoryReportPDF.jsx';
+import SummaryCard from '../../components/ui/SummaryCard.jsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
 import { QRCodeCanvas } from 'qrcode.react';
+import numeral from 'numeral';
 
-export default function Usuarios() {
+const fCurrency = (number) => numeral(number).format('$0,0');
+
+export default function Items() {
   const [openModal, setOpenModal] = useState(false);
   const [openModalRemission, setOpenModalRemission] = useState(false);
 
@@ -22,6 +36,14 @@ export default function Usuarios() {
   const [projects, setProjects] = useState([]);
   const [qrMenuAnchor, setQrMenuAnchor] = useState(null);
   const [selectedQRItem, setSelectedQRItem] = useState(null);
+
+  const inventoryStats = useMemo(() => {
+    const totalValue = gridData.reduce((acc, item) => acc + (Number(item.amount) * Number(item.price || 0)), 0);
+    return {
+      totalValue,
+      distinctItems: gridData.length
+    };
+  }, [gridData]);
 
   const movementInitialValues = useMemo(() => (selectedItem ? { id: selectedItem.id } : {}), [selectedItem]);
 
@@ -221,8 +243,47 @@ export default function Usuarios() {
     URL.revokeObjectURL(url);
   }
 
+  const downloadInventoryReport = async () => {
+    const blob = await pdf(
+      <InventoryReportPDF 
+        data={gridData} 
+        stats={inventoryStats} 
+        user={decrypt(sessionStorage.getItem('user'))} 
+      />
+    ).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte_inventario_${new Date().getTime()}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
+      {/* SUMMARY CARDS */}
+      <Grid container spacing={2} mb={4} alignItems="stretch">
+        <Grid item xs={12} sm={6} md={6}>
+          <SummaryCard 
+            title="Total de items"
+            value={inventoryStats.distinctItems}
+            icon={CalendarDaysIcon}
+            iconColor="text-blue-600"
+            iconBgColor="#eff6ff"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={6}>
+          <SummaryCard 
+            title="Valor Total Inventario"
+            value={fCurrency(inventoryStats.totalValue)}
+            icon={CurrencyDollarIcon}
+            iconColor="text-amber-500"
+            iconBgColor="#fffbeb"
+            textColor="#059669"
+          />
+        </Grid>
+      </Grid>
       <BaseGrid
         key={refreshKey}
         title="Items"
@@ -240,11 +301,28 @@ export default function Usuarios() {
           { label: 'ENTRADA/SALIDA' },
         ]}
         extraHeaderActions={
-          <BaseButton
-            color="green"
-            text="Remisionar"
-            onClick={() => setOpenModalRemission(true)}
-          />
+          <Box display="flex" gap={2}>
+            <BaseButton
+              color="green"
+              text="Remisionar"
+              onClick={() => setOpenModalRemission(true)}
+            />
+            <Button
+              variant="contained"
+              onClick={downloadInventoryReport}
+              startIcon={<DocumentTextIcon className="h-5 w-5" />}
+              sx={{
+                bgcolor: '#1e40af',
+                '&:hover': { bgcolor: '#1e3a8a' },
+                borderRadius: 2,
+                px: 3,
+                fontWeight: 'bold',
+                textTransform: 'none'
+              }}
+            >
+              Inventario PDF
+            </Button>
+          </Box>
         }
         renderExtraCell={({ item, headerLabel }) => {
           if (headerLabel === 'QR') return (
