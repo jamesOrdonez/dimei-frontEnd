@@ -58,7 +58,7 @@ export default function ItemsList({
         .get(productEndpoint)
         .then((response) => {
           const formattedOptions = response.data.data.map((item: any) => ({
-            label: item[optionLabel],
+            label: `${item[optionValue]} - ${item[optionLabel] || ''}`,
             value: item[optionValue],
           }));
           formattedOptions.forEach((opt: Option) => {

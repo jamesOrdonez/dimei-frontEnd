@@ -47,7 +47,7 @@ export default function BaseSelect({
         .then((response) => {
           const rawData = response.data.data || response.data;
           const formattedOptions = (Array.isArray(rawData) ? rawData : []).map((item: any) => ({
-            label: String(item[optionLabel] || ''),
+            label: `${item[optionValue]} - ${item[optionLabel] || ''}`,
             value: item[optionValue],
           }));
           setItems(formattedOptions);

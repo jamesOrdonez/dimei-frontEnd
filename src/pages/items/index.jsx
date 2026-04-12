@@ -147,7 +147,7 @@ export default function Usuarios() {
         options: gridData
           .filter(item => !values.group_item || String(item.group_item || '') === String(values.group_item || ''))
           .map(item => ({
-            label: item.description,
+            label: `${item.id} - ${item.description}`,
             value: item.id
           }))
       }),

@@ -91,7 +91,7 @@ export default function Usuarios() {
             values.net_items?.some(selected => String(selected.id) === String(item.id))
           )
           .map(item => ({
-            label: item.description,
+            label: `${item.id} - ${item.description}`,
             value: item.id
           }))
       }),
