@@ -47,6 +47,9 @@ interface BaseGridProps {
   mapPayload?: (payload: any) => any;
   customFilters?: CustomFilter[];
   firstHeader?: string | { label: string; after?: string };
+  hideCreate?: boolean;
+  hideEdit?: boolean;
+  hideDelete?: boolean;
 }
 
 export default function BaseGrid({ 
@@ -68,6 +71,9 @@ export default function BaseGrid({
   mapPayload,
   customFilters = [],
   firstHeader,
+  hideCreate = false,
+  hideEdit = false,
+  hideDelete = false,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -170,7 +176,7 @@ export default function BaseGrid({
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearchChange={setSearch}
-        onNewClick={() => {
+        onNewClick={hideCreate ? undefined : () => {
           setDialogMode('create');
           setSelectedItem(null);
           setOpenDialog(true);
@@ -205,12 +211,12 @@ export default function BaseGrid({
               if (headerLabel === 'ACCIONES') {
                 return (
                   <GridActions
-                    onEdit={() => {
+                    onEdit={hideEdit ? undefined : () => {
                       setDialogMode('update');
                       setSelectedItem(item);
                       setOpenDialog(true);
                     }}
-                    onDelete={() => handleDelete(item.id)}
+                    onDelete={hideDelete ? undefined : () => handleDelete(item.id)}
                     extraActions={renderExtraActions ? renderExtraActions(item) : undefined}
                   />
                 );
@@ -226,12 +232,12 @@ export default function BaseGrid({
             renderExtraCell={propRenderExtraCell}
             renderActions={(item) => (
               <GridActions
-                onEdit={() => {
+                onEdit={hideEdit ? undefined : () => {
                   setDialogMode('update');
                   setSelectedItem(item);
                   setOpenDialog(true);
                 }}
-                onDelete={() => handleDelete(item.id)}
+                onDelete={hideDelete ? undefined : () => handleDelete(item.id)}
                 extraActions={renderExtraActions ? renderExtraActions(item) : undefined}
               />
             )}

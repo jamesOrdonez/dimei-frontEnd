@@ -6,11 +6,14 @@ import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import InventoryComparisonModal from './components/InventoryComparisonModal.jsx';
 import BaseButton from '../../components/ui/BaseButton.tsx';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 export default function Proyectos() {
   const navigate = useNavigate();
   const [openInventoryModal, setOpenInventoryModal] = useState(false);
   const [customers, setCustomers] = useState([]);
+  const { hasPermission, isAdmin } = usePermissions();
+
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -111,14 +114,18 @@ export default function Proyectos() {
         deleteEndpoint="/deleteProject"
         fetchOneEndpoint="/getOneProject"
         fields={fields}
+        hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
+        hideEdit={!isAdmin}
+        hideDelete={!isAdmin}
         extraHeaderActions={
-          <BaseButton
-            icon={<Icon icon="lucide:bar-chart-2" />}
-            onClick={() => setOpenInventoryModal(true)}
-            color="orange"
-            text="Stock"
-          />
-
+          hasPermission(PERMISOS.CONSULTAR_LISTAS) ? (
+            <BaseButton
+              icon={<Icon icon="lucide:bar-chart-2" />}
+              onClick={() => setOpenInventoryModal(true)}
+              color="orange"
+              text="Stock"
+            />
+          ) : null
         }
         extraHeaders={[{ label: 'Estado', after: 'customerId' }]}
         renderExtraCell={({ item, headerLabel }) => {

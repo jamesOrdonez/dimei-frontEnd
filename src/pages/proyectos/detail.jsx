@@ -16,6 +16,8 @@ import DeliveryActPdf from './components/DeliveryActPdf.jsx';
 import { decrypt } from '../../utils/crypto.js';
 import { useMemo } from 'react';
 import { pdf } from '@react-pdf/renderer';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
+
 
 export default function DetalleProyecto() {
   const { id: projectId } = useParams();
@@ -28,6 +30,8 @@ export default function DetalleProyecto() {
   const [uploadingSignedAct, setUploadingSignedAct] = useState(false);
   const company = sessionStorage.getItem('company');
   const user = decrypt(sessionStorage.getItem('user')) || ' ';
+  const { hasPermission, isAdmin } = usePermissions();
+
 
   const fetchProject = useCallback(() => {
     axios.get(`/getOneProject/${projectId}`)
@@ -331,24 +335,26 @@ export default function DetalleProyecto() {
                     <Alert severity="warning" variant="outlined" sx={{ borderRadius: 2 }}>
                       <AlertTitle>Pendiente por cargar</AlertTitle>
                       Aún no se ha cargado el acta de entrega final firmada por el cliente.
-                      <Box mt={2}>
-                        <Button
-                          variant="contained"
-                          color="warning"
-                          component="label"
-                          startIcon={<CloudArrowUpIcon className="w-5 h-5" />}
-                          disabled={uploadingSignedAct}
-                          sx={{ borderRadius: 2, color: '#fff' }}
-                        >
-                          {uploadingSignedAct ? 'Subiendo...' : 'Cargar Acta Firmada'}
-                          <input
-                            type="file"
-                            hidden
-                            accept="application/pdf"
-                            onChange={handleUploadSignedAct}
-                          />
-                        </Button>
-                      </Box>
+                      {hasPermission(PERMISOS.ANEXAR_ACTAS) && (
+                        <Box mt={2}>
+                          <Button
+                            variant="contained"
+                            color="warning"
+                            component="label"
+                            startIcon={<CloudArrowUpIcon className="w-5 h-5" />}
+                            disabled={uploadingSignedAct}
+                            sx={{ borderRadius: 2, color: '#fff' }}
+                          >
+                            {uploadingSignedAct ? 'Subiendo...' : 'Cargar Acta Firmada'}
+                            <input
+                              type="file"
+                              hidden
+                              accept="application/pdf"
+                              onChange={handleUploadSignedAct}
+                            />
+                          </Button>
+                        </Box>
+                      )}
                     </Alert>
                   ) : (
                     <Box display="flex" alignItems="center" gap={2}>
@@ -365,26 +371,29 @@ export default function DetalleProyecto() {
                         >
                           Ver
                         </Button>
-                        <Button
-                          variant="outlined"
-                          color="inherit"
-                          component="label"
-                          sx={{ borderRadius: 2 }}
-                        >
-                          Actualizar
-                          <input
-                            type="file"
-                            hidden
-                            accept="application/pdf"
-                            onChange={handleUploadSignedAct}
-                          />
-                        </Button>
+                        {hasPermission(PERMISOS.ANEXAR_ACTAS) && (
+                          <Button
+                            variant="outlined"
+                            color="inherit"
+                            component="label"
+                            sx={{ borderRadius: 2 }}
+                          >
+                            Actualizar
+                            <input
+                              type="file"
+                              hidden
+                              accept="application/pdf"
+                              onChange={handleUploadSignedAct}
+                            />
+                          </Button>
+                        )}
                       </Box>
                     </Box>
                   )}
                 </Box>
               </Grid>
             )}
+
           </Grid>
         </CardContent>
       </Card>
@@ -478,36 +487,39 @@ export default function DetalleProyecto() {
           </Card>
         )
       ) : (
-        !showItems ? (
-          <Box textAlign="center" mb={6}>
-            <Button 
-              fullWidth
-              variant="outlined" 
-              color="primary" 
-              onClick={() => setShowItems(true)}
-              sx={{ borderRadius: 2, py: 1.5, borderStyle: 'dashed', borderWidth: 2 }}
-            >
-              + Habilitar asignación de Items adicionales
-            </Button>
-          </Box>
-        ) : (
-          <Card sx={{ mb: 6, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" fontWeight="bold" color="secondary.main">
-                  Asignar Items Adicionales
-                </Typography>
-                <Button size="small" color="error" onClick={() => setShowItems(false)}>
-                  Ocultar
-                </Button>
-              </Box>
-              <Divider sx={{ mb: 3 }} />
-              
-              <ItemTransfer projectId={projectId} company={company} project={project} onSuccess={fetchProject} />
-            </CardContent>
-          </Card>
+        hasPermission(PERMISOS.PEDIR_MATERIAL) && (
+          !showItems ? (
+            <Box textAlign="center" mb={6}>
+              <Button 
+                fullWidth
+                variant="outlined" 
+                color="primary" 
+                onClick={() => setShowItems(true)}
+                sx={{ borderRadius: 2, py: 1.5, borderStyle: 'dashed', borderWidth: 2 }}
+              >
+                + Habilitar asignación de Items adicionales
+              </Button>
+            </Box>
+          ) : (
+            <Card sx={{ mb: 6, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+              <CardContent sx={{ p: 4 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6" fontWeight="bold" color="secondary.main">
+                    Asignar Items Adicionales
+                  </Typography>
+                  <Button size="small" color="error" onClick={() => setShowItems(false)}>
+                    Ocultar
+                  </Button>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                
+                <ItemTransfer projectId={projectId} company={company} project={project} onSuccess={fetchProject} />
+              </CardContent>
+            </Card>
+          )
         )
       )}
+
 
       {project && (
         <RemisionModal 

@@ -13,7 +13,7 @@ interface GridHeaderProps {
   viewMode?: 'list' | 'grid';
   onViewModeChange?: (mode: 'list' | 'grid') => void;
   onSearchChange: (value: string) => void;
-  onNewClick: () => void;
+  onNewClick?: () => void;
   extraActions?: React.ReactNode;
   customFilters?: CustomFilter[];
   activeFilters?: Record<string, any>;
@@ -152,23 +152,25 @@ export default function GridHeader({
 
             {extraActions}
             
-            <Button
-              variant="contained"
-              disableElevation
-              onClick={onNewClick}
-              sx={{ 
-                px: 4, 
-                py: 1.5, 
-                borderRadius: 2, 
-                textTransform: 'none', 
-                fontWeight: 'bold',
-                minWidth: 120,
-                height: 50,
-                fontSize: '1rem'
-              }}
-            >
-              Nuevo
-            </Button>
+            {onNewClick && (
+              <Button
+                variant="contained"
+                disableElevation
+                onClick={onNewClick}
+                sx={{ 
+                  px: 4, 
+                  py: 1.5, 
+                  borderRadius: 2, 
+                  textTransform: 'none', 
+                  fontWeight: 'bold',
+                  minWidth: 120,
+                  height: 50,
+                  fontSize: '1rem'
+                }}
+              >
+                Nuevo
+              </Button>
+            )}
           </Stack>
         </Stack>
       </Box>

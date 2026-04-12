@@ -20,10 +20,13 @@ import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
 import { QRCodeCanvas } from 'qrcode.react';
 import numeral from 'numeral';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 const fCurrency = (number) => numeral(number).format('$0,0');
 
 export default function Items() {
+  const { hasPermission, isAdmin } = usePermissions();
+
   const [openModal, setOpenModal] = useState(false);
   const [openModalRemission, setOpenModalRemission] = useState(false);
 
@@ -296,16 +299,21 @@ export default function Items() {
         onDataChange={setGridData}
         mapData={mapItemsData}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure']}
+        hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
+        hideEdit={!isAdmin}
+        hideDelete={!isAdmin}
         extraHeaders={[
           { label: 'ENTRADA/SALIDA' },
         ]}
         extraHeaderActions={
           <Box display="flex" gap={2}>
-            <BaseButton
-              color="green"
-              text="Remisionar"
-              onClick={() => setOpenModalRemission(true)}
-            />
+            {hasPermission(PERMISOS.HACER_REMISIONES) && (
+              <BaseButton
+                color="green"
+                text="Remisionar"
+                onClick={() => setOpenModalRemission(true)}
+              />
+            )}
             <Button
               variant="contained"
               onClick={downloadInventoryReport}
@@ -342,21 +350,25 @@ export default function Items() {
           );
           if (headerLabel === 'ENTRADA/SALIDA') return (
             <div className="flex items-center gap-2">
-              <Tooltip title="Entrada" placement="top">
-                <span>
-                  <Button onClick={() => openMovement(item, 'entrance')}>
-                    <ArrowRightCircleIcon className="h-6 w-6 text-green-600" />
-                  </Button>
-                </span>
-              </Tooltip>
+              {hasPermission(PERMISOS.INGRESAR_MATERIAL) && (
+                <Tooltip title="Entrada" placement="top">
+                  <span>
+                    <Button onClick={() => openMovement(item, 'entrance')}>
+                      <ArrowRightCircleIcon className="h-6 w-6 text-green-600" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
 
-              <Tooltip title="Salida" placement="top">
-                <span>
-                  <Button onClick={() => openMovement(item, 'exit')}>
-                    <ArrowLeftCircleIcon className="h-6 w-6 text-red-600" />
-                  </Button>
-                </span>
-              </Tooltip>
+              {isAdmin && (
+                <Tooltip title="Salida" placement="top">
+                  <span>
+                    <Button onClick={() => openMovement(item, 'exit')}>
+                      <ArrowLeftCircleIcon className="h-6 w-6 text-red-600" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
             </div>
           );
         }}

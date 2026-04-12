@@ -5,6 +5,8 @@ import UnidadMedida from './components/unidad.medida';
 import ElevatorType from './components/elevator.type';
 import TypeDriveSystem from './components/type.drive.system';
 import ProductsGroup from './components/products.groups';
+import RolesManagement from './components/roles.management';
+
 
 // 🔁 COMPONENTE TABS REUTILIZABLE
 export function ConfigTabs({ tabs }) {
@@ -63,7 +65,12 @@ export default function Configuraciones() {
       label: 'Tipo de sistema hidraulico',
       component: <TypeDriveSystem />,
     },
+    {
+      label: 'Roles y Permisos',
+      component: <RolesManagement />,
+    },
   ];
+
 
   return <ConfigTabs tabs={tabs} />;
 }

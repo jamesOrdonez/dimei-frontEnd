@@ -5,6 +5,7 @@ import Router from './routes/routes';
 // theme
 import ThemeProvider from './theme';
 import axios from 'axios';
+import { PermissionsProvider } from './context/PermissionsContext';
 
 let URL_DEV = 'http://localhost:8080/api/v1/';
 let URL_PRO = 'https://vps.equiposdimei.com/api/v1/';
@@ -22,9 +23,12 @@ export default function App() {
     <HelmetProvider>
       <BrowserRouter>
         <ThemeProvider>
-          <Router />
+          <PermissionsProvider>
+            <Router />
+          </PermissionsProvider>
         </ThemeProvider>
       </BrowserRouter>
     </HelmetProvider>
   );
 }
+

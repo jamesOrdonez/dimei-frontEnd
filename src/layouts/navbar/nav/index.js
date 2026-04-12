@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
@@ -14,6 +14,8 @@ import NavSection from '../../../components/nav-section';
 //
 import navConfig from './config';
 import { decrypt } from '../../../utils/crypto';
+import { usePermissions } from '../../../context/PermissionsContext';
+
 
 // ----------------------------------------------------------------------
 
@@ -38,7 +40,7 @@ export default function Nav({ openNav, onCloseNav }) {
   const { pathname } = useLocation();
   const usuario = decrypt(sessionStorage.getItem('user'));
   const rolName = decrypt(sessionStorage.getItem('rolName'));
-
+  const { hasPermission, isAdmin } = usePermissions();
 
   const isDesktop = useResponsive('up', 'lg');
 
@@ -48,6 +50,18 @@ export default function Nav({ openNav, onCloseNav }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Filtrar opciones del menú según permisos del usuario
+  const filteredNavConfig = useMemo(() => {
+    return navConfig.filter(item => {
+      if (item.adminOnly) return isAdmin;
+      if (item.requiredPermissions && item.requiredPermissions.length > 0) {
+        if (isAdmin) return true;
+        return item.requiredPermissions.some(p => hasPermission(p));
+      }
+      return true; // Sin restricciones → siempre visible
+    });
+  }, [isAdmin, hasPermission]);
 
 
   const renderContent = (
@@ -106,7 +120,7 @@ export default function Nav({ openNav, onCloseNav }) {
       <Typography variant="overline" sx={{ px: 5, color: 'text.disabled', display: 'block', mb: 1 }}>
         Menú
       </Typography>
-      <NavSection data={navConfig} />
+      <NavSection data={filteredNavConfig} />
 
 
       <Box sx={{ flexGrow: 1 }} />

@@ -1,9 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 export default function Usuarios() {
   const [gridData, setGridData] = useState([]);
+  const { hasPermission, isAdmin } = usePermissions();
+
 
   useEffect(() => {
     axios.get(`/getItem/${sessionStorage.getItem('company')}`)
@@ -96,6 +99,9 @@ export default function Usuarios() {
         deleteEndpoint="/deleteProduct"
         fetchOneEndpoint="/getOneproduct"
         fields={fields}
+        hideCreate={!hasPermission(PERMISOS.CREAR_PRODUCTOS)}
+        hideEdit={!isAdmin}
+        hideDelete={!isAdmin}
         formAdditionalValues={{ mathOperation: '+' }}
         excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
         extraHeaders={[

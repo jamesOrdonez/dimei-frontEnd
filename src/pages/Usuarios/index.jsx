@@ -28,15 +28,22 @@ export default function Usuarios() {
       name: 'rol',
       label: 'Rol',
       input: 'select',
-      options: [
-        { label: 'Administrador', value: 1 },
-        { label: 'Usuario', value: 2 },
-      ],
+      endpoint: `/getRoles/${sessionStorage.getItem('company')}`,
+      optionLabel: 'name',
+      optionValue: 'id',
       grid: { xs: 12, md: 6 },
       required: true,
-      dynamicProps: ({ mode }) => mode === 'update' ? { grid: { xs: 12, md: 12 } } : {},
+      dynamicProps: ({ values, mode }) => mode === 'update' ? { grid: { xs: 12, md: 12 } } : {},
     },
   ];
+
+  const mapData = (users) => {
+    return (Array.isArray(users) ? users : []).map(u => ({
+      ...u,
+      Rol: u.Rol?.name || 'S/N',
+      rol: u.rol // Keep ID for form
+    }));
+  };
 
   return (
     <BaseGrid
@@ -47,7 +54,9 @@ export default function Usuarios() {
       deleteEndpoint="/deleteUser"
       fetchOneEndpoint="/getOneUser"
       fields={fields}
-      excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password']}
+      mapData={mapData}
+      excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'rol']}
     />
   );
 }
+
