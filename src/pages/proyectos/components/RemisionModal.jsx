@@ -44,9 +44,6 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
   const [selectedItems, setSelectedItems] = useState([]); // Right side
   const [leftItemSelected, setLeftItemSelected] = useState([]); // Toggle selection left
   const [rightItemSelected, setRightItemSelected] = useState([]); // Toggle selection right
-  
-  // New state for quantities on the left side
-  const [leftQuantities, setLeftQuantities] = useState({}); // { id: value }
 
   // Reset form when opening
   React.useEffect(() => {
@@ -58,7 +55,6 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       setRightProductSelected([]);
       setLeftItemSelected([]);
       setRightItemSelected([]);
-      setLeftQuantities({});
       
       
 
@@ -163,9 +159,6 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       const newSelected = [...selected];
       if (index === -1) {
         newSelected.push(item);
-        if (side === 'left' && !leftQuantities[id]) {
-           setLeftQuantities(prev => ({ ...prev, [id]: 1 }));
-        }
       }
       else newSelected.splice(index, 1);
       setSelected(newSelected);
@@ -180,9 +173,6 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       const newSelected = [...selected];
       if (index === -1) {
         newSelected.push(item);
-        if (side === 'left' && !leftQuantities[id]) {
-           setLeftQuantities(prev => ({ ...prev, [id]: 1 }));
-        }
       }
       else newSelected.splice(index, 1);
       setSelected(newSelected);
@@ -195,16 +185,21 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
     if (tabIndex === 0) {
       const newSelected = [...selectedProducts];
       leftProductSelected.forEach(p => {
-        const qtyToMove = Number(leftQuantities[p.product_id] || 1);
+        const currentOnRightSum = newSelected.filter(s => s.product_id === p.product_id)
+          .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+        const qtyToMove = Number(p.quantity) - Number(p.remitted_quantity || 0) - currentOnRightSum;
+
         const existingIdx = newSelected.findIndex(sp => sp.product_id === p.product_id && !sp.stored);
         
-        if (existingIdx > -1) {
-          newSelected[existingIdx] = { 
-            ...newSelected[existingIdx], 
-            remisionQty: Number(newSelected[existingIdx].remisionQty) + qtyToMove 
-          };
-        } else {
-          newSelected.push({ ...p, remisionQty: qtyToMove, rowId: generateRowId(p.product_id) });
+        if (qtyToMove > 0) {
+            if (existingIdx > -1) {
+              newSelected[existingIdx] = { 
+                ...newSelected[existingIdx], 
+                remisionQty: Number(newSelected[existingIdx].remisionQty) + qtyToMove 
+              };
+            } else {
+              newSelected.push({ ...p, remisionQty: qtyToMove, rowId: generateRowId(p.product_id) });
+            }
         }
       });
       setSelectedProducts(newSelected);
@@ -212,16 +207,21 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
     } else {
       const newSelected = [...selectedItems];
       leftItemSelected.forEach(i => {
-        const qtyToMove = Number(leftQuantities[i.item_id] || 1);
+        const currentOnRightSum = newSelected.filter(s => s.item_id === i.item_id)
+          .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+        const qtyToMove = Number(i.quantity) - Number(i.remitted_quantity || 0) - currentOnRightSum;
+
         const existingIdx = newSelected.findIndex(si => si.item_id === i.item_id && !si.stored);
         
-        if (existingIdx > -1) {
-          newSelected[existingIdx] = { 
-            ...newSelected[existingIdx], 
-            remisionQty: Number(newSelected[existingIdx].remisionQty) + qtyToMove 
-          };
-        } else {
-          newSelected.push({ ...i, remisionQty: qtyToMove, rowId: generateRowId(i.item_id) });
+        if (qtyToMove > 0) {
+            if (existingIdx > -1) {
+              newSelected[existingIdx] = { 
+                ...newSelected[existingIdx], 
+                remisionQty: Number(newSelected[existingIdx].remisionQty) + qtyToMove 
+              };
+            } else {
+              newSelected.push({ ...i, remisionQty: qtyToMove, rowId: generateRowId(i.item_id) });
+            }
         }
       });
       setSelectedItems(newSelected);
@@ -524,22 +524,19 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                       <TextField 
                         size="small"
                         type="number"
-                        value={leftQuantities[id] || ''}
-                        placeholder="Cant."
-                        onChange={(e) => {
-                          const val = Math.max(1, Math.min(maxAvailable, Number(e.target.value)));
-                          setLeftQuantities(prev => ({ ...prev, [id]: val }));
-                        }}
+                        value={maxAvailable}
+                        disabled={true}
                         sx={{ 
                           width: 65, 
                           ml: 1, 
                           '& .MuiInputBase-root': {
-                            backgroundColor: '#fff',
+                            backgroundColor: '#f1f5f9',
                             fontSize: '0.75rem'
                           },
                           '& .MuiInputBase-input': { 
                             p: '6px 8px',
-                            textAlign: 'center'
+                            textAlign: 'center',
+                            color: '#475569'
                           } 
                         }}
                       />
