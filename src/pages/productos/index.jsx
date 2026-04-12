@@ -49,27 +49,14 @@ export default function Usuarios() {
       name: 'value1',
       label: 'Valor 1',
       input: 'number',
-      grid: { xs: 12, md: 4 },
-      hasToHide: ({ values }) => hasToHide(values),
-    },
-    {
-      name: 'mathOperation',
-      label: 'Operación matemática',
-      input: 'select',
-      options: [
-        { label: 'Suma', value: '+' },
-        { label: 'Resta', value: '-' },
-        { label: 'Multiplicación', value: '*' },
-        { label: 'División', value: '/' },
-      ],
-      grid: { xs: 12, md: 4 },
+      grid: { xs: 12, md: 6 },
       hasToHide: ({ values }) => hasToHide(values),
     },
     {
       name: 'value2',
       label: 'Valor 2',
       input: 'number',
-      grid: { xs: 12, md: 4 },
+      grid: { xs: 12, md: 6 },
       hasToHide: ({ values }) => hasToHide(values),
     },
     {
@@ -109,13 +96,13 @@ export default function Usuarios() {
         deleteEndpoint="/deleteProduct"
         fetchOneEndpoint="/getOneproduct"
         fields={fields}
+        formAdditionalValues={{ mathOperation: '+' }}
         excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
         extraHeaders={[
           { label: 'Grupo', after: 'name' },
           { label: '¿Es Variable?', after: 'description' },
           { label: 'Valor 1', after: '¿Es Variable?' },
-          { label: 'Operación', after: 'Valor 1' },
-          { label: 'Valor 2', after: 'Operación' },
+          { label: 'Valor 2', after: 'Valor 1' },
         ]}
         renderExtraCell={({ item, headerLabel }) => {
           switch (headerLabel) {
@@ -125,14 +112,6 @@ export default function Usuarios() {
               return item.variable === '1' || item.variable === 1 ? 'Si' : 'No';
             case 'Valor 1':
               return item.value1 ?? '-';
-            case 'Operación':
-              const opMap = {
-                '+': 'Suma',
-                '-': 'Resta',
-                '*': 'Multiplicación',
-                '/': 'División'
-              };
-              return opMap[item.mathOperation] || item.mathOperation || '-';
             case 'Valor 2':
               return item.value2 ?? '-';
             default:
