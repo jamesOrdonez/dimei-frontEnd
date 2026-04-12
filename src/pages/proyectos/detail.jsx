@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
@@ -29,7 +29,7 @@ export default function DetalleProyecto() {
   const company = sessionStorage.getItem('company');
   const user = decrypt(sessionStorage.getItem('user')) || ' ';
 
-  const fetchProject = () => {
+  const fetchProject = useCallback(() => {
     axios.get(`/getOneProject/${projectId}`)
       .then(res => {
         const raw = res.data.data ?? res.data;
@@ -42,11 +42,11 @@ export default function DetalleProyecto() {
         }
       })
       .catch(err => console.error('Error cargando proyecto:', err));
-  };
+  }, [projectId]);
 
   useEffect(() => {
     fetchProject();
-  }, [projectId]);
+  }, [fetchProject]);
 
   const handleStartProject = () => {
     Swal.fire({

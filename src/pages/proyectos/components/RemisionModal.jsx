@@ -60,7 +60,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       setRightItemSelected([]);
       setLeftQuantities({});
       
-      const generateRowId = (id) => `${id}_${Date.now()}_${Math.random()}`;
+      
 
       // Pre-populate with already remitted items from the project
       const initialProducts = [];

@@ -57,7 +57,7 @@ export default function BaseSelect({
     } else if (items !== options) {
       setItems(options || []);
     }
-  }, [endpoint, options, optionLabel, optionValue]);
+  }, [endpoint, options, optionLabel, optionValue, items]);
 
   const selectedOption = items.find((opt) => String(opt.value) === String(value)) || null;
 

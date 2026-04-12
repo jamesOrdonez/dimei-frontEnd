@@ -68,7 +68,7 @@ export default function ItemsList({
         })
         .catch((error) => console.error('Error fetching items for list:', error));
     }
-  }, [options, productEndpoint, optionLabel, optionValue]);
+  }, [options, productEndpoint, optionLabel, optionValue, items]);
 
   const handleItemChange = (index: number, field: string, newValue: any) => {
     const newList = [...value];

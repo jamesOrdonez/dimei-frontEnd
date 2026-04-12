@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Grid,
   Paper,
@@ -38,9 +38,7 @@ export default function ItemTransfer({ projectId, company, project, onSuccess })
   const [leftSelected, setLeftSelected] = useState([]);
   const [rightSelected, setRightSelected] = useState([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+   
 
   // Sync internal state if parent project changes
   useEffect(() => {
@@ -49,7 +47,7 @@ export default function ItemTransfer({ projectId, company, project, onSuccess })
     }
   }, [project]);
 
-  const fetchData = async (silent = false) => {
+  const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const [itemsRes, groupsRes] = await Promise.all([
@@ -66,7 +64,11 @@ export default function ItemTransfer({ projectId, company, project, onSuccess })
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [company]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleToggle = (item, side) => {
     const selectedList = side === 'left' ? leftSelected : rightSelected;
