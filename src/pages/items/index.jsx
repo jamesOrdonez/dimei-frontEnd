@@ -169,13 +169,6 @@ export default function Items() {
       required: true,
     },
     {
-      name: 'group_item',
-      label: 'Seleccione grupo de items',
-      input: 'select',
-      endpoint: `/getItemGroup/${sessionStorage.getItem('company')}`,
-      grid: { xs: 12 },
-    },
-    {
       name: 'description',
       label: 'Descripción de la remisión',
       input: 'text',
@@ -184,16 +177,7 @@ export default function Items() {
     },
     {
       name: 'net_items',
-      input: 'items',
-      hasToHide: ({ values }) => !values.group_item,
-      dynamicProps: ({ values }) => ({
-        options: gridData
-          .filter(item => !values.group_item || String(item.group_item || '') === String(values.group_item || ''))
-          .map(item => ({
-            label: `${item.id} - ${item.description}`,
-            value: item.id
-          }))
-      }),
+      input: 'itemTransfer',
       grid: { xs: 12 },
     }
   ], [gridData]);
@@ -239,7 +223,7 @@ export default function Items() {
           cantidad: item.quantity
         }
       }),
-      elaboradoPor: decrypt(sessionStorage.getItem('name')),
+      elaboradoPor: decrypt(sessionStorage.getItem('name')) || decrypt(sessionStorage.getItem('user')) || 'Usuario',
       aprobadoPor: ' ',
     };
 
@@ -388,6 +372,7 @@ export default function Items() {
         open={openModalRemission}
         fields={remissionFields}
         saveEndpoint='saveRemision'
+        maxWidth="md"
         onClose={() => setOpenModalRemission(false)}
         onSuccess={({ response, payload }) => {
           makeAndDownloadPDF(response, payload);
