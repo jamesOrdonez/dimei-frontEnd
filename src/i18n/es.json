@@ -13,5 +13,8 @@
   "travel": "Recorrido (m)",
   "capacity": "Capacidad (kg)",
   "customer": "Cliente",
-  "location": "Ubicación"
+  "location": "Ubicación",
+  "project": "Proyecto",
+  "date": "Fecha",
+  "elaboradoPor": "Elaborado por"
 }

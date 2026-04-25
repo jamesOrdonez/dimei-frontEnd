@@ -14,6 +14,7 @@ import Proyectos from '../pages/proyectos';
 import DetalleProyecto from '../pages/proyectos/detail';
 import PublicItemView from '../pages/items/public-view';
 import AnalisisInventario from '../pages/analisis-inventario';
+import Remisiones from '../pages/remisiones/index';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -80,6 +81,7 @@ export default function Router() {
         <Route path="/proyectos" element={<Proyectos />} />
         <Route path="/proyectos/:id" element={<DetalleProyecto />} />
         <Route path="/analisis-inventario" element={<AnalisisInventario />} />
+        <Route path="/remisiones" element={<Remisiones />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

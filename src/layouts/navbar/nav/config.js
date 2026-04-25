@@ -1,5 +1,5 @@
 // component
-import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
 import { PERMISOS } from '../../../context/PermissionsContext';
@@ -60,6 +60,15 @@ const navConfig = [
       PERMISOS.CONSULTAR_LISTAS,
       PERMISOS.ANEXAR_ACTAS,
       PERMISOS.PEDIR_MATERIAL,
+      PERMISOS.HACER_REMISIONES,
+      PERMISOS.VER_PROYECTOS,
+    ],
+  },
+  {
+    title: 'Remisiones Realizadas',
+    path: '/remisiones',
+    icon: <DocumentTextIcon className="h-6 w-6 text-gray-500" />,
+    requiredPermissions: [
       PERMISOS.HACER_REMISIONES,
       PERMISOS.VER_PROYECTOS,
     ],
