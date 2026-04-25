@@ -149,6 +149,15 @@ export default function Items() {
       grid: { xs: 12, md: 12 },
     },
     {
+      name: 'proveedor_id',
+      label: 'Proveedor asociado',
+      input: 'select',
+      endpoint: `/getClientes/${sessionStorage.getItem('company')}?tipo=proveedor`,
+      optionLabel: 'nombre',
+      optionValue: 'id',
+      grid: { xs: 12, md: 12 },
+    },
+    {
       name: 'img',
       label: 'Imagen del item',
       input: 'file',
@@ -198,10 +207,12 @@ export default function Items() {
       amount: item.amount,
       Grupo: item.ItemGroup?.name || 'S/N',
       Unidad: item.UnitOfMeasure?.unitOfMeasure || 'S/N',
+      Proveedor: item.Proveedor?.nombre || '-',
       price: item.price,
       location: [item.position1, item.position2, item.position3].filter(Boolean).join(' - ') || '-',
       group_item: item.group_item || item.ItemGroup?.id, // Keep for filtering in remission modal
       unitOfMeasure: item.unitOfMeasure || item.UnitOfMeasure?.id, // Keep for reference
+      proveedor_id: item.proveedor_id || item.Proveedor?.id,
     }));
   };
 
@@ -290,7 +301,7 @@ export default function Items() {
         fields={fields}
         onDataChange={setGridData}
         mapData={mapItemsData}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'proveedor_id']}
         hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideDelete={!isAdmin}
