@@ -180,7 +180,7 @@ export default function Items() {
       input: 'itemTransfer',
       grid: { xs: 12 },
     }
-  ], [gridData]);
+  ], []);
 
   const movementFields = useMemo(() => [
     {

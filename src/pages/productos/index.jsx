@@ -1,18 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
-import axios from 'axios';
+import { useMemo } from 'react';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 export default function Usuarios() {
-  const [gridData, setGridData] = useState([]);
   const { hasPermission, isAdmin } = usePermissions();
-
-
-  useEffect(() => {
-    axios.get(`/getItem/${sessionStorage.getItem('company')}`)
-      .then(res => setGridData(res.data.data ?? res.data))
-      .catch(err => console.error('Error cargando items:', err));
-  }, []);
 
   
   const hasToHide = (values) => values.variable === '0' || !values.variable;
@@ -67,7 +58,7 @@ export default function Usuarios() {
       input: 'itemTransfer',
       grid: { xs: 12 },
     }
-  ], [gridData]);
+  ], []);
 
   return (
     <>
