@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
-
+import { fCurrency } from '../../utils/formatNumber';
 export default function Usuarios() {
   const { hasPermission, isAdmin } = usePermissions();
 
@@ -89,9 +89,9 @@ export default function Usuarios() {
             case '¿Es Variable?':
               return item.variable === '1' || item.variable === 1 ? 'Si' : 'No';
             case 'Valor 1':
-              return item.value1 ?? '-';
+              return item.value1 != null ? fCurrency(item.value1) : '-';
             case 'Valor 2':
-              return item.value2 ?? '-';
+              return item.value2 != null ? fCurrency(item.value2) : '-';
             default:
               return null;
           }

@@ -17,8 +17,7 @@ import * as XLSX from 'xlsx';
 import { pdf } from '@react-pdf/renderer';
 import InventoryComparisonPdf from '../proyectos/components/InventoryComparisonPdf';
 
-const fCurrency = (value) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
+import { fCurrency } from '../../utils/formatNumber';
 
 export default function AnalisisInventario() {
   const [data, setData] = useState([]);

@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Helmet } from 'react-helmet-async';
 import Footer from '../../components/ui/Footer';
+import { fCurrency } from '../../utils/formatNumber';
 
 export default function PublicItemView() {
   const { id } = useParams();
@@ -177,7 +178,7 @@ export default function PublicItemView() {
                     <DetailRow 
                       icon={<CurrencyDollarIcon className="h-5 w-5 text-blue-500" />} 
                       label="Precio" 
-                      value={`$ ${Number(item.price).toLocaleString('es-CO')}`} 
+                      value={fCurrency(item.price)} 
                     />
                     <DetailRow 
                       icon={<ArchiveBoxIcon className="h-5 w-5 text-blue-500" />} 

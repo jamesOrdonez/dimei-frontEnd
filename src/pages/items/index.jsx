@@ -21,8 +21,7 @@ import { pdf } from '@react-pdf/renderer';
 import { QRCodeCanvas } from 'qrcode.react';
 import numeral from 'numeral';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
-
-const fCurrency = (number) => numeral(number).format('$0,0');
+import { fCurrency } from '../../utils/formatNumber.js';
 
 export default function Items() {
   const { hasPermission, isAdmin } = usePermissions();
@@ -291,11 +290,12 @@ export default function Items() {
         fields={fields}
         onDataChange={setGridData}
         mapData={mapItemsData}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price']}
         hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideDelete={!isAdmin}
         extraHeaders={[
+          { label: 'Precio', after: 'Unidad' },
           { label: 'ENTRADA/SALIDA' },
         ]}
         extraHeaderActions={
@@ -325,6 +325,7 @@ export default function Items() {
           </Box>
         }
         renderExtraCell={({ item, headerLabel }) => {
+          if (headerLabel === 'Precio') return item.price != null && item.price !== '' ? fCurrency(item.price) : '-';
           if (headerLabel === 'QR') return (
             <Tooltip title="Opciones de QR" placement="top">
               <Box 
