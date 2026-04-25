@@ -14,7 +14,6 @@ export default function Proyectos() {
   const [customers, setCustomers] = useState([]);
   const { hasPermission, isAdmin } = usePermissions();
 
-
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -33,25 +32,31 @@ export default function Proyectos() {
     navigate(`/proyectos/${item.id}`);
   };
 
-  const statusOptions = useMemo(() => [
-    { value: 'Creado', label: 'Creado' },
-    { value: 'Iniciado', label: 'Iniciado' },
-    { value: 'Finalizado', label: 'Finalizado' },
-    { value: 'Cancelado', label: 'Cancelado' },
-  ], []);
+  const statusOptions = useMemo(
+    () => [
+      { value: 'Creado', label: 'Creado' },
+      { value: 'Iniciado', label: 'Iniciado' },
+      { value: 'Finalizado', label: 'Finalizado' },
+      { value: 'Cancelado', label: 'Cancelado' },
+    ],
+    []
+  );
 
   const customerOptions = useMemo(() => {
     if (!Array.isArray(customers)) return [];
-    return customers.map(c => ({
-      value: c.nombre, 
-      label: c.nombre
+    return customers.map((c) => ({
+      value: c.nombre,
+      label: c.nombre,
     }));
   }, [customers]);
 
-  const customFilters = useMemo(() => [
-    { key: 'state', label: 'Estado', options: statusOptions },
-    { key: 'customerName', label: 'Cliente', options: customerOptions },
-  ], [statusOptions, customerOptions]);
+  const customFilters = useMemo(
+    () => [
+      { key: 'state', label: 'Estado', options: statusOptions },
+      { key: 'customerName', label: 'Cliente', options: customerOptions },
+    ],
+    [statusOptions, customerOptions]
+  );
 
   const fields = [
     {
@@ -65,7 +70,7 @@ export default function Proyectos() {
     },
     {
       name: 'typeDriveSystem',
-      label: 'Tipo de sistema motriz',
+      label: 'Tipo de sistema',
       input: 'select',
       optionLabel: 'typeDriveSystem',
       endpoint: `/getTypeDriveSystems/${sessionStorage.getItem('company')}`,
@@ -137,10 +142,10 @@ export default function Proyectos() {
               Cancelado: 'error',
             };
             return (
-              <Chip 
-                label={item.state} 
-                color={stateColors[item.state] || 'default'} 
-                size="small" 
+              <Chip
+                label={item.state}
+                color={stateColors[item.state] || 'default'}
+                size="small"
                 variant="outlined"
                 sx={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.65rem' }}
               />
@@ -164,10 +169,7 @@ export default function Proyectos() {
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act']}
         customFilters={customFilters}
       />
-      <InventoryComparisonModal
-        open={openInventoryModal}
-        onClose={() => setOpenInventoryModal(false)}
-      />
+      <InventoryComparisonModal open={openInventoryModal} onClose={() => setOpenInventoryModal(false)} />
     </>
   );
 }

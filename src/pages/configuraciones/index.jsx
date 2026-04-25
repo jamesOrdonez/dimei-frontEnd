@@ -7,7 +7,6 @@ import TypeDriveSystem from './components/type.drive.system';
 import ProductsGroup from './components/products.groups';
 import RolesManagement from './components/roles.management';
 
-
 // 🔁 COMPONENTE TABS REUTILIZABLE
 export function ConfigTabs({ tabs }) {
   const [value, setValue] = useState(0);
@@ -58,11 +57,11 @@ export default function Configuraciones() {
       component: <UnidadMedida />,
     },
     {
-      label: 'Tipo de ascensor',
+      label: 'Tipo de sistema',
       component: <ElevatorType />,
     },
     {
-      label: 'Tipo de sistema hidraulico',
+      label: 'Tipo de ascensor',
       component: <TypeDriveSystem />,
     },
     {
@@ -70,7 +69,6 @@ export default function Configuraciones() {
       component: <RolesManagement />,
     },
   ];
-
 
   return <ConfigTabs tabs={tabs} />;
 }

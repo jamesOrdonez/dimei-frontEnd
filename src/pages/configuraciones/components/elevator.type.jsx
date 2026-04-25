@@ -4,7 +4,7 @@ export default function ElevatorType() {
   const fields = [
     {
       name: 'elevatorType',
-      label: 'Tipo de Ascensor',
+      label: 'Tipo de Sistema',
       input: 'text',
       grid: { xs: 12, md: 12 },
       required: true,
@@ -13,11 +13,11 @@ export default function ElevatorType() {
 
   return (
     <BaseGrid
-      title="Tipo de Ascensor"
+      title="Tipo de Sistema"
       endpoint={`/getElevatorTypes/${sessionStorage.getItem('company')}`}
       saveEndpoint="/saveElevatorTypes"
-      updateEndpoint="/updateElevatorTypes"
-      deleteEndpoint="/deleteElevatorTypes"
+      updateEndpoint="/updateElevatorType"
+      deleteEndpoint="/deleteElevatorType"
       fetchOneEndpoint="/getOneElevatorTypes"
       excludeKeys={['company']}
       fields={fields}

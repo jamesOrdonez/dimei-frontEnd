@@ -4,7 +4,7 @@ export default function TypeDriveSystem() {
   const fields = [
     {
       name: 'typeDriveSystem',
-      label: 'Tipo de sistema hidraulico',
+      label: 'Tipo de Ascensor',
       input: 'text',
       grid: { xs: 12, md: 12 },
       required: true,
@@ -13,7 +13,7 @@ export default function TypeDriveSystem() {
 
   return (
     <BaseGrid
-      title="Tipo de sistema hidraulico"
+      title="Tipo de Ascensor"
       endpoint={`/getTypeDriveSystems/${sessionStorage.getItem('company')}`}
       saveEndpoint="/saveTypeDriveSystems"
       updateEndpoint="/updateTypeDriveSystems"
