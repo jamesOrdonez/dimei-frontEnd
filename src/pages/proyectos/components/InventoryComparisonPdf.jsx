@@ -22,11 +22,12 @@ const styles = StyleSheet.create({
   tableHeader: { flexDirection: 'row', backgroundColor: '#f8fafc', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
   colId: { width: '6%', textAlign: 'center' },
-  colItem: { width: '24%' },
-  colTotalInv: { width: '10%', textAlign: 'center' },
-  colComp: { width: '10%', textAlign: 'center' },
-  colLibre: { width: '10%', textAlign: 'center' },
-  colBuy: { width: '12%', textAlign: 'center' },
+  colItem: { width: '20%' },
+  colProv: { width: '12%' },
+  colTotalInv: { width: '8%', textAlign: 'center' },
+  colComp: { width: '8%', textAlign: 'center' },
+  colLibre: { width: '8%', textAlign: 'center' },
+  colBuy: { width: '10%', textAlign: 'center' },
   colPrice: { width: '14%', textAlign: 'right' },
   colTotalBuy: { width: '14%', textAlign: 'right' },
   colHeader: { fontFamily: 'Helvetica-Bold', fontSize: 9, color: '#475569' },
@@ -84,6 +85,7 @@ export default function InventoryComparisonPdf({ data, categories, summary, proj
           <View style={styles.tableHeader}>
             <Text style={[styles.colId, styles.colHeader]}>ID</Text>
             <Text style={[styles.colItem, styles.colHeader]}>ÍTEM</Text>
+            <Text style={[styles.colProv, styles.colHeader]}>PROV.</Text>
             <Text style={[styles.colTotalInv, styles.colHeader]}>TOTAL INV.</Text>
             <Text style={[styles.colComp, styles.colHeader]}>COMPROMETIDO</Text>
             <Text style={[styles.colLibre, styles.colHeader]}>DISP. LIBRE</Text>
@@ -109,6 +111,7 @@ export default function InventoryComparisonPdf({ data, categories, summary, proj
                   <Text style={styles.rowTextBold}>{row.item_name}</Text>
                   <Text style={{ fontSize: 8, color: '#94a3b8' }}>{catName}</Text>
                 </View>
+                <Text style={[styles.colProv, styles.rowText]}>{row.proveedor || '-'}</Text>
                 <Text style={[styles.colTotalInv, styles.rowText]}>{total}</Text>
                 <Text style={[styles.colComp, styles.rowText]}>{comp > 0 ? comp : '—'}</Text>
                 <Text style={[styles.colLibre, styles.rowText]}>{lib}</Text>
