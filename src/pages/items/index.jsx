@@ -223,7 +223,7 @@ export default function Items() {
           cantidad: item.quantity
         }
       }),
-      elaboradoPor: decrypt(sessionStorage.getItem('name')) || decrypt(sessionStorage.getItem('user')) || 'Usuario',
+      elaboradoPor: decrypt(sessionStorage.getItem('name')) || 'S/N',
       aprobadoPor: ' ',
     };
 
