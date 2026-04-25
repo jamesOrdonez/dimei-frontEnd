@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 
-export default function Clientes() {
+export default function Proveedores() {
   const fields = [
     { name: 'nombre', label: 'Nombre', input: 'text', grid: { xs: 12, md: 6 }, required: true },
     { name: 'nit', label: 'NIT', input: 'text', grid: { xs: 12, md: 6 }, required: true },
@@ -49,18 +49,18 @@ export default function Clientes() {
   return (
     <>
       <Helmet>
-        <title>Clientes</title>
+        <title>Proveedores</title>
       </Helmet>
       <BaseGrid
-        title="Cliente"
-        endpoint={`/getClientes/${sessionStorage.getItem('company')}?tipo=cliente`}
+        title="Proveedor"
+        endpoint={`/getClientes/${sessionStorage.getItem('company')}?tipo=proveedor`}
         saveEndpoint="/saveCliente"
         updateEndpoint="/updateCliente"
         deleteEndpoint="/deleteCliente"
         fields={fields}
         mapData={mapData}
         mapPayload={mapPayload}
-        formAdditionalValues={{ tipo: 'cliente' }}
+        formAdditionalValues={{ tipo: 'proveedor' }}
         excludeKeys={[
           'contacto_principal',
           'contactos_genericos',

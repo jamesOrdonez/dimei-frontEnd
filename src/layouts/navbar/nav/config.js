@@ -1,5 +1,5 @@
 // component
-import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon, DocumentTextIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
 import { PERMISOS } from '../../../context/PermissionsContext';
@@ -50,6 +50,12 @@ const navConfig = [
     path: '/clientes',
     icon: <UserGroupIcon className="h-6 w-6 text-gray-500" />,
     adminOnly: true, // Solo Administrador gestiona clientes
+  },
+  {
+    title: 'Proveedores',
+    path: '/proveedores',
+    icon: <BuildingStorefrontIcon className="h-6 w-6 text-gray-500" />,
+    adminOnly: true, // Solo Administrador gestiona proveedores
   },
   {
     title: 'Proyectos',

@@ -9,6 +9,7 @@ import BlogPage from '../pages/BlogPage';
 import ItemProductos from '../pages/productos/index';
 import Configuraciones from '../pages/configuraciones';
 import Clientes from '../pages/clientes';
+import Proveedores from '../pages/proveedores';
 import Items from '../pages/items';
 import Proyectos from '../pages/proyectos';
 import DetalleProyecto from '../pages/proyectos/detail';
@@ -78,6 +79,7 @@ export default function Router() {
         <Route path="/itemProductos" element={<ItemProductos />} />
         <Route path="/configuraciones" element={<Configuraciones />} />
         <Route path="/clientes" element={<Clientes />} />
+        <Route path="/proveedores" element={<Proveedores />} />
         <Route path="/proyectos" element={<Proyectos />} />
         <Route path="/proyectos/:id" element={<DetalleProyecto />} />
         <Route path="/analisis-inventario" element={<AnalisisInventario />} />
