@@ -31,6 +31,7 @@ export default function Login() {
       sessionStorage.setItem('company', 1);
 
       sessionStorage.setItem('user', encrypt(respon.data.user));
+      sessionStorage.setItem('name', encrypt(respon.data.name));
       sessionStorage.setItem('userId', encrypt(respon.data.userId));
 
       // Redirigir al dashboard

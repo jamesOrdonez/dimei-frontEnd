@@ -29,7 +29,7 @@ export default function DetalleProyecto() {
   const [closingProject, setClosingProject] = useState(false);
   const [uploadingSignedAct, setUploadingSignedAct] = useState(false);
   const company = sessionStorage.getItem('company');
-  const user = decrypt(sessionStorage.getItem('user')) || ' ';
+  const user = decrypt(sessionStorage.getItem('name')) || ' ';
   const { hasPermission } = usePermissions();
 
 

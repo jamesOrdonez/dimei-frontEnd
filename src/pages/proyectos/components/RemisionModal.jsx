@@ -301,7 +301,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             }
             return acc;
           }, []),
-        elaboradoPor: decrypt(sessionStorage.getItem('user')) || ' ',
+        elaboradoPor: decrypt(sessionStorage.getItem('name')) || ' ',
         aprobadoPor: ' ',
       };
 

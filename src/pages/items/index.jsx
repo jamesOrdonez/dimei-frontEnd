@@ -239,7 +239,7 @@ export default function Items() {
           cantidad: item.quantity
         }
       }),
-      elaboradoPor: decrypt(sessionStorage.getItem('user')),
+      elaboradoPor: decrypt(sessionStorage.getItem('name')),
       aprobadoPor: ' ',
     };
 
@@ -259,7 +259,7 @@ export default function Items() {
       <InventoryReportPDF 
         data={gridData} 
         stats={inventoryStats} 
-        user={decrypt(sessionStorage.getItem('user'))} 
+        user={decrypt(sessionStorage.getItem('name'))} 
       />
     ).toBlob();
 

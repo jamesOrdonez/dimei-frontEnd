@@ -1,12 +1,10 @@
-import { useState } from 'react';
-import { Box, Button, Tooltip } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import RemisionPDF from '../productos/remisionPDF.jsx';
 import { pdf } from '@react-pdf/renderer';
 
 export default function Remisiones() {
-  const [gridData, setGridData] = useState([]);
 
   const fields = [
     {
@@ -100,7 +98,6 @@ export default function Remisiones() {
         title="Remisiones Realizadas"
         endpoint={`/getAll/${sessionStorage.getItem('company')}`}
         fields={fields}
-        onDataChange={setGridData}
         mapData={mapRemisionesData}
         hideCreate={true}
         hideEdit={true}
