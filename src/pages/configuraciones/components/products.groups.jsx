@@ -19,6 +19,7 @@ export default function ProductsGroup() {
       updateEndpoint="/updateProductGroup"
       deleteEndpoint="/deleteProductGroup"
       fetchOneEndpoint="/getOneProductGroup"
+      hideDelete={true}
       excludeKeys={['company']}
       fields={fields}
     />

@@ -19,6 +19,7 @@ export default function TypeDriveSystem() {
       updateEndpoint="/updateTypeDriveSystems"
       deleteEndpoint="/deleteTypeDriveSystems"
       fetchOneEndpoint="/getOneTypeDriveSystems"
+      hideDelete={true}
       excludeKeys={['company']}
       fields={fields}
     />

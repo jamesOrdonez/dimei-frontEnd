@@ -34,6 +34,7 @@ export default function ItemsGroup() {
         saveEndpoint="/saveItemGroup"
         updateEndpoint="/updateItemGroup"
         deleteEndpoint="/deleteItemgroup"
+        hideDelete={true}
         fields={fields}
         excludeKeys={['company', 'created_at', 'updated_at', 'state']}
         formAdditionalValues={{ company: sessionStorage.getItem('company') }}

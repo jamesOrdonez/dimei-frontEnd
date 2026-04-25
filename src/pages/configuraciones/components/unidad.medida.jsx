@@ -23,6 +23,7 @@ export default function Unidad_medida() {
         saveEndpoint="/unitOfMeasuremet"
         updateEndpoint="/unitOfMeasuremet"
         deleteEndpoint="/unitOfMeasuremet"
+        hideDelete={true}
         fields={fields}
         excludeKeys={['company', 'created_at', 'updated_at', 'unitOfMeasure']}
         formAdditionalValues={{ company: sessionStorage.getItem('company') }}

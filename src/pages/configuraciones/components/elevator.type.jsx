@@ -19,6 +19,7 @@ export default function ElevatorType() {
       updateEndpoint="/updateElevatorType"
       deleteEndpoint="/deleteElevatorType"
       fetchOneEndpoint="/getOneElevatorTypes"
+      hideDelete={true}
       excludeKeys={['company']}
       fields={fields}
     />
