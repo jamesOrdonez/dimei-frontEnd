@@ -1,5 +1,5 @@
 // component
-import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
+import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
 import { PERMISOS } from '../../../context/PermissionsContext';
@@ -61,6 +61,14 @@ const navConfig = [
       PERMISOS.ANEXAR_ACTAS,
       PERMISOS.PEDIR_MATERIAL,
       PERMISOS.HACER_REMISIONES,
+    ],
+  },
+  {
+    title: 'Análisis de inventario',
+    path: '/analisis-inventario',
+    icon: <ChartBarIcon className="h-6 w-6 text-gray-500" />,
+    requiredPermissions: [
+      PERMISOS.CONSULTAR_LISTAS,
     ],
   },
   {

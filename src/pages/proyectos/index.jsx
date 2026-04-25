@@ -4,13 +4,10 @@ import { IconButton, Chip } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
-import InventoryComparisonModal from './components/InventoryComparisonModal.jsx';
-import BaseButton from '../../components/ui/BaseButton.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 export default function Proyectos() {
   const navigate = useNavigate();
-  const [openInventoryModal, setOpenInventoryModal] = useState(false);
   const [customers, setCustomers] = useState([]);
   const { hasPermission, isAdmin } = usePermissions();
 
@@ -122,16 +119,6 @@ export default function Proyectos() {
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
-        extraHeaderActions={
-          hasPermission(PERMISOS.CONSULTAR_LISTAS) ? (
-            <BaseButton
-              icon={<Icon icon="lucide:bar-chart-2" />}
-              onClick={() => setOpenInventoryModal(true)}
-              color="orange"
-              text="Stock"
-            />
-          ) : null
-        }
         extraHeaders={[{ label: 'Estado', after: 'customerId' }]}
         renderExtraCell={({ item, headerLabel }) => {
           if (headerLabel === 'Estado') {
@@ -169,7 +156,6 @@ export default function Proyectos() {
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act']}
         customFilters={customFilters}
       />
-      <InventoryComparisonModal open={openInventoryModal} onClose={() => setOpenInventoryModal(false)} />
     </>
   );
 }
