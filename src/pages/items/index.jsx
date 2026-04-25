@@ -143,6 +143,12 @@ export default function Items() {
       optionLabel: 'unitOfMeasure',
       grid: { xs: 12, md: 6 },
     },
+    { 
+      name: 'low_stock', 
+      label: 'Umbral de stock bajo', 
+      input: 'number', 
+      grid: { xs: 12, md: 6 },
+    },
     {
       name: 'img',
       label: 'Imagen del item',

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, Box, TextField, MenuItem, Select,
   ToggleButton, ToggleButtonGroup, Grid, Card, CardContent,
@@ -57,11 +56,10 @@ export default function AnalisisInventario() {
     return data.filter(item => {
       if (searchText && !item.item_name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (selectedCategory !== 'all' && String(item.category) !== String(selectedCategory)) return false;
-      const total = item.total_inventory;
       const available = item.available_inventory;
-      const ratio = total > 0 ? available / total : 0;
-      if (selectedStatus === 'good' && ratio < 0.3) return false;
-      if (selectedStatus === 'low' && (ratio >= 0.3 || available <= 0)) return false;
+      const lowThreshold = item.low_stock || 0;
+      if (selectedStatus === 'good' && available <= lowThreshold) return false;
+      if (selectedStatus === 'low' && (available > lowThreshold || available <= 0)) return false;
       if (selectedStatus === 'buy' && available > 0) return false;
       if (selectedProject !== 'all' && item.separated_inventory <= 0) return false;
       return true;
@@ -147,7 +145,8 @@ export default function AnalisisInventario() {
             const ratio = total > 0 ? (lib / total) * 100 : 0;
             const isBuy = row.available_inventory < 0;
             const isNone = row.available_inventory === 0;
-            const isLow = !isNone && !isBuy && ratio < 30;
+            const lowThreshold = row.low_stock || 0;
+            const isLow = !isNone && !isBuy && lib <= lowThreshold;
             const catObj = categories.find(c => String(c.id) === String(row.category));
             const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
             return (
@@ -206,11 +205,11 @@ export default function AnalisisInventario() {
         const comp = Math.max(0, row.separated_inventory);
         const lib = Math.max(0, row.available_inventory);
         const deficit = row.available_inventory < 0 ? Math.abs(row.available_inventory) : 0;
-        const ratio = total > 0 ? (lib / total) * 100 : 0;
         const compRatio = total > 0 ? (comp / total) * 100 : 0;
         const isBuy = row.available_inventory < 0;
         const isNone = row.available_inventory === 0;
-        const isLow = !isNone && !isBuy && ratio < 30;
+        const lowThreshold = row.low_stock || 0;
+        const isLow = !isNone && !isBuy && lib <= lowThreshold;
         const catObj = categories.find(c => String(c.id) === String(row.category));
         const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
         return (
@@ -310,8 +309,8 @@ export default function AnalisisInventario() {
         {/* Legend */}
         <Box display="flex" alignItems="center" gap={2} mb={3} flexWrap="wrap">
           <Typography variant="caption" fontWeight={700} color="#94a3b8" letterSpacing={1}>DISPONIBILIDAD:</Typography>
-          <Chip size="small" variant="outlined" label="● Buena disponibilidad (≥ 30%)" sx={{ borderColor: '#86efac', color: '#16a34a', bgcolor: '#fff' }} />
-          <Chip size="small" variant="outlined" label="● Stock bajo (< 30%)" sx={{ borderColor: '#fde047', color: '#d97706', bgcolor: '#fff' }} />
+          <Chip size="small" variant="outlined" label="● Buena disponibilidad (> Umbral)" sx={{ borderColor: '#86efac', color: '#16a34a', bgcolor: '#fff' }} />
+          <Chip size="small" variant="outlined" label="● Stock bajo (≤ Umbral)" sx={{ borderColor: '#fde047', color: '#d97706', bgcolor: '#fff' }} />
           <Chip size="small" variant="outlined" label="● Requiere Compra (≤ 0)" sx={{ borderColor: '#ef4444', color: '#b91c1c', bgcolor: '#fef2f2' }} />
         </Box>
 
