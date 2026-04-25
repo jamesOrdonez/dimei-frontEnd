@@ -9,6 +9,7 @@ interface BasePasswordProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fullWidth?: boolean;
   required?: boolean;
+  autoFocus?: boolean;
 }
 
 export default function BasePassword({
@@ -18,6 +19,7 @@ export default function BasePassword({
   onChange,
   fullWidth = true,
   required = false,
+  autoFocus = false,
 }: BasePasswordProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -31,6 +33,7 @@ export default function BasePassword({
       required={required}
       type={showPassword ? 'text' : 'password'}
       variant="outlined"
+      autoFocus={autoFocus}
       InputProps={{
         endAdornment: (
           <InputAdornment position="end">

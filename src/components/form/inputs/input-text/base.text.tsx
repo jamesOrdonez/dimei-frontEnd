@@ -8,6 +8,7 @@ interface BaseTextProps {
   fullWidth?: boolean;
   required?: boolean;
   rows?: number;
+  autoFocus?: boolean;
 }
 
 export default function BaseText({
@@ -18,6 +19,7 @@ export default function BaseText({
   fullWidth = true,
   required = false,
   rows = 1,
+  autoFocus = false,
 }: BaseTextProps) {
   return (
     <TextField
@@ -30,6 +32,7 @@ export default function BaseText({
       variant="outlined"
       multiline
       rows={rows}
+      autoFocus={autoFocus}
     />
   );
 }

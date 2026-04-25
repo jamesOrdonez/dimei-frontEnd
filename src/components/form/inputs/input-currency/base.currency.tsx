@@ -11,6 +11,7 @@ interface BaseCurrencyProps {
   fullWidth?: boolean;
   required?: boolean;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 export default function BaseCurrency({
@@ -22,6 +23,7 @@ export default function BaseCurrency({
   fullWidth = true,
   required = false,
   disabled = false,
+  autoFocus = false,
 }: BaseCurrencyProps) {
   const [displayValue, setDisplayValue] = useState('');
 
@@ -83,6 +85,7 @@ export default function BaseCurrency({
       size={size}
       variant="outlined"
       type="text"
+      autoFocus={autoFocus}
     />
   );
 }

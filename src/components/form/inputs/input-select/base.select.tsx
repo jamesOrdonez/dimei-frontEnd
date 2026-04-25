@@ -19,6 +19,7 @@ interface BaseSelectProps {
   endpoint?: string;
   optionLabel?: string;
   optionValue?: string;
+  autoFocus?: boolean;
 }
 
 const EMPTY_ARRAY: any[] = [];
@@ -34,7 +35,8 @@ export default function BaseSelect({
   endpoint,
   optionLabel = 'name',
   optionValue = 'id',
-  size = 'medium'
+  size = 'medium',
+  autoFocus = false
 }: BaseSelectProps) {
   const [items, setItems] = useState<Option[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -70,7 +72,6 @@ export default function BaseSelect({
       value={selectedOption}
       loading={loading}
       fullWidth={fullWidth}
-      disabled={loading}
       onChange={(_, newValue) => {
         onChange({
           target: {
@@ -87,6 +88,7 @@ export default function BaseSelect({
           required={required}
           variant="outlined"
           size={size}
+          autoFocus={autoFocus}
           InputProps={{
             ...params.InputProps,
             endAdornment: (

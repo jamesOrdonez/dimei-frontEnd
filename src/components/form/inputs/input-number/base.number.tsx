@@ -9,6 +9,7 @@ interface BaseTextProps {
   fullWidth?: boolean;
   required?: boolean;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 export default function BaseText({
@@ -20,6 +21,7 @@ export default function BaseText({
   fullWidth = true,
   required = false,
   disabled = false,
+  autoFocus = false,
 }: BaseTextProps) {
   return (
     <TextField
@@ -33,6 +35,7 @@ export default function BaseText({
       size={size}
       variant="outlined"
       type="number"
+      autoFocus={autoFocus}
     />
   );
 }

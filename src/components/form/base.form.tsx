@@ -73,6 +73,8 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
     }
   };
 
+  let autoFocusSet = false;
+
   return (
     <Grid container spacing={2}>
       {fields.map((field) => {
@@ -89,6 +91,11 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
 
         if (currentField.hasToHide && currentField.hasToHide({ values: formData, mode })) {
           return null;
+        }
+
+        const isFirstVisible = !autoFocusSet;
+        if (isFirstVisible) {
+          autoFocusSet = true;
         }
 
         const InputComponent = INPUT_COMPONENTS[currentField.input];
@@ -112,6 +119,7 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
                 })()}
                 value={formData[currentField.name]}
                 onChange={handleChange}
+                autoFocus={isFirstVisible}
               />
             ) : (
               <>No existe el componente</>
