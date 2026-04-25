@@ -50,6 +50,7 @@ interface BaseGridProps {
   hideCreate?: boolean;
   hideEdit?: boolean;
   hideDelete?: boolean;
+  formMaxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
 }
 
 export default function BaseGrid({ 
@@ -74,6 +75,7 @@ export default function BaseGrid({
   hideCreate = false,
   hideEdit = false,
   hideDelete = false,
+  formMaxWidth,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -259,6 +261,7 @@ export default function BaseGrid({
         additionalValues={formAdditionalValues}
         title={`${dialogMode === 'create' ? 'Nuevo' : 'Editar'} ${title}`}
         mapPayload={mapPayload}
+        maxWidth={formMaxWidth}
       />
     </Box>
   );

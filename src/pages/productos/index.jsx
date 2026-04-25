@@ -63,28 +63,8 @@ export default function Usuarios() {
       hasToHide: ({ values }) => hasToHide(values),
     },
     {
-      name: 'group_item',
-      label: 'Seleccione grupo de items',
-      input: 'select',
-      endpoint: `/getItemGroup/${sessionStorage.getItem('company')}`,
-      grid: { xs: 12 },
-    },
-    {
       name: 'net_items',
-      input: 'items',
-      hasToHide: ({ values }) => !values.group_item && (!values.net_items || values.net_items.length === 0),
-      dynamicProps: ({ values }) => ({
-        options: gridData
-          .filter(item => 
-            !values.group_item || 
-            String(item.group_item) === String(values.group_item) ||
-            values.net_items?.some(selected => String(selected.id) === String(item.id))
-          )
-          .map(item => ({
-            label: `${item.id} - ${item.description}`,
-            value: item.id
-          }))
-      }),
+      input: 'itemTransfer',
       grid: { xs: 12 },
     }
   ], [gridData]);
@@ -102,6 +82,7 @@ export default function Usuarios() {
         hideCreate={!hasPermission(PERMISOS.CREAR_PRODUCTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
+        formMaxWidth="md"
         formAdditionalValues={{ mathOperation: '+' }}
         excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
         extraHeaders={[

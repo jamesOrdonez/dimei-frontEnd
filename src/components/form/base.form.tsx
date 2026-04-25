@@ -7,6 +7,7 @@ import BaseNumber from './inputs/input-number/base.number.tsx';
 import BaseFile from './inputs/input-file/base.file.tsx';
 import ItemsList from './inputs/item-row/items.list.tsx';
 import ClientContacts from './inputs/input-contacts/client.contacts.tsx';
+import FormItemTransfer from './inputs/item-transfer/form.item.transfer.tsx';
 
 // Mapping of input types to their respective components
 const INPUT_COMPONENTS: Record<string, any> = {
@@ -17,6 +18,7 @@ const INPUT_COMPONENTS: Record<string, any> = {
   file: BaseFile,
   items: ItemsList,
   clientContacts: ClientContacts,
+  itemTransfer: FormItemTransfer,
 };
 
 export interface BaseField {

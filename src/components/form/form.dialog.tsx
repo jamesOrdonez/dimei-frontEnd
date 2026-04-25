@@ -47,6 +47,7 @@ interface FormDialogProps {
   updateEndpoint?: string;
   fetchOneEndpoint?: string;
   mapPayload?: (payload: any) => any;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
 }
 
 export default function FormDialog({
@@ -64,6 +65,7 @@ export default function FormDialog({
   updateEndpoint,
   fetchOneEndpoint,
   mapPayload,
+  maxWidth,
 }: FormDialogProps) {
   const [currentData, setCurrentData] = useState<Record<string, any>>(initialValues || {});
   const [isFetching, setIsFetching] = useState(false);
@@ -235,7 +237,7 @@ export default function FormDialog({
       onClose={onClose}
       title={dialogTitle}
       actions={actions}
-      maxWidth="sm"
+      maxWidth={maxWidth || 'sm'}
       fullWidth
     >
       <Box sx={{ minHeight: 100, position: 'relative' }}>
