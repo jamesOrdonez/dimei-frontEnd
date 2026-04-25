@@ -61,6 +61,7 @@ const navConfig = [
       PERMISOS.ANEXAR_ACTAS,
       PERMISOS.PEDIR_MATERIAL,
       PERMISOS.HACER_REMISIONES,
+      PERMISOS.VER_PROYECTOS,
     ],
   },
   {

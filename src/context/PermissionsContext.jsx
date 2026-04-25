@@ -19,6 +19,7 @@ export const PERMISOS = {
     CONSULTAR_LISTAS: 'Consultar listas de compras',
     ANEXAR_ACTAS: 'Anexar actas de entrega',
     PEDIR_MATERIAL: 'Pedir material adicional',
+    VER_PROYECTOS: 'Visualizar proyectos',
 };
 
 export function PermissionsProvider({ children }) {

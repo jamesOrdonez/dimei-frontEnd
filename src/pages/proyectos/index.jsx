@@ -141,17 +141,19 @@ export default function Proyectos() {
           return null;
         }}
         renderExtraActions={(item) => (
-          <IconButton
-            sx={{
-              color: 'info.main',
-              border: '1.5px solid',
-              borderColor: 'info.light',
-              borderRadius: 1.5,
-            }}
-            onClick={() => handleView(item)}
-          >
-            <Icon icon="lucide:eye" width={20} />
-          </IconButton>
+          (hasPermission(PERMISOS.VER_PROYECTOS) || hasPermission(PERMISOS.CREAR_PROYECTOS)) && (
+            <IconButton
+              sx={{
+                color: 'info.main',
+                border: '1.5px solid',
+                borderColor: 'info.light',
+                borderRadius: 1.5,
+              }}
+              onClick={() => handleView(item)}
+            >
+              <Icon icon="lucide:eye" width={20} />
+            </IconButton>
+          )
         )}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act']}
         customFilters={customFilters}

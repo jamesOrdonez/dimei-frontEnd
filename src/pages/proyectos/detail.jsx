@@ -215,7 +215,7 @@ export default function DetalleProyecto() {
 
         {project && (
           <Box display="flex" gap={1}>
-            {project.state === 'Creado' && (
+            {project.state === 'Creado' && hasPermission(PERMISOS.CREAR_PROYECTOS) && (
               <Button
                 variant="contained"
                 color="success"
@@ -233,6 +233,7 @@ export default function DetalleProyecto() {
                   variant="contained"
                   color="info"
                   onClick={() => setOpenRemision(true)}
+                  disabled={!hasPermission(PERMISOS.HACER_REMISIONES)}
                   sx={{ borderRadius: 2 }}
                 >
                   Remisionar
@@ -242,7 +243,7 @@ export default function DetalleProyecto() {
                   variant="contained"
                   color="warning"
                   onClick={handleCloseProject}
-                  disabled={closingProject}
+                  disabled={closingProject || !hasPermission(PERMISOS.CREAR_PROYECTOS)}
                   sx={{ borderRadius: 2, color: '#fff' }}
                 >
                   {closingProject ? 'Cerrando...' : 'Cerrar Proyecto'}
@@ -401,11 +402,11 @@ export default function DetalleProyecto() {
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" fontWeight="bold" color="primary.main" mb={2}>
-            {project.state === 'Finalizado' ? 'Lista de Productos del Proyecto' : 'Asignar Productos'}
+            {(project.state === 'Finalizado' || !hasPermission(PERMISOS.CREAR_PROYECTOS)) ? 'Lista de Productos del Proyecto' : 'Asignar Productos'}
           </Typography>
           <Divider sx={{ mb: 3 }} />
           
-          {project.state === 'Finalizado' ? (
+          {project.state === 'Finalizado' || !hasPermission(PERMISOS.CREAR_PROYECTOS) ? (
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
               <Table size="small">
                 <TableHead sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
@@ -457,7 +458,7 @@ export default function DetalleProyecto() {
         </CardContent>
       </Card>
 
-      {project.state === 'Finalizado' ? (
+      {project.state === 'Finalizado' || !hasPermission(PERMISOS.PEDIR_MATERIAL) ? (
         project.items && project.items.length > 0 && (
           <Card sx={{ mb: 6, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardContent sx={{ p: 4 }}>

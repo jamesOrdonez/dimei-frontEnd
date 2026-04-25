@@ -33,6 +33,7 @@ const ALLOWED_PERMISSIONS = [
   'Consultar listas de compras',
   'Anexar actas de entrega',
   'Pedir material adicional',
+  'Visualizar proyectos',
 ];
 
 const BASE_ROLES = ['Almacenista', 'Diseñador', 'Administrador'];
@@ -58,6 +59,7 @@ export default function RolesManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedRol, setSelectedRol] = useState(null);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [availablePermissions, setAvailablePermissions] = useState(ALLOWED_PERMISSIONS);
   const [permissLoading, setPermissLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [openNewRol, setOpenNewRol] = useState(false);
@@ -87,7 +89,11 @@ export default function RolesManagement() {
     setPermissLoading(true);
     try {
       const res = await axios.get(`/getPermissions/${rol.id}`);
-      setSelectedPermissions((res.data.data || []).map(p => p.permiss));
+      setSelectedPermissions((res.data.data || []).map(p => p.permiss).filter(Boolean));
+      // Usar el catálogo que devuelve el backend (incluye permisos nuevos automáticamente)
+      if (res.data.allPermissions?.length > 0) {
+        setAvailablePermissions(res.data.allPermissions);
+      }
     } catch (err) {
       console.error('Error cargando permisos:', err);
       setSelectedPermissions([]);
@@ -344,7 +350,7 @@ export default function RolesManagement() {
                         Marca los permisos que tendrá el rol <strong>{selectedRol.name}</strong>:
                       </Typography>
                       <FormGroup>
-                        {ALLOWED_PERMISSIONS.map(permiso => (
+                        {availablePermissions.map(permiso => (
                           <FormControlLabel
                             key={permiso}
                             control={
