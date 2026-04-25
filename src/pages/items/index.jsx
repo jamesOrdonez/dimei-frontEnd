@@ -131,7 +131,7 @@ export default function Items() {
     { 
       name: 'price', 
       label: 'Precio', 
-      input: 'number', 
+      input: 'currency', 
       grid: { xs: 12, md: 6 },
     },
     { 
@@ -146,7 +146,7 @@ export default function Items() {
       name: 'low_stock', 
       label: 'Umbral de stock bajo', 
       input: 'number', 
-      grid: { xs: 12, md: 6 },
+      grid: { xs: 12, md: 12 },
     },
     {
       name: 'img',
