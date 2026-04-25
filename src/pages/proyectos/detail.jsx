@@ -194,7 +194,7 @@ export default function DetalleProyecto() {
   if (!project) return <Loader />;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 lg:px-12 mt-6">
+    <div className="px-4 lg:px-8 mt-6">
       <Helmet>
         <title>Detalle del proyecto {projectId}</title>
       </Helmet>
