@@ -8,6 +8,7 @@ import BaseFile from './inputs/input-file/base.file.tsx';
 import ItemsList from './inputs/item-row/items.list.tsx';
 import ClientContacts from './inputs/input-contacts/client.contacts.tsx';
 import FormItemTransfer from './inputs/item-transfer/form.item.transfer.tsx';
+import FormToolTransfer from './inputs/tool-transfer/form.tool.transfer.tsx';
 import BaseCurrency from './inputs/input-currency/base.currency.tsx';
 
 // Mapping of input types to their respective components
@@ -20,6 +21,7 @@ const INPUT_COMPONENTS: Record<string, any> = {
   items: ItemsList,
   clientContacts: ClientContacts,
   itemTransfer: FormItemTransfer,
+  toolTransfer: FormToolTransfer,
   currency: BaseCurrency,
 };
 

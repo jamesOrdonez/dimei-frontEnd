@@ -11,8 +11,8 @@ import {
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import BaseButton from '../../components/ui/BaseButton.tsx';
-import RemisionPDF from '../productos/remisionPDF.jsx';
 import InventoryReportPDF from '../items/InventoryReportPDF.jsx';
+import ToolLoanPDF from './ToolLoanPDF.jsx';
 import SummaryCard from '../../components/ui/SummaryCard.jsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
@@ -23,7 +23,7 @@ export default function Herramientas() {
   const { hasPermission, isAdmin } = usePermissions();
 
   const [openModal, setOpenModal] = useState(false);
-  const [openModalRemission, setOpenModalRemission] = useState(false);
+  const [openLoanModal, setOpenLoanModal] = useState(false);
 
   const [movementType, setMovementType] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -119,29 +119,30 @@ export default function Herramientas() {
     }
   ];
 
-  const remissionFields = useMemo(() => [
+  const loanFields = useMemo(() => [
     {
-      name: 'fk_proyect',
-      label: 'Seleccione Proyecto',
+      name: 'net_tools',
+      input: 'toolTransfer',
+      label: '',
+      grid: { xs: 12 },
+    },
+    {
+      name: 'borrower_user_id',
+      label: 'Usuario al que se presta',
       input: 'select',
-      endpoint: `/getProjects/${sessionStorage.getItem('company')}`,
-      optionLabel: 'customer',
+      endpoint: `/getUser/${sessionStorage.getItem('company')}`,
+      optionLabel: 'name',
       optionValue: 'id',
       grid: { xs: 12 },
       required: true,
     },
     {
-      name: 'description',
-      label: 'Descripción de la remisión',
+      name: 'observations',
+      label: 'Observaciones',
       input: 'text',
-      rows: 4,
+      rows: 3,
       grid: { xs: 12 },
     },
-    {
-      name: 'net_items',
-      input: 'itemTransfer',
-      grid: { xs: 12 },
-    }
   ], []);
 
   const movementFields = useMemo(() => [
@@ -153,47 +154,56 @@ export default function Herramientas() {
     },
   ], [movementType]);
 
-  const mapToolsData = (items) => {
-    return items.map(item => ({
-      img: item.img,
-      id: item.id,
-      description: item.description,
-      amount: item.amount,
-      Grupo: item.ToolGroup?.name || 'S/N',
-      Unidad: item.ToolUnitOfMeasure?.unitOfMeasure || 'S/N',
-      price: item.price,
-      location: [item.position1, item.position2, item.position3].filter(Boolean).join(' - ') || '-',
-      group_item: item.group_item || item.ItemGroup?.id,
-      unitOfMeasure: item.unitOfMeasure || item.UnitOfMeasure?.id,
-    }));
+  const mapToolsData = (tools) => {
+    return tools.map((item) => {
+      const totalAmount = Number(item.amount) || 0;
+      const lentAmount = Number(item.lent_amount) || 0;
+      const availableAmount = totalAmount - lentAmount;
+
+      return {
+        img: item.img,
+        id: item.id,
+        description: item.description,
+        amount: item.amount,
+        'Cant. Total': totalAmount,
+        'Cant. Prestada': lentAmount,
+        'Cant. Disponible': availableAmount,
+        Grupo: item.ToolGroup?.name || 'S/N',
+        Unidad: item.ToolUnitOfMeasure?.unitOfMeasure || 'S/N',
+        price: item.price,
+        location: [item.position1, item.position2, item.position3].filter(Boolean).join(' - ') || '-',
+        group_item: item.group_item || item.ItemGroup?.id,
+        unitOfMeasure: item.unitOfMeasure || item.UnitOfMeasure?.id,
+        lent_amount: lentAmount,
+      };
+    });
   };
 
-  const makeAndDownloadPDF = async (response, payload) => {
-    const project = projects.find(p => String(p.id) === String(payload.fk_proyect));
-    const remisionPDF = {
-      remisionId: response.data.remisionId,
-      projectId: payload.fk_proyect,
-      cliente: project?.customer || 'S/N',
-      fecha: new Date().toLocaleDateString(),
-      description: payload.description,
-      items: (payload.net_items || []).map(item => {
-        const gItem = gridData.find(gItem => gItem.id === item.id);
+  const makeAndDownloadLoanPDF = async (response, payload) => {
+    const users = await axios.get(`/getUser/${company}`).then(r => r.data.data || []);
+    const borrower = users.find(u => String(u.id) === String(payload.borrower_user_id));
+    const loanPDF = {
+      loanId: response.data.loanId,
+      date: new Date().toLocaleDateString(),
+      borrowerName: borrower?.name || 'S/N',
+      createdByName: decrypt(sessionStorage.getItem('name')) || 'S/N',
+      observations: payload.observations,
+      tools: (payload.net_tools || []).map(tool => {
+        const gItem = gridData.find(g => g.id === tool.id);
         return {
-          id: gItem.id,
-          description: gItem.description,
-          grupo: gItem.group,
-          cantidad: item.quantity
+          id: tool.id,
+          description: gItem?.description || `Herramienta #${tool.id}`,
+          group: gItem?.Grupo || '-',
+          quantity: tool.quantity || 1,
         };
       }),
-      elaboradoPor: decrypt(sessionStorage.getItem('name')) || 'S/N',
-      aprobadoPor: ' ',
     };
 
-    const blob = await pdf(<RemisionPDF remision={remisionPDF} />).toBlob();
+    const blob = await pdf(<ToolLoanPDF loan={loanPDF} />).toBlob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `remision_${remisionPDF.remisionId}.pdf`;
+    link.download = `prestamo_herramientas_${loanPDF.loanId}.pdf`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -251,7 +261,7 @@ export default function Herramientas() {
         fields={fields}
         onDataChange={setGridData}
         mapData={mapToolsData}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'amount', 'lent_amount']}
         hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideDelete={!isAdmin}
@@ -264,8 +274,8 @@ export default function Herramientas() {
             {hasPermission(PERMISOS.HACER_REMISIONES) && (
               <BaseButton
                 color="green"
-                text="Remisionar"
-                onClick={() => setOpenModalRemission(true)}
+                text="Registrar Préstamo"
+                onClick={() => setOpenLoanModal(true)}
               />
             )}
             <Button
@@ -313,14 +323,14 @@ export default function Herramientas() {
       />
 
       <FormDialog
-        title="Nueva remisión"
-        open={openModalRemission}
-        fields={remissionFields}
-        saveEndpoint='saveRemision'
+        title="Registrar Préstamo de Herramientas"
+        open={openLoanModal}
+        fields={loanFields}
+        saveEndpoint='saveToolLoan'
         maxWidth="md"
-        onClose={() => setOpenModalRemission(false)}
+        onClose={() => setOpenLoanModal(false)}
         onSuccess={({ response, payload }) => {
-          makeAndDownloadPDF(response, payload);
+          makeAndDownloadLoanPDF(response, payload);
           setRefreshKey(prev => prev + 1);
         }}
       />

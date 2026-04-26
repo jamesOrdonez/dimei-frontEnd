@@ -1,5 +1,5 @@
 // component
-import { TagIcon, WrenchScrewdriverIcon, WrenchIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon, DocumentTextIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
+import { TagIcon, WrenchScrewdriverIcon, WrenchIcon, UserGroupIcon, ArchiveBoxIcon, ChartBarIcon, DocumentTextIcon, BuildingStorefrontIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
 import { PERMISOS } from '../../../context/PermissionsContext';
@@ -41,6 +41,16 @@ const navConfig = [
     title: 'Herramientas',
     path: '/herramientas',
     icon: <WrenchIcon className="h-6 w-6 text-gray-500" />,
+    requiredPermissions: [
+      PERMISOS.INGRESAR_MATERIAL,
+      PERMISOS.HACER_REMISIONES,
+      PERMISOS.CREAR_ITEMS,
+    ],
+  },
+  {
+    title: 'Préstamos Herramientas',
+    path: '/prestamos-herramientas',
+    icon: <ClipboardDocumentListIcon className="h-6 w-6 text-gray-500" />,
     requiredPermissions: [
       PERMISOS.INGRESAR_MATERIAL,
       PERMISOS.HACER_REMISIONES,

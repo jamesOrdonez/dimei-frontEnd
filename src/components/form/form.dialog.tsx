@@ -154,7 +154,7 @@ export default function FormDialog({
           if (status === 400) {
             Alert.fire({
               icon: 'error',
-              title: 'Stock Insuficiente',
+              title: errorMessage.includes('stock') ? 'Stock Insuficiente' : 'Error de Validación',
               html: `<div style="text-align: left;">${errorMessage.replace(/\n/g, '<br/>')}</div>`,
               confirmButtonText: 'Entendido'
             });

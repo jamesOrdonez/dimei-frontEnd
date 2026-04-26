@@ -17,6 +17,7 @@ import PublicItemView from '../pages/items/public-view';
 import AnalisisInventario from '../pages/analisis-inventario';
 import Remisiones from '../pages/remisiones/index';
 import Herramientas from '../pages/herramientas';
+import PrestamosHerramientas from '../pages/prestamos-herramientas';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -78,6 +79,7 @@ export default function Router() {
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
         <Route path="/herramientas" element={<Herramientas />} />
+        <Route path="/prestamos-herramientas" element={<PrestamosHerramientas />} />
         <Route path="/itemProductos" element={<ItemProductos />} />
         <Route path="/configuraciones" element={<Configuraciones />} />
         <Route path="/clientes" element={<Clientes />} />
