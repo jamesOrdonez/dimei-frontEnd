@@ -6,6 +6,8 @@ import ElevatorType from './components/elevator.type';
 import TypeDriveSystem from './components/type.drive.system';
 import ProductsGroup from './components/products.groups';
 import RolesManagement from './components/roles.management';
+import ToolsGroup from './components/tools.group';
+import ToolUnidadMedida from './components/tool.unidad.medida';
 
 // 🔁 COMPONENTE TABS REUTILIZABLE
 export function ConfigTabs({ tabs }) {
@@ -45,16 +47,24 @@ export function ConfigTabs({ tabs }) {
 export default function Configuraciones() {
   const tabs = [
     {
-      label: 'Grupo items',
+      label: 'Grupo Items',
       component: <ItemsGroup />,
     },
     {
-      label: 'Grupo productos',
+      label: 'Grupo Herramientas',
+      component: <ToolsGroup />,
+    },
+    {
+      label: 'Grupo Productos',
       component: <ProductsGroup />,
     },
     {
-      label: 'Unidad de medida',
+      label: 'Unidad de Medida Items',
       component: <UnidadMedida />,
+    },
+    {
+      label: 'Unidad de Medida Herramientas',
+      component: <ToolUnidadMedida />,
     },
     {
       label: 'Tipo de sistema',

@@ -26,6 +26,7 @@ export default function AnalisisInventario() {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedProveedor, setSelectedProveedor] = useState('all');
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('all');
   const [viewMode, setViewMode] = useState('list');
@@ -55,6 +56,7 @@ export default function AnalisisInventario() {
     return data.filter(item => {
       if (searchText && !item.item_name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (selectedCategory !== 'all' && String(item.category) !== String(selectedCategory)) return false;
+      if (selectedProveedor !== 'all' && item.proveedor !== selectedProveedor) return false;
       const available = item.available_inventory;
       const lowThreshold = item.low_stock || 0;
       if (selectedStatus === 'good' && available <= lowThreshold) return false;
@@ -63,7 +65,11 @@ export default function AnalisisInventario() {
       if (selectedProject !== 'all' && item.separated_inventory <= 0) return false;
       return true;
     });
-  }, [data, searchText, selectedCategory, selectedStatus, selectedProject]);
+  }, [data, searchText, selectedCategory, selectedStatus, selectedProject, selectedProveedor]);
+
+  const proveedoresUnicos = useMemo(() => {
+    return Array.from(new Set(data.map(d => d.proveedor).filter(p => p && p !== '-'))).sort();
+  }, [data]);
 
   const summary = useMemo(() => {
     return filteredData.reduce((acc, item) => {
@@ -319,12 +325,12 @@ export default function AnalisisInventario() {
         </Box>
 
         {/* Filters */}
+        <Box mb={1.5}>
+          <TextField fullWidth size="small" placeholder="Buscar ítem..." value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            InputProps={{ startAdornment: <InputAdornment position="start"><MagnifyingGlassIcon className="w-5 h-5 text-gray-400" /></InputAdornment>, sx: { bgcolor: '#fff', borderRadius: 2 } }} />
+        </Box>
         <Grid container spacing={1.5} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <TextField fullWidth size="small" placeholder="Buscar ítem..." value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><MagnifyingGlassIcon className="w-5 h-5 text-gray-400" /></InputAdornment>, sx: { bgcolor: '#fff', borderRadius: 2 } }} />
-          </Grid>
           <Grid item xs={12} md={2.5}>
             <Select fullWidth size="small" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} sx={{ bgcolor: '#fff', borderRadius: 2 }} displayEmpty>
               <MenuItem value="all">Proyecto: Todos</MenuItem>
@@ -338,6 +344,12 @@ export default function AnalisisInventario() {
             </Select>
           </Grid>
           <Grid item xs={12} md={2.5}>
+            <Select fullWidth size="small" value={selectedProveedor} onChange={(e) => setSelectedProveedor(e.target.value)} sx={{ bgcolor: '#fff', borderRadius: 2 }} displayEmpty>
+              <MenuItem value="all">Proveedor: Todos</MenuItem>
+              {proveedoresUnicos.map((p, i) => <MenuItem key={i} value={p}>{p}</MenuItem>)}
+            </Select>
+          </Grid>
+          <Grid item xs={12} md={2.5}>
             <Select fullWidth size="small" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} sx={{ bgcolor: '#fff', borderRadius: 2 }} displayEmpty>
               <MenuItem value="all">Estados: Todos</MenuItem>
               <MenuItem value="good">Buena disponibilidad</MenuItem>
@@ -345,7 +357,7 @@ export default function AnalisisInventario() {
               <MenuItem value="buy">A comprar (Stock ≤ 0)</MenuItem>
             </Select>
           </Grid>
-          <Grid item xs={12} md={1.5} display="flex" justifyContent="flex-end">
+          <Grid item xs={12} md={2} display="flex" justifyContent="flex-end">
             <ToggleButtonGroup value={viewMode} exclusive onChange={(e, v) => v !== null && setViewMode(v)} size="small" sx={{ bgcolor: '#fff' }}>
               <ToggleButton value="list"><ListBulletIcon className="w-5 h-5" /></ToggleButton>
               <ToggleButton value="cards"><Squares2X2Icon className="w-5 h-5" /></ToggleButton>
