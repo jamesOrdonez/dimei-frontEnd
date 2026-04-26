@@ -53,14 +53,34 @@ export default function Nav({ openNav, onCloseNav }) {
 
   // Filtrar opciones del menú según permisos del usuario
   const filteredNavConfig = useMemo(() => {
-    return navConfig.filter(item => {
-      if (item.adminOnly) return isAdmin;
-      if (item.requiredPermissions && item.requiredPermissions.length > 0) {
-        if (isAdmin) return true;
-        return item.requiredPermissions.some(p => hasPermission(p));
-      }
-      return true; // Sin restricciones → siempre visible
-    });
+    return navConfig
+      .map((item) => {
+        // Ítem con children → filtrar cada child y devolver el grupo si queda alguno
+        if (item.children) {
+          const visibleChildren = item.children.filter((child) => {
+            if (child.adminOnly) return isAdmin;
+            if (child.requiredPermissions?.length > 0) {
+              if (isAdmin) return true;
+              return child.requiredPermissions.some((p) => hasPermission(p));
+            }
+            return true;
+          });
+
+          if (visibleChildren.length === 0) return null;
+          // Si el grupo es adminOnly, solo mostrarlo al admin
+          if (item.adminOnly && !isAdmin) return null;
+          return { ...item, children: visibleChildren };
+        }
+
+        // Ítem hoja → mismo comportamiento anterior
+        if (item.adminOnly) return isAdmin ? item : null;
+        if (item.requiredPermissions?.length > 0) {
+          if (isAdmin) return item;
+          return item.requiredPermissions.some((p) => hasPermission(p)) ? item : null;
+        }
+        return item; // Sin restricciones → siempre visible
+      })
+      .filter(Boolean);
   }, [isAdmin, hasPermission]);
 
 
