@@ -79,9 +79,15 @@ export default function PrestamosHerramientas() {
   };
 
   const downloadPDF = async (loan) => {
+    // loan.date puede ser string ISO o ya formateado; parseamos con seguridad
+    const parsedDate = loan.date ? new Date(loan.date) : null;
+    const formattedDate = parsedDate && !isNaN(parsedDate)
+      ? parsedDate.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' })
+      : loan.Fecha || 'Sin fecha';
+
     const loanPDF = {
       loanId: loan.id,
-      date: new Date(loan.date).toLocaleDateString(),
+      date: formattedDate,
       borrowerName: loan.BorrowerUser?.name || loan.borrowerName || 'S/N',
       createdByName: loan.CreatedBy?.name || loan.createdBy || 'S/N',
       observations: loan.observations,
@@ -103,7 +109,8 @@ export default function PrestamosHerramientas() {
 
   const mapLoansData = (loans) => loans.map(loan => ({
     id: loan.id,
-    Fecha: new Date(loan.date).toLocaleDateString(),
+    date: loan.date,  // preservar fecha raw para el PDF
+    Fecha: loan.date ? new Date(loan.date).toLocaleDateString('es-CO') : 'Sin fecha',
     'Prestado a': loan.BorrowerUser?.name || 'S/N',
     'Registrado por': loan.CreatedBy?.name || 'S/N',
     Observaciones: loan.observations || '-',
