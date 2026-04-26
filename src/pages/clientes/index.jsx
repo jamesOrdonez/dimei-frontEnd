@@ -15,7 +15,7 @@ export default function Clientes() {
       let principal = c.contacto_principal;
       if (typeof principal === 'string' && principal.trim()) {
         try { principal = JSON.parse(principal); } catch (e) { principal = null; }
-      
+      }
       // Parse contactos_genericos safely
       let genericos = c.contactos_genericos;
       if (typeof genericos === 'string' && genericos.trim()) {

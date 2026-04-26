@@ -28,8 +28,6 @@ export default function Items() {
 
   const [openModal, setOpenModal] = useState(false);
   const [openModalRemission, setOpenModalRemission] = useState(false);
-
-
   const [movementType, setMovementType] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -37,7 +35,6 @@ export default function Items() {
   const [projects, setProjects] = useState([]);
   const [qrMenuAnchor, setQrMenuAnchor] = useState(null);
   const [selectedQRItem, setSelectedQRItem] = useState(null);
-
   const inventoryStats = useMemo(() => {
     const totalValue = gridData.reduce((acc, item) => acc + (Number(item.amount) * Number(item.price || 0)), 0);
     return {

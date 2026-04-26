@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { encrypt } from '../../utils/crypto';
 import Swealert from '../../components/Swealert';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 /* const logo = 'https://readymadeui.com/signin-image.webp'; */
 const logo = '/assets/logo-dimei.png';
@@ -11,6 +12,7 @@ export default function Login() {
     user: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -49,7 +51,8 @@ export default function Login() {
     <div className="font-[sans-serif]">
       <div className="grid lg:grid-cols-3 md:grid-cols-2 items-center gap-4 h-full">
         <div className="max-md:order-1 lg:col-span-2 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8">
-          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="Logo DIMEI" />
+          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="login" />
+
         </div>
 
         <div className="w-full p-6">
@@ -78,35 +81,27 @@ export default function Login() {
               <div className="relative flex items-center">
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
-                  className="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent px-4 py-3.5 rounded-md outline-blue-600"
+                  className="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent px-4 py-3.5 pr-12 rounded-md outline-blue-600"
                   placeholder="***********"
                   value={formData.password}
                   onChange={handleChange}
                 />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-md"
-                  defaultChecked
-                />
-                <label htmlFor="remember-me" className="ml-3 block text-sm">
-                  Acuérdate de mí
-                </label>
-              </div>
-              <div>
-                <button type="button" className="text-blue-600 font-semibold text-sm hover:underline bg-transparent border-none cursor-pointer p-0">
-                  ¿Has olvidado tu contraseña?
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
+
             <div className="mt-8">
               <button
                 type="submit"
