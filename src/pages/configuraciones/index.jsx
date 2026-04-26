@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Tabs, Tab, Box } from '@mui/material';
-import Grupo from './components/grupo';
-import Unidad_medida from './components/unidad.medida';
-
-// 🔁 TAB PANEL REUTILIZABLE
-function TabPanel({ children, value, index }) {
-  return <div hidden={value !== index}>{value === index && <Box sx={{ pt: 2 }}>{children}</Box>}</div>;
-}
+import ItemsGroup from './components/items.group';
+import UnidadMedida from './components/unidad.medida';
+import ElevatorType from './components/elevator.type';
+import TypeDriveSystem from './components/type.drive.system';
+import ProductsGroup from './components/products.groups';
+import RolesManagement from './components/roles.management';
+import ToolsGroup from './components/tools.group';
+import ToolUnidadMedida from './components/tool.unidad.medida';
 
 // 🔁 COMPONENTE TABS REUTILIZABLE
 export function ConfigTabs({ tabs }) {
@@ -38,7 +39,7 @@ export function ConfigTabs({ tabs }) {
         ))}
       </Tabs>
 
-      <div className="mt-6 rounded-xl bg-white p-6 shadow-md">{tabs[value]?.component}</div>
+      <div className="mt-6">{tabs[value]?.component}</div>
     </Box>
   );
 }
@@ -46,12 +47,36 @@ export function ConfigTabs({ tabs }) {
 export default function Configuraciones() {
   const tabs = [
     {
-      label: 'Grupo',
-      component: <Grupo />,
+      label: 'Grupo Items',
+      component: <ItemsGroup />,
     },
     {
-      label: 'Unidad de medida',
-      component: <Unidad_medida />,
+      label: 'Grupo Herramientas',
+      component: <ToolsGroup />,
+    },
+    {
+      label: 'Grupo Productos',
+      component: <ProductsGroup />,
+    },
+    {
+      label: 'Unidad de Medida Items',
+      component: <UnidadMedida />,
+    },
+    {
+      label: 'Unidad de Medida Herramientas',
+      component: <ToolUnidadMedida />,
+    },
+    {
+      label: 'Tipo de sistema',
+      component: <ElevatorType />,
+    },
+    {
+      label: 'Tipo de ascensor',
+      component: <TypeDriveSystem />,
+    },
+    {
+      label: 'Roles y Permisos',
+      component: <RolesManagement />,
     },
   ];
 

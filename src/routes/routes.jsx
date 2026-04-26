@@ -6,12 +6,18 @@ import { LoginForm } from '../Auth';
 import Usuarios from '../pages/Usuarios';
 import ProductsPage from '../pages/ProductsPage';
 import BlogPage from '../pages/BlogPage';
-import OldItems from '../pages/productos/index';
-import ItemProductos from '../pages/productos/itemProductos';
+import ItemProductos from '../pages/productos/index';
 import Configuraciones from '../pages/configuraciones';
-import DetalleItems from '../pages/productos/detalle_items';
 import Clientes from '../pages/clientes';
+import Proveedores from '../pages/proveedores';
 import Items from '../pages/items';
+import Proyectos from '../pages/proyectos';
+import DetalleProyecto from '../pages/proyectos/detail';
+import PublicItemView from '../pages/items/public-view';
+import AnalisisInventario from '../pages/analisis-inventario';
+import Remisiones from '../pages/remisiones/index';
+import Herramientas from '../pages/herramientas';
+import PrestamosHerramientas from '../pages/prestamos-herramientas';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -72,15 +78,21 @@ export default function Router() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
-        <Route path="/olditems" element={<OldItems />} />
-        <Route path="/items/:id" element={<DetalleItems />} />
+        <Route path="/herramientas" element={<Herramientas />} />
+        <Route path="/prestamos-herramientas" element={<PrestamosHerramientas />} />
         <Route path="/itemProductos" element={<ItemProductos />} />
         <Route path="/configuraciones" element={<Configuraciones />} />
         <Route path="/clientes" element={<Clientes />} />
+        <Route path="/proveedores" element={<Proveedores />} />
+        <Route path="/proyectos" element={<Proyectos />} />
+        <Route path="/proyectos/:id" element={<DetalleProyecto />} />
+        <Route path="/analisis-inventario" element={<AnalisisInventario />} />
+        <Route path="/remisiones" element={<Remisiones />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />
       </Route>
+      <Route path="/public/item/:id" element={<PublicItemView />} />
       <Route path="/" element={<LoginForm />} />
       <Route path="*" element={<Page404 />} />
     </Routes>

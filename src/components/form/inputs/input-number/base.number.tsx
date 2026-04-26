@@ -4,18 +4,24 @@ interface BaseTextProps {
   name: string;
   label: string;
   value: string;
+  size?: "medium" | "small"
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fullWidth?: boolean;
   required?: boolean;
+  disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 export default function BaseText({
   name,
   label,
   value,
+  size = 'medium',
   onChange,
   fullWidth = true,
   required = false,
+  disabled = false,
+  autoFocus = false,
 }: BaseTextProps) {
   return (
     <TextField
@@ -25,8 +31,11 @@ export default function BaseText({
       onChange={onChange}
       fullWidth={fullWidth}
       required={required}
+      disabled={disabled}
+      size={size}
       variant="outlined"
       type="number"
+      autoFocus={autoFocus}
     />
   );
 }

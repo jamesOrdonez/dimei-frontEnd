@@ -3,20 +3,51 @@ import { Button, CircularProgress, Box } from '@mui/material';
 import axios from 'axios';
 import BaseDialog from '../dialog/base.dialog.tsx';
 import BaseForm, { BaseField } from './base.form.tsx';
+import { decrypt } from '../../utils/crypto.js';
+import Swal from 'sweetalert2';
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+    const container = Swal.getContainer();
+    if (container) {
+      container.style.zIndex = '9999';
+    }
+  }
+});
+
+const Alert = Swal.mixin({
+  confirmButtonColor: '#3b82f6',
+  didOpen: () => {
+    const container = Swal.getContainer();
+    if (container) {
+      container.style.zIndex = '9999';
+    }
+  }
+});
 
 interface FormDialogProps {
   open: boolean;
   onClose: () => void;
   onSave?: (data: Record<string, any>) => void;
-  onSuccess?: () => void;
+  onSuccess?: (data: Record<string, any>) => void;
   fields: BaseField[];
   mode: 'create' | 'update';
   initialValues?: Record<string, any>;
+  additionalValues?: Record<string, any>;
   title?: string;
   endpoint?: string;
   saveEndpoint?: string;
   updateEndpoint?: string;
   fetchOneEndpoint?: string;
+  mapPayload?: (payload: any) => any;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
 }
 
 export default function FormDialog({
@@ -25,13 +56,16 @@ export default function FormDialog({
   onSave,
   onSuccess,
   fields,
-  mode,
+  mode = 'create',
   initialValues,
+  additionalValues,
   title,
   endpoint,
   saveEndpoint,
   updateEndpoint,
   fetchOneEndpoint,
+  mapPayload,
+  maxWidth,
 }: FormDialogProps) {
   const [currentData, setCurrentData] = useState<Record<string, any>>(initialValues || {});
   const [isFetching, setIsFetching] = useState(false);
@@ -60,19 +94,36 @@ export default function FormDialog({
           } finally {
             setIsFetching(false);
           }
+        } else {
+          // If no fetch URL, just use initialValues when opening
+          setCurrentData(initialValues || {});
         }
       } else if (open) {
         setCurrentData(initialValues || {});
       }
     };
 
-    fetchData();
-  }, [open, initialValues, mode, endpoint, updateEndpoint]);
+    if (open) {
+      fetchData();
+    }
+  }, [open, initialValues, mode, endpoint, updateEndpoint, fetchOneEndpoint]);
+
 
   const handleSave = async () => {
     const hasFile = Object.values(currentData).some((val) => val instanceof File);
 
-    let payload: any = { ...currentData, state: 1, company: sessionStorage.getItem('company') };
+    let mappedData = currentData;
+    if (mapPayload) {
+      mappedData = mapPayload(currentData);
+    }
+
+    let payload: any = { 
+      ...mappedData,
+      ...(additionalValues || {}),
+      state: 1, 
+      fkUser: decrypt(sessionStorage.getItem('userId')),
+      company: sessionStorage.getItem('company') 
+    };
     let headers = {};
 
     if (hasFile) {
@@ -91,11 +142,29 @@ export default function FormDialog({
       if (finalSaveEndpoint) {
         setIsSaving(true);
         try {
-          await axios.post(finalSaveEndpoint, payload, { headers });
-          if (onSuccess) onSuccess();
+          const response = await axios.post(finalSaveEndpoint, payload, { headers });
+          if (onSuccess) onSuccess({ response, payload });
+          Toast.fire({ icon: 'success', title: 'Registro creado exitosamente' });
           onClose();
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error creating record:', error);
+          const errorMessage = error.response?.data?.message || 'Error al crear el registro';
+          const status = error.response?.status;
+
+          if (status === 400) {
+            Alert.fire({
+              icon: 'error',
+              title: errorMessage.includes('stock') ? 'Stock Insuficiente' : 'Error de Validación',
+              html: `<div style="text-align: left;">${errorMessage.replace(/\n/g, '<br/>')}</div>`,
+              confirmButtonText: 'Entendido'
+            });
+          } else {
+            Toast.fire({ 
+              icon: 'error', 
+              title: errorMessage,
+              timer: 5000 
+            });
+          }
         } finally {
           setIsSaving(false);
         }
@@ -108,11 +177,29 @@ export default function FormDialog({
         try {
           // Note: some backends prefer POST with _method=PUT for FormData
           // but here we follow the existing pattern of using PUT
-          await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload, { headers });
-          if (onSuccess) onSuccess();
+          const response = await axios.put(`${finalUpdateEndpoint}/${currentData.id}`, payload, { headers });
+          if (onSuccess) onSuccess({ response, payload });
+          Toast.fire({ icon: 'success', title: 'Registro actualizado exitosamente' });
           onClose();
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error updating record:', error);
+          const errorMessage = error.response?.data?.message || 'Error al actualizar el registro';
+          const status = error.response?.status;
+
+          if (status === 400) {
+            Alert.fire({
+              icon: 'error',
+              title: 'Inconsistencia en la operación',
+              html: `<div style="text-align: left;">${errorMessage.replace(/\n/g, '<br/>')}</div>`,
+              confirmButtonText: 'Entendido'
+            });
+          } else {
+            Toast.fire({ 
+              icon: 'error', 
+              title: errorMessage,
+              timer: 5000
+            });
+          }
         } finally {
           setIsSaving(false);
         }
@@ -150,7 +237,7 @@ export default function FormDialog({
       onClose={onClose}
       title={dialogTitle}
       actions={actions}
-      maxWidth="sm"
+      maxWidth={maxWidth || 'sm'}
       fullWidth
     >
       <Box sx={{ minHeight: 100, position: 'relative' }}>

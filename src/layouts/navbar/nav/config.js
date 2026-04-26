@@ -1,62 +1,138 @@
 // component
-import { TagIcon, WrenchScrewdriverIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import {
+  TagIcon, WrenchScrewdriverIcon, WrenchIcon, UserGroupIcon, ArchiveBoxIcon,
+  ChartBarIcon, DocumentTextIcon, BuildingStorefrontIcon, ClipboardDocumentListIcon,
+  CubeIcon, Cog6ToothIcon,
+} from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
+import { PERMISOS } from '../../../context/PermissionsContext';
 
 // ----------------------------------------------------------------------
 
 const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
 
+/**
+ * navConfig — cada ítem puede tener:
+ *  - adminOnly: true        → solo visible para el Administrador
+ *  - requiredPermissions:[] → visible si tiene AL MENOS UNO de esos permisos
+ *  - children: []           → grupo colapsable; la visibilidad la controla cada child
+ *  - (ninguno)              → visible para todos los usuarios autenticados
+ */
 const navConfig = [
+  // ── General ──────────────────────────────────────────────────────────────
   {
-    title: 'dashboard',
+    title: 'Dashboard',
     path: '/dashboard',
     icon: icon('ic_analytics'),
-  },
-  {
-    title: 'usuarios',
-    path: '/usuarios',
-    icon: icon('ic_user'),
-  },
-  {
-    title: 'Items',
-    path: '/items',
-    icon: <TruckIcon class="h-6 w-6 text-gray-500" />,
-  },
-  {
-    title: 'Productos',
-    path: '/itemProductos',
-    icon: <TagIcon class="h-6 w-6 text-gray-500" />,
-  },
-  {
-    title: 'Clientes',
-    path: '/clientes',
-    icon: <UserGroupIcon class="h-6 w-6 text-gray-500" />,
-  },
-  {
-    title: 'Configuraciones',
-    path: '/configuraciones',
-    icon: <WrenchScrewdriverIcon class="h-6 w-6 text-gray-500" />,
+    adminOnly: true,
   },
 
-  
-  /*  
+  // ── Inventario ───────────────────────────────────────────────────────────
+  {
+    title: 'Inventario',
+    icon: <CubeIcon className="h-6 w-6" />,
+    children: [
+      {
+        title: 'Items',
+        path: '/items',
+        icon: <TruckIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.INGRESAR_MATERIAL,
+          PERMISOS.HACER_REMISIONES,
+          PERMISOS.CREAR_ITEMS,
+        ],
+      },
+      {
+        title: 'Herramientas',
+        path: '/herramientas',
+        icon: <WrenchIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.INGRESAR_MATERIAL, // Exclusivo de Almacenista → Admin + Almacenista
+        ],
+      },
+      {
+        title: 'Productos',
+        path: '/itemProductos',
+        icon: <TagIcon className="h-5 w-5" />,
+        requiredPermissions: [PERMISOS.CREAR_PRODUCTOS],
+      },
+      {
+        title: 'Análisis de inventario',
+        path: '/analisis-inventario',
+        icon: <ChartBarIcon className="h-5 w-5" />,
+        requiredPermissions: [PERMISOS.CONSULTAR_LISTAS],
+      },
+    ],
+  },
 
+  // ── Proyectos ─────────────────────────────────────────────────────────────
   {
-    title: 'blog',
-    path: '/dashboard/blog',
-    icon: icon('ic_blog'),
+    title: 'Proyectos',
+    path: '/proyectos',
+    icon: <ArchiveBoxIcon className="h-6 w-6" />,
+    requiredPermissions: [
+      PERMISOS.CREAR_PROYECTOS,
+      PERMISOS.CONSULTAR_LISTAS,
+      PERMISOS.ANEXAR_ACTAS,
+      PERMISOS.PEDIR_MATERIAL,
+      PERMISOS.HACER_REMISIONES,
+      PERMISOS.VER_PROYECTOS,
+    ],
   },
+
+  // ── Administración ────────────────────────────────────────────────────────
+  // El grupo no lleva adminOnly para que usuarios con permisos de remisiones/préstamos
+  // también puedan ver sus children correspondientes.
   {
-    title: 'login',
-    path: '/login',
-    icon: icon('ic_lock'),
+    title: 'Administración',
+    icon: <Cog6ToothIcon className="h-6 w-6" />,
+    children: [
+      {
+        title: 'Usuarios',
+        path: '/usuarios',
+        icon: icon('ic_user'),
+        adminOnly: true,
+      },
+      {
+        title: 'Clientes',
+        path: '/clientes',
+        icon: <UserGroupIcon className="h-5 w-5" />,
+        adminOnly: true,
+      },
+      {
+        title: 'Proveedores',
+        path: '/proveedores',
+        icon: <BuildingStorefrontIcon className="h-5 w-5" />,
+        adminOnly: true,
+      },
+      {
+        title: 'Remisiones',
+        path: '/remisiones',
+        icon: <DocumentTextIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.HACER_REMISIONES,
+          PERMISOS.VER_PROYECTOS,
+        ],
+      },
+      {
+        title: 'Préstamos Herramientas',
+        path: '/prestamos-herramientas',
+        icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.INGRESAR_MATERIAL,
+          PERMISOS.HACER_REMISIONES,
+          PERMISOS.CREAR_ITEMS,
+        ],
+      },
+      {
+        title: 'Configuraciones',
+        path: '/configuraciones',
+        icon: <WrenchScrewdriverIcon className="h-5 w-5" />,
+        adminOnly: true,
+      },
+    ],
   },
-  {
-    title: 'Not found',
-    path: '/404',
-    icon: icon('ic_disabled'),
-  }, */
 ];
 
 export default navConfig;

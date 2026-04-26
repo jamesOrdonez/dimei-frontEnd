@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import {
   Table,
   TableBody,
@@ -12,6 +13,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { PhotoIcon } from '@heroicons/react/24/outline';
 
 interface ExtraHeader {
   label: string;
@@ -21,9 +24,10 @@ interface ExtraHeader {
 interface BaseTableProps {
   data: any[];
   extraHeaders?: (string | ExtraHeader)[];
-  renderExtraCell?: (item: any, index: number, headerLabel: string) => React.ReactNode;
+  renderExtraCell?: (params: { item: any; rowIndex: number; headerLabel: string }) => React.ReactNode;
   excludeKeys?: string[];
   rowsPerPageOptions?: number[];
+  firstHeader?: string | ExtraHeader; // New prop for first column
 }
 
 export default function BaseTable({
@@ -32,7 +36,11 @@ export default function BaseTable({
   renderExtraCell,
   excludeKeys = [],
   rowsPerPageOptions = [5, 10, 25],
+  firstHeader,
 }: BaseTableProps) {
+
+  const { t } = useTranslation();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
   const [goToPage, setGoToPage] = useState('');
@@ -52,6 +60,12 @@ export default function BaseTable({
   // Combine headers with positioning logic
   const combinedHeaders: { label: string; isExtra: boolean }[] = [];
   
+  // 0. Add first header if provided
+  if (firstHeader) {
+    const fh = typeof firstHeader === 'string' ? { label: firstHeader } : firstHeader;
+    combinedHeaders.push({ label: fh.label, isExtra: true });
+  }
+
   // 1. Add data keys and their associated extra headers
   dataKeys.forEach(key => {
     combinedHeaders.push({ label: key, isExtra: false });
@@ -109,7 +123,7 @@ export default function BaseTable({
                     backgroundColor: '#ffffff'
                   }}
                 >
-                  {header.label}
+                  {t(header.label)}
                 </TableCell>
               ))}
             </TableRow>
@@ -127,11 +141,42 @@ export default function BaseTable({
               >
                 {combinedHeaders.map((header) => {
                   if (!header.isExtra) {
-                    return <TableCell key={header.label}>{item[header.label]?.toString() || '-'}</TableCell>;
+                    const value = item[header.label];
+                    // Render image if header is named img or Imagen
+                    if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase())) {
+                      const src = value && typeof value === 'string' && value.startsWith('http') 
+                        ? value 
+                        : value ? `${axios.defaults.baseURL}/getItem/image/${item.id}` : null;
+                      return (
+                        <TableCell key={header.label}>
+                          {src ? (
+                            <Box 
+                              component="img" 
+                              src={src} 
+                              sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover' }} 
+                              alt={header.label}
+                            />
+                          ) : (
+                            <Box sx={{ 
+                              width: 50, 
+                              height: 50, 
+                              borderRadius: 1, 
+                              bgcolor: 'rgba(59, 130, 246, 0.05)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <PhotoIcon className="h-6 w-6 text-blue-200" />
+                            </Box>
+                          )}
+                        </TableCell>
+                      );
+                    }
+                    return <TableCell key={header.label}>{value?.toString() || '-'}</TableCell>;
                   }
                   return (
                     <TableCell key={header.label}>
-                      {renderExtraCell ? renderExtraCell(item, rowIndex, header.label) : '-'}
+                      {renderExtraCell ? renderExtraCell({ item, rowIndex, headerLabel: header.label }) : '-'}
                     </TableCell>
                   );
                 })}

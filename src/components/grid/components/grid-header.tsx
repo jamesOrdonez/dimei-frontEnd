@@ -1,20 +1,41 @@
-import { Box, TextField, Stack, InputAdornment, IconButton, Button } from '@mui/material';
+import { Box, TextField, Stack, InputAdornment, IconButton, Button, MenuItem } from '@mui/material';
 import { Icon } from '@iconify/react';
+
+export interface CustomFilter {
+  key: string;
+  label: string;
+  options: { value: any; label: string }[];
+}
 
 interface GridHeaderProps {
   title: string;
   search: string;
-  
+  viewMode?: 'list' | 'grid';
+  onViewModeChange?: (mode: 'list' | 'grid') => void;
   onSearchChange: (value: string) => void;
-  onNewClick: () => void;
+  onNewClick?: () => void;
   extraActions?: React.ReactNode;
+  customFilters?: CustomFilter[];
+  activeFilters?: Record<string, any>;
+  onFilterChange?: (key: string, value: any) => void;
 }
 
-export default function GridHeader({ title, search, onSearchChange, onNewClick, extraActions }: GridHeaderProps) {
+export default function GridHeader({ 
+  title, 
+  search, 
+  viewMode = 'list', 
+  onViewModeChange, 
+  onSearchChange, 
+  onNewClick, 
+  extraActions,
+  customFilters = [],
+  activeFilters = {},
+  onFilterChange
+}: GridHeaderProps) {
   return (
     <Box>
       {/* Tab Style Title */}
-      <Box sx={{ position: 'relative', mb: -0.5, ml: 2 }}>
+      <Box sx={{ position: 'relative' }}>
         <Box
           sx={{
             display: 'inline-block',
@@ -42,64 +63,115 @@ export default function GridHeader({ title, search, onSearchChange, onNewClick, 
           bgcolor: 'background.paper'
         }}
       >
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 4 }}>
-          <TextField
-            fullWidth
-            placeholder="Search"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon icon="eva:search-fill" width={24} height={24} />
-                </InputAdornment>
-              ),
-              sx: { 
-                borderRadius: 2, 
-                bgcolor: '#F4F6F8',
-                '& fieldset': { border: 'none' },
-                height: 50
-              },
-            }}
-          />
+        <Stack 
+          direction={{ xs: 'column', md: 'row' }} 
+          spacing={2} 
+          alignItems={{ xs: 'stretch', md: 'center' }} 
+          sx={{ mb: 4 }}
+        >
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ flexGrow: 1 }}>
+            <TextField
+              fullWidth
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon icon="eva:search-fill" width={24} height={24} />
+                  </InputAdornment>
+                ),
+                sx: { 
+                  borderRadius: 2, 
+                  bgcolor: '#F4F6F8',
+                  '& fieldset': { border: 'none' },
+                  height: 50
+                },
+              }}
+            />
+
+            {customFilters.map((filter) => (
+              <TextField
+                key={filter.key}
+                select
+                label={filter.label}
+                value={activeFilters[filter.key] || ''}
+                onChange={(e) => onFilterChange && onFilterChange(filter.key, e.target.value)}
+                sx={{ 
+                  minWidth: { xs: '100%', sm: 160 },
+                  '& .MuiInputBase-root': {
+                    borderRadius: 2,
+                    bgcolor: '#F4F6F8',
+                    height: 50,
+                    '& fieldset': { border: 'none' },
+                  }
+                }}
+              >
+                <MenuItem value=""><em>Todos</em></MenuItem>
+                {filter.options.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ))}
+          </Stack>
           
-          <Stack direction="row" spacing={0.5} sx={{ bgcolor: '#F4F6F8', p: 0.5, borderRadius: 2 }}>
-             <IconButton size="medium" sx={{ color: 'text.secondary' }}>
+          <Stack 
+            direction="row" 
+            spacing={2} 
+            alignItems="center" 
+            sx={{ flexWrap: 'wrap' }}
+          >
+            <Stack direction="row" spacing={0.5} sx={{ bgcolor: '#F4F6F8', p: 0.5, borderRadius: 2 }}>
+             <IconButton 
+               size="medium" 
+               onClick={() => onViewModeChange && onViewModeChange('list')}
+               sx={{ 
+                 ...(viewMode === 'list' 
+                   ? { bgcolor: 'white', color: 'primary.main', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', '&:hover': { bgcolor: 'white' } } 
+                   : { color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }
+                 )
+               }}
+             >
                <Icon icon="ic:round-format-list-bulleted" width={24} height={24} />
              </IconButton>
              <IconButton 
                size="medium" 
+               onClick={() => onViewModeChange && onViewModeChange('grid')}
                sx={{ 
-                 bgcolor: 'white', 
-                 color: 'primary.main',
-                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                 '&:hover': { bgcolor: 'white' }
+                 ...(viewMode === 'grid' 
+                   ? { bgcolor: 'white', color: 'primary.main', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', '&:hover': { bgcolor: 'white' } } 
+                   : { color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }
+                 )
                }}
              >
                <Icon icon="ic:round-grid-view" width={24} height={24} />
              </IconButton>
+            </Stack>
+
+            {extraActions}
+            
+            {onNewClick && (
+              <Button
+                variant="contained"
+                disableElevation
+                onClick={onNewClick}
+                sx={{ 
+                  px: 4, 
+                  py: 1.5, 
+                  borderRadius: 2, 
+                  textTransform: 'none', 
+                  fontWeight: 'bold',
+                  minWidth: 120,
+                  height: 50,
+                  fontSize: '1rem'
+                }}
+              >
+                Nuevo
+              </Button>
+            )}
           </Stack>
-
-          
-          {extraActions}
-
-          <Button
-            variant="contained"
-            disableElevation
-            onClick={onNewClick}
-            sx={{ 
-              px: 4, 
-              py: 1.5, 
-              borderRadius: 2, 
-              textTransform: 'none', 
-              fontWeight: 'bold',
-              minWidth: 120,
-              height: 50,
-              fontSize: '1rem'
-            }}
-          >
-            Nuevo
-          </Button>
         </Stack>
       </Box>
     </Box>

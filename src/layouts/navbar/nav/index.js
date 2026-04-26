@@ -1,9 +1,12 @@
 import PropTypes from 'prop-types';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
-import { Box, Link, Button, Drawer, Typography, Avatar, Stack } from '@mui/material';
+import { Box, Link, Drawer, Typography, Avatar, Button } from '@mui/material';
+import Iconify from '../../../components/iconify';
+
+
 import useResponsive from '../../../hooks/useResponsive';
 // components
 import Scrollbar from '../../../components/scrollbar';
@@ -11,6 +14,8 @@ import NavSection from '../../../components/nav-section';
 //
 import navConfig from './config';
 import { decrypt } from '../../../utils/crypto';
+import { usePermissions } from '../../../context/PermissionsContext';
+
 
 // ----------------------------------------------------------------------
 
@@ -34,7 +39,8 @@ Nav.propTypes = {
 export default function Nav({ openNav, onCloseNav }) {
   const { pathname } = useLocation();
   const usuario = decrypt(sessionStorage.getItem('user'));
-  const rol = decrypt(sessionStorage.getItem('rol'));
+  const rolName = decrypt(sessionStorage.getItem('rolName'));
+  const { hasPermission, isAdmin } = usePermissions();
 
   const isDesktop = useResponsive('up', 'lg');
 
@@ -42,7 +48,41 @@ export default function Nav({ openNav, onCloseNav }) {
     if (openNav) {
       onCloseNav();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Filtrar opciones del menú según permisos del usuario
+  const filteredNavConfig = useMemo(() => {
+    return navConfig
+      .map((item) => {
+        // Ítem con children → filtrar cada child y devolver el grupo si queda alguno
+        if (item.children) {
+          const visibleChildren = item.children.filter((child) => {
+            if (child.adminOnly) return isAdmin;
+            if (child.requiredPermissions?.length > 0) {
+              if (isAdmin) return true;
+              return child.requiredPermissions.some((p) => hasPermission(p));
+            }
+            return true;
+          });
+
+          if (visibleChildren.length === 0) return null;
+          // Si el grupo es adminOnly, solo mostrarlo al admin
+          if (item.adminOnly && !isAdmin) return null;
+          return { ...item, children: visibleChildren };
+        }
+
+        // Ítem hoja → mismo comportamiento anterior
+        if (item.adminOnly) return isAdmin ? item : null;
+        if (item.requiredPermissions?.length > 0) {
+          if (isAdmin) return item;
+          return item.requiredPermissions.some((p) => hasPermission(p)) ? item : null;
+        }
+        return item; // Sin restricciones → siempre visible
+      })
+      .filter(Boolean);
+  }, [isAdmin, hasPermission]);
+
 
   const renderContent = (
     <Scrollbar
@@ -53,63 +93,57 @@ export default function Nav({ openNav, onCloseNav }) {
       style={{ background: '#fff' }}
     >
       <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
-        <img
-          src="https://www.ingenieria.unam.mx/dimei/images/logos/logo_dimei22.png"
-          alt="logo"
-          height="20px"
-          width="140px"
-        />
+        <img src="/img/logo.png" alt="Logo" style={{ borderRadius: '10px' }} />
       </Box>
 
       <Box sx={{ mb: 5, mx: 2.5 }}>
         <Link underline="none">
           <StyledAccount>
-            <Avatar src={'./img/profile/pngfind.com-pirate-flag-png-2847145.png'} alt="photoURL" />
+            <Avatar sx={{ bgcolor: 'primary.main' }}>{usuario?.charAt(0).toUpperCase()}</Avatar>
 
-            <Box sx={{ ml: 2 }}>
+            <Box sx={{ ml: 2, flexGrow: 1 }}>
               <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
                 {usuario}
               </Typography>
 
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {rol == 1 && 'Desarrollador'}
-                {rol == 2 && 'Almacenista'}
-                {rol == 3 && 'Proyectos'}
-                {rol == 4 && 'Mantenimientos'}
-                {rol == 5 && 'Administrador'}
+                {rolName}
               </Typography>
             </Box>
           </StyledAccount>
         </Link>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          component={Link}
+          href="/"
+          onClick={() => sessionStorage.clear()}
+          startIcon={<Iconify icon="eva:log-out-fill" />}
+          sx={{
+            mt: 2,
+            bgcolor: (theme) => alpha(theme.palette.error.main, 0.1),
+            justifyContent: 'flex-start',
+            px: 2,
+            '&:hover': {
+              bgcolor: (theme) => alpha(theme.palette.error.main, 0.2),
+            },
+          }}
+        >
+          Cerrar sesión
+        </Button>
+
       </Box>
 
-      <NavSection data={navConfig} />
+
+      <Typography variant="overline" sx={{ px: 5, color: 'text.disabled', display: 'block', mb: 1 }}>
+        Menú
+      </Typography>
+      <NavSection data={filteredNavConfig} />
+
 
       <Box sx={{ flexGrow: 1 }} />
-
-      {/*  <Box sx={{ px: 2.5, pb: 3, mt: 10 }}>
-        <Stack alignItems="center" spacing={3} sx={{ pt: 5, borderRadius: 2, position: 'relative' }}>
-          <Box
-            component="img"
-            src="/assets/illustrations/illustration_avatar.png"
-            sx={{ width: 100, position: 'absolute', top: -50 }}
-          />
-
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography gutterBottom variant="h6">
-              Get more?
-            </Typography>
-
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              From only $69
-            </Typography>
-          </Box>
-
-          <Button href="https://material-ui.com/store/items/minimal-dashboard/" target="_blank" variant="contained">
-            Upgrade to Pro
-          </Button>
-        </Stack>
-      </Box> */}
     </Scrollbar>
   );
 

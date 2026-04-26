@@ -1,0 +1,20 @@
+{
+  "description": "Descripción",
+  "amount": "Cantidad",
+  "group_item": "Grupo",
+  "price": "Precio",
+  "mathOperation": "Operación matemática",
+  "unitOfMeasure": "Unidad de medida",
+  "state": "Estado",
+  "name": "Nombre",
+  "elevatorType": "Tipo de sistema",
+  "typeDriveSystem": "Tipo de Ascensor",
+  "stopNumber": "Número de paradas",
+  "travel": "Recorrido (m)",
+  "capacity": "Capacidad (kg)",
+  "customer": "Cliente",
+  "location": "Ubicación",
+  "project": "Proyecto",
+  "date": "Fecha",
+  "elaboradoPor": "Elaborado por"
+}

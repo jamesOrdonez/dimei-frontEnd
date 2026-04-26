@@ -7,17 +7,17 @@ import { bgBlur } from '../../../utils/cssStyles';
 // components
 import Iconify from '../../../components/iconify';
 //
-import Searchbar from './Searchbar';
-import AccountPopover from './AccountPopover';
-import NotificationsPopover from './NotificationsPopover';
+//
+
 
 // ----------------------------------------------------------------------
 
 const NAV_WIDTH = 280;
 
-const HEADER_MOBILE = 64;
+const HEADER_MOBILE = 50;
 
-const HEADER_DESKTOP = 92;
+const HEADER_DESKTOP = 64;
+
 
 const StyledRoot = styled(AppBar)(({ theme }) => ({
   ...bgBlur({ color: theme.palette.background.default }),
@@ -43,7 +43,8 @@ Header.propTypes = {
 
 export default function Header({ onOpenNav }) {
   return (
-    <StyledRoot style={{ boxShadow: '0px 0px 5px 0px gray', background: '#fff' }}>
+    <StyledRoot style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', background: '#fff' }}>
+
       <StyledToolbar>
         <IconButton
           onClick={onOpenNav}
@@ -55,7 +56,6 @@ export default function Header({ onOpenNav }) {
           <Iconify icon="eva:menu-2-fill" />
         </IconButton>
 
-        <Searchbar />
         <Box sx={{ flexGrow: 1 }} />
 
         <Stack
@@ -66,8 +66,7 @@ export default function Header({ onOpenNav }) {
             sm: 1,
           }}
         >
-          <NotificationsPopover />
-          <AccountPopover />
+          {/* <NotificationsPopover /> */}
         </Stack>
       </StyledToolbar>
     </StyledRoot>

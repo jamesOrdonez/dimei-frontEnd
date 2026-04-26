@@ -4,7 +4,7 @@ import { encrypt } from '../../utils/crypto';
 import Swealert from '../../components/Swealert';
 
 /* const logo = 'https://readymadeui.com/signin-image.webp'; */
-const logo = 'https://equiposdimei.com/wp-content/uploads/2014/12/logo-header.png';
+const logo = '/assets/logo-dimei.png';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -27,8 +27,11 @@ export default function Login() {
       // Guardar datos en sessionStorage inmediatamente
       sessionStorage.setItem('Token', respon.data.token);
       sessionStorage.setItem('rol', encrypt(respon.data.rolId));
+      sessionStorage.setItem('rolName', encrypt(respon.data.rolName));
       sessionStorage.setItem('company', 1);
+
       sessionStorage.setItem('user', encrypt(respon.data.user));
+      sessionStorage.setItem('name', encrypt(respon.data.name));
       sessionStorage.setItem('userId', encrypt(respon.data.userId));
 
       // Redirigir al dashboard
@@ -46,7 +49,8 @@ export default function Login() {
     <div className="font-[sans-serif]">
       <div className="grid lg:grid-cols-3 md:grid-cols-2 items-center gap-4 h-full">
         <div className="max-md:order-1 lg:col-span-2 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8">
-          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="login-image" />
+          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="login" />
+
         </div>
 
         <div className="w-full p-6">
@@ -82,26 +86,6 @@ export default function Login() {
                   value={formData.password}
                   onChange={handleChange}
                 />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-md"
-                  defaultChecked
-                />
-                <label htmlFor="remember-me" className="ml-3 block text-sm">
-                  Acuérdate de mí
-                </label>
-              </div>
-              <div>
-                <a href="javascript:void(0);" className="text-blue-600 font-semibold text-sm hover:underline">
-                  ¿Has olvidado tu contraseña?
-                </a>
               </div>
             </div>
 

@@ -5,6 +5,11 @@ import BaseSelect from './inputs/input-select/base.select.tsx';
 import BasePassword from './inputs/input-password/base.password.tsx';
 import BaseNumber from './inputs/input-number/base.number.tsx';
 import BaseFile from './inputs/input-file/base.file.tsx';
+import ItemsList from './inputs/item-row/items.list.tsx';
+import ClientContacts from './inputs/input-contacts/client.contacts.tsx';
+import FormItemTransfer from './inputs/item-transfer/form.item.transfer.tsx';
+import FormToolTransfer from './inputs/tool-transfer/form.tool.transfer.tsx';
+import BaseCurrency from './inputs/input-currency/base.currency.tsx';
 
 // Mapping of input types to their respective components
 const INPUT_COMPONENTS: Record<string, any> = {
@@ -13,6 +18,11 @@ const INPUT_COMPONENTS: Record<string, any> = {
   password: BasePassword,
   number: BaseNumber,
   file: BaseFile,
+  items: ItemsList,
+  clientContacts: ClientContacts,
+  itemTransfer: FormItemTransfer,
+  toolTransfer: FormToolTransfer,
+  currency: BaseCurrency,
 };
 
 export interface BaseField {
@@ -32,6 +42,7 @@ export interface BaseField {
   endpoint?: string;
   optionLabel?: string;
   optionValue?: string;
+  selectLabel?: string;
   hasToHide?: (params: { values: any; mode: 'create' | 'update' }) => boolean;
   dynamicProps?: (params: { values: any; mode: 'create' | 'update' }) => Partial<BaseField>;
 }
@@ -64,6 +75,8 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
     }
   };
 
+  let autoFocusSet = false;
+
   return (
     <Grid container spacing={2}>
       {fields.map((field) => {
@@ -82,6 +95,11 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
           return null;
         }
 
+        const isFirstVisible = !autoFocusSet;
+        if (isFirstVisible) {
+          autoFocusSet = true;
+        }
+
         const InputComponent = INPUT_COMPONENTS[currentField.input];
 
         return (
@@ -96,16 +114,14 @@ export default function BaseForm({ fields, initialValues, onChange, mode = 'crea
           >
             {InputComponent ? (
               <InputComponent
-                name={currentField.name}
-                label={currentField.label}
+                {...(() => {
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  const { input, grid, hasToHide, dynamicProps, ...fieldProps } = currentField;
+                  return fieldProps;
+                })()}
                 value={formData[currentField.name]}
                 onChange={handleChange}
-                required={currentField.required}
-                options={currentField.options}
-                rows={currentField.rows}
-                endpoint={currentField.endpoint}
-                optionLabel={currentField.optionLabel}
-                optionValue={currentField.optionValue}
+                autoFocus={isFirstVisible}
               />
             ) : (
               <>No existe el componente</>
