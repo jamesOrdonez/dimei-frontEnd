@@ -96,6 +96,7 @@ export default function BaseGrid({
     onDataChangeRef.current = onDataChange;
   });
 
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -118,7 +119,6 @@ export default function BaseGrid({
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
 
   useEffect(() => {
     let filtered = data;

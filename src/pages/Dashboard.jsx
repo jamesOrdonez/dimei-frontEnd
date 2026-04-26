@@ -4,7 +4,7 @@ import axios from 'axios';
 // @mui
 import { useTheme } from '@mui/material/styles';
 import { Grid, Container, Typography, CircularProgress, Box } from '@mui/material';
-// components
+// sections
 import { AppCurrentVisits, AppWebsiteVisits, AppWidgetSummary, AppConversionRates } from '../sections/@dashboard/app';
 
 // ----------------------------------------------------------------------

@@ -49,8 +49,7 @@ export default function Login() {
     <div className="font-[sans-serif]">
       <div className="grid lg:grid-cols-3 md:grid-cols-2 items-center gap-4 h-full">
         <div className="max-md:order-1 lg:col-span-2 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8">
-          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="login" />
-
+          <img src={logo} className="lg:w-[50%] w-full h-full object-contain block mx-auto" alt="Logo DIMEI" />
         </div>
 
         <div className="w-full p-6">
@@ -89,6 +88,25 @@ export default function Login() {
               </div>
             </div>
 
+            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-md"
+                  defaultChecked
+                />
+                <label htmlFor="remember-me" className="ml-3 block text-sm">
+                  Acuérdate de mí
+                </label>
+              </div>
+              <div>
+                <button type="button" className="text-blue-600 font-semibold text-sm hover:underline bg-transparent border-none cursor-pointer p-0">
+                  ¿Has olvidado tu contraseña?
+                </button>
+              </div>
+            </div>
             <div className="mt-8">
               <button
                 type="submit"
