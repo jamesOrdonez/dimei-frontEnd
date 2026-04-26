@@ -2,7 +2,7 @@
 import {
   TagIcon, WrenchScrewdriverIcon, WrenchIcon, UserGroupIcon, ArchiveBoxIcon,
   ChartBarIcon, DocumentTextIcon, BuildingStorefrontIcon, ClipboardDocumentListIcon,
-  Squares2X2Icon, CubeIcon, Cog6ToothIcon, UsersIcon,
+  CubeIcon, Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
@@ -25,6 +25,7 @@ const navConfig = [
     title: 'Dashboard',
     path: '/dashboard',
     icon: icon('ic_analytics'),
+    adminOnly: true,
   },
 
   // ── Inventario ───────────────────────────────────────────────────────────
@@ -43,6 +44,14 @@ const navConfig = [
         ],
       },
       {
+        title: 'Herramientas',
+        path: '/herramientas',
+        icon: <WrenchIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.INGRESAR_MATERIAL, // Exclusivo de Almacenista → Admin + Almacenista
+        ],
+      },
+      {
         title: 'Productos',
         path: '/itemProductos',
         icon: <TagIcon className="h-5 w-5" />,
@@ -57,69 +66,27 @@ const navConfig = [
     ],
   },
 
-  // ── Herramientas ─────────────────────────────────────────────────────────
-  {
-    title: 'Herramientas',
-    icon: <WrenchIcon className="h-6 w-6" />,
-    children: [
-      {
-        title: 'Catálogo',
-        path: '/herramientas',
-        icon: <WrenchIcon className="h-5 w-5" />,
-        requiredPermissions: [
-          PERMISOS.INGRESAR_MATERIAL,
-          PERMISOS.HACER_REMISIONES,
-          PERMISOS.CREAR_ITEMS,
-        ],
-      },
-      {
-        title: 'Préstamos',
-        path: '/prestamos-herramientas',
-        icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
-        requiredPermissions: [
-          PERMISOS.INGRESAR_MATERIAL,
-          PERMISOS.HACER_REMISIONES,
-          PERMISOS.CREAR_ITEMS,
-        ],
-      },
-    ],
-  },
-
   // ── Proyectos ─────────────────────────────────────────────────────────────
   {
     title: 'Proyectos',
+    path: '/proyectos',
     icon: <ArchiveBoxIcon className="h-6 w-6" />,
-    children: [
-      {
-        title: 'Proyectos',
-        path: '/proyectos',
-        icon: <ArchiveBoxIcon className="h-5 w-5" />,
-        requiredPermissions: [
-          PERMISOS.CREAR_PROYECTOS,
-          PERMISOS.CONSULTAR_LISTAS,
-          PERMISOS.ANEXAR_ACTAS,
-          PERMISOS.PEDIR_MATERIAL,
-          PERMISOS.HACER_REMISIONES,
-          PERMISOS.VER_PROYECTOS,
-        ],
-      },
-      {
-        title: 'Remisiones',
-        path: '/remisiones',
-        icon: <DocumentTextIcon className="h-5 w-5" />,
-        requiredPermissions: [
-          PERMISOS.HACER_REMISIONES,
-          PERMISOS.VER_PROYECTOS,
-        ],
-      },
+    requiredPermissions: [
+      PERMISOS.CREAR_PROYECTOS,
+      PERMISOS.CONSULTAR_LISTAS,
+      PERMISOS.ANEXAR_ACTAS,
+      PERMISOS.PEDIR_MATERIAL,
+      PERMISOS.HACER_REMISIONES,
+      PERMISOS.VER_PROYECTOS,
     ],
   },
 
   // ── Administración ────────────────────────────────────────────────────────
+  // El grupo no lleva adminOnly para que usuarios con permisos de remisiones/préstamos
+  // también puedan ver sus children correspondientes.
   {
     title: 'Administración',
     icon: <Cog6ToothIcon className="h-6 w-6" />,
-    adminOnly: true,
     children: [
       {
         title: 'Usuarios',
@@ -138,6 +105,25 @@ const navConfig = [
         path: '/proveedores',
         icon: <BuildingStorefrontIcon className="h-5 w-5" />,
         adminOnly: true,
+      },
+      {
+        title: 'Remisiones',
+        path: '/remisiones',
+        icon: <DocumentTextIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.HACER_REMISIONES,
+          PERMISOS.VER_PROYECTOS,
+        ],
+      },
+      {
+        title: 'Préstamos Herramientas',
+        path: '/prestamos-herramientas',
+        icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+        requiredPermissions: [
+          PERMISOS.INGRESAR_MATERIAL,
+          PERMISOS.HACER_REMISIONES,
+          PERMISOS.CREAR_ITEMS,
+        ],
       },
       {
         title: 'Configuraciones',
