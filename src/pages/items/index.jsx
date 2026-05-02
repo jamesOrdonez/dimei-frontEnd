@@ -19,7 +19,6 @@ import SummaryCard from '../../components/ui/SummaryCard.jsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
 import { QRCodeCanvas } from 'qrcode.react';
-import numeral from 'numeral';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 import { fCurrency } from '../../utils/formatNumber.js';
 

@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import {
   Box, Chip, IconButton, Tooltip, Dialog, DialogTitle, DialogContent,
   DialogActions, Button, TextField, Select, MenuItem, FormControl,
-  InputLabel, Typography, Paper, Divider, CircularProgress
+  InputLabel, Typography, Paper, CircularProgress
 } from '@mui/material';
 import {
-  ClockIcon, ArrowPathIcon, EyeIcon, DocumentTextIcon
+  ClockIcon, ArrowPathIcon, DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { decrypt } from '../../utils/crypto.js';
@@ -25,7 +25,6 @@ const STATUS_OPTIONS = ['Prestado', 'Devuelto', 'Devuelto Dañado', 'Perdido'];
 export default function PrestamosHerramientas() {
   const company = sessionStorage.getItem('company');
   const [refreshKey, setRefreshKey] = useState(0);
-  const [gridData, setGridData] = useState([]);
 
   // Status change modal
   const [statusModal, setStatusModal] = useState(false);
@@ -129,7 +128,6 @@ export default function PrestamosHerramientas() {
         endpoint={`/getToolLoan/${company}`}
         fields={[]}
         mapData={mapLoansData}
-        onDataChange={setGridData}
         excludeKeys={['status', 'loanItems', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
         hideCreate={true}
         hideEdit={true}

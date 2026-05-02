@@ -146,7 +146,7 @@ export default function BaseTable({
                     if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase())) {
                       const src = value && typeof value === 'string' && value.startsWith('http') 
                         ? value 
-                        : value ? `${axios.defaults.baseURL}/getItem/image/${item.id}` : null;
+                        : value ? `${axios.defaults.baseURL}/getItem/image/${item.id}?v=${value}` : null;
                       return (
                         <TableCell key={header.label}>
                           {src ? (
