@@ -101,7 +101,7 @@ export default function PublicItemView() {
                 {item.img ? (
                   <Box 
                     component="img"
-                    src={`${axios.defaults.baseURL}/getItem/image/${item.id}`}
+                    src={`${axios.defaults.baseURL}getItem/image/${item.id}`}
                     alt={item.description}
                     sx={{ 
                       maxHeight: '100%', 
