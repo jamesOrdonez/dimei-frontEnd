@@ -106,6 +106,15 @@ export default function Proyectos() {
     },
   ];
 
+  const mapData = (data) => {
+    return data.map((item) => ({
+      ...item,
+      'Tipo de ascensor': item.elevatorTypeName,
+      'Tipo de sistema': item.typeDriveSystemName,
+      'Cliente': item.customerName,
+    }));
+  };
+
   return (
     <>
       <BaseGrid
@@ -116,10 +125,11 @@ export default function Proyectos() {
         deleteEndpoint="/deleteProject"
         fetchOneEndpoint="/getOneProject"
         fields={fields}
+        mapData={mapData}
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
-        extraHeaders={[{ label: 'Estado', after: 'customerId' }]}
+        extraHeaders={[{ label: 'Estado', after: 'Cliente' }]}
         renderExtraCell={({ item, headerLabel }) => {
           if (headerLabel === 'Estado') {
             const stateColors = {
@@ -155,7 +165,7 @@ export default function Proyectos() {
             </IconButton>
           )
         )}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName']}
         customFilters={customFilters}
       />
     </>
