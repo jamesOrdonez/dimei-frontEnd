@@ -9,6 +9,7 @@ import ProductsGroup from './components/products.groups';
 import RolesManagement from './components/roles.management';
 import ToolsGroup from './components/tools.group';
 import ToolUnidadMedida from './components/tool.unidad.medida';
+import Preguntas from './components/preguntas';
 import { Tabs, Tab } from '@mui/material';
 
 // 🔁 COMPONENTE TABS REUTILIZABLE (Mantenido para compatibilidad con otras vistas)
@@ -158,6 +159,12 @@ export default function Configuraciones() {
       items: [
         { label: 'Tipo de sistema', component: <ElevatorType /> },
         { label: 'Tipo de ascensor', component: <TypeDriveSystem /> },
+      ],
+    },
+    {
+      label: 'Mantenimiento',
+      items: [
+        { label: 'Preguntas', component: <Preguntas /> },
       ],
     },
   ];
