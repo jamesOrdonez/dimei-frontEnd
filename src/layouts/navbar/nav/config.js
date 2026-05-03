@@ -80,6 +80,19 @@ const navConfig = [
       PERMISOS.VER_PROYECTOS,
     ],
   },
+  {
+    title: 'Equipos',
+    path: '/equipos',
+    icon: <WrenchScrewdriverIcon className="h-6 w-6" />,
+    requiredPermissions: [
+      PERMISOS.CREAR_PROYECTOS,
+      PERMISOS.CONSULTAR_LISTAS,
+      PERMISOS.ANEXAR_ACTAS,
+      PERMISOS.PEDIR_MATERIAL,
+      PERMISOS.HACER_REMISIONES,
+      PERMISOS.VER_PROYECTOS,
+    ],
+  },
 
   // ── Administración ────────────────────────────────────────────────────────
   // El grupo no lleva adminOnly para que usuarios con permisos de remisiones/préstamos

@@ -78,8 +78,8 @@ export default function Clientes() {
       component: <ClientsGrid type="cliente" title="Cliente de Proyecto" />,
     },
     {
-      label: 'Clientes de Mantenimiento',
-      component: <ClientsGrid type="mantenimiento" title="Cliente de Mantenimiento" />,
+      label: 'Clientes de Equipos',
+      component: <ClientsGrid type="equipo" title="Cliente de Equipo" />,
     },
   ];
 
