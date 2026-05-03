@@ -6,7 +6,14 @@ import {
   FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel,
   Divider, Tooltip, CircularProgress, Paper, Collapse, Tab, Tabs,
 } from '@mui/material';
-import { PlusIcon, PencilIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon, SquaresPlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon, SquaresPlusIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const TYPE_LABELS = { unica: 'Única', multiple: 'Múltiple', abierta: 'Abierta', fotos: 'Fotos' };
 const TYPE_COLORS = { unica: 'primary', multiple: 'secondary', abierta: 'success', fotos: 'warning' };
@@ -184,8 +191,39 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
   );
 }
 
+// ─── SortableQuestion ────────────────────────────────────────────────────────
+function SortableQuestion({ q, onEdit, deletingId, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
+  return (
+    <Paper ref={setNodeRef} style={style} elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 2 }}>
+      <Stack direction="row" alignItems="flex-start" spacing={1}>
+        <Box {...attributes} {...listeners} sx={{ cursor: 'grab', pt: 0.5, color: '#94a3b8', '&:active': { cursor: 'grabbing' } }}>
+          <Bars3Icon style={{ width: 16, height: 16 }} />
+        </Box>
+        <Chip label={TYPE_LABELS[q.type]} color={TYPE_COLORS[q.type]} size="small" sx={{ minWidth: 80, fontWeight: 700 }} />
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="body2" fontWeight={600}>{q.text}</Typography>
+          {q.type === 'fotos' && (<Typography variant="caption" color="text.secondary">Fotos: mín {q.min_photos} – máx {q.max_photos}</Typography>)}
+          {(q.type === 'unica' || q.type === 'multiple') && q.options?.length > 0 && (
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
+              {q.options.map(o => (<Chip key={o.id} label={Number(o.requires_photo) === 1 ? `${o.text} 📷` : o.text} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />))}
+            </Stack>
+          )}
+        </Box>
+        <Stack direction="row" spacing={0.5}>
+          <IconButton size="small" onClick={() => onEdit(q)}><PencilIcon className="h-4 w-4" /></IconButton>
+          <LoadingIconButton size="small" color="error" loading={deletingId === q.id} onClick={() => onDelete(q.id)}>
+            <TrashIcon className="h-4 w-4" />
+          </LoadingIconButton>
+        </Stack>
+      </Stack>
+    </Paper>
+  );
+}
+
 // ─── GroupCard ────────────────────────────────────────────────────────────────
-function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates }) {
+function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates, dragHandleProps }) {
   const [expanded, setExpanded] = useState(false);
   const [qDialog, setQDialog] = useState({ open: false, editing: null });
   const [savingQ, setSavingQ] = useState(false);
@@ -226,15 +264,30 @@ function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates }) {
     finally { setDeletingGroup(false); }
   };
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleQDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = questions.findIndex(q => q.id === active.id);
+    const newIdx = questions.findIndex(q => q.id === over.id);
+    const reordered = arrayMove(questions, oldIdx, newIdx);
+    setQuestions(reordered);
+    await axios.post('/reorderQuestions', { order: reordered.map((q, i) => ({ id: q.id, order: i })) });
+  };
+
   return (
     <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
       <Stack direction="row" alignItems="center"
-        sx={{ px: 2.5, py: 1.5, cursor: 'pointer', '&:hover': { bgcolor: '#f8fafc' } }}
-        onClick={() => setExpanded(v => !v)}>
-        <IconButton size="small" sx={{ mr: 1 }} onClick={e => { e.stopPropagation(); setExpanded(v => !v); }}>
-          {expanded ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
-        </IconButton>
-        <Typography fontWeight={700} sx={{ flex: 1 }}>{group.name}</Typography>
+        sx={{ px: 2.5, py: 1.5, '&:hover': { bgcolor: '#f8fafc' } }}>
+        <Box {...(dragHandleProps || {})} sx={{ cursor: 'grab', mr: 1, color: '#94a3b8', '&:active': { cursor: 'grabbing' } }}
+          onClick={e => e.stopPropagation()}>
+          <Bars3Icon style={{ width: 18, height: 18 }} />
+        </Box>
+        <Box sx={{ cursor: 'pointer', flex: 1, display: 'flex', alignItems: 'center' }} onClick={() => setExpanded(v => !v)}>
+          <IconButton size="small" sx={{ mr: 1 }}>{expanded ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}</IconButton>
+          <Typography fontWeight={700} sx={{ flex: 1 }}>{group.name}</Typography>
+        </Box>
         <Chip label={`${questions.length} pregunta${questions.length !== 1 ? 's' : ''}`} size="small" sx={{ mr: 1 }} />
         <Tooltip title="Editar grupo">
           <IconButton size="small" onClick={e => { e.stopPropagation(); onGroupEdited(group); }}>
@@ -265,38 +318,18 @@ function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates }) {
               Este grupo no tiene preguntas aún.
             </Typography>
           ) : (
-            <Stack spacing={1.5}>
-              {questions.map(q => (
-                <Paper key={q.id} elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 2 }}>
-                  <Stack direction="row" alignItems="flex-start" spacing={1}>
-                    <Chip label={TYPE_LABELS[q.type]} color={TYPE_COLORS[q.type]} size="small" sx={{ minWidth: 80, fontWeight: 700 }} />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="body2" fontWeight={600}>{q.text}</Typography>
-                      {q.type === 'fotos' && (
-                        <Typography variant="caption" color="text.secondary">Fotos: mín {q.min_photos} – máx {q.max_photos}</Typography>
-                      )}
-                      {(q.type === 'unica' || q.type === 'multiple') && q.options?.length > 0 && (
-                        <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
-                          {q.options.map(o => (
-                            <Chip key={o.id} label={Number(o.requires_photo) === 1 ? `${o.text} 📷` : o.text}
-                              size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
-                          ))}
-                        </Stack>
-                      )}
-                    </Box>
-                    <Stack direction="row" spacing={0.5}>
-                      <IconButton size="small" onClick={() => setQDialog({ open: true, editing: q })}>
-                        <PencilIcon className="h-4 w-4" />
-                      </IconButton>
-                      <LoadingIconButton size="small" color="error" loading={deletingId === q.id}
-                        onClick={() => handleDeleteQuestion(q.id)}>
-                        <TrashIcon className="h-4 w-4" />
-                      </LoadingIconButton>
-                    </Stack>
-                  </Stack>
-                </Paper>
-              ))}
-            </Stack>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleQDragEnd}>
+              <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                <Stack spacing={1.5}>
+                  {questions.map(q => (
+                    <SortableQuestion key={q.id} q={q}
+                      onEdit={q => setQDialog({ open: true, editing: q })}
+                      deletingId={deletingId}
+                      onDelete={handleDeleteQuestion} />
+                  ))}
+                </Stack>
+              </SortableContext>
+            </DndContext>
           )}
         </Box>
       </Collapse>
@@ -428,6 +461,44 @@ function OptionTemplateManager({ templates, onTemplatesChange }) {
   );
 }
 
+// ─── GroupsDndList ────────────────────────────────────────────────────────────
+function SortableGroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <GroupCard group={group} onGroupEdited={onGroupEdited} onGroupDeleted={onGroupDeleted}
+        optionTemplates={optionTemplates}
+        dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
+function GroupsDndList({ groups, setGroups, onGroupEdited, onGroupDeleted, optionTemplates }) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = groups.findIndex(g => g.id === active.id);
+    const newIdx = groups.findIndex(g => g.id === over.id);
+    const reordered = arrayMove(groups, oldIdx, newIdx);
+    setGroups(reordered);
+    await axios.post('/reorderQuestionGroups', { order: reordered.map((g, i) => ({ id: g.id, sort_order: i })) });
+  };
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={groups.map(g => g.id)} strategy={verticalListSortingStrategy}>
+        <Stack spacing={2}>
+          {groups.map(g => (
+            <SortableGroupCard key={g.id} group={g} onGroupEdited={onGroupEdited}
+              onGroupDeleted={onGroupDeleted} optionTemplates={optionTemplates} />
+          ))}
+        </Stack>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 // ─── GroupNameDialog ──────────────────────────────────────────────────────────
 function GroupDialog({ open, onClose, onSave, initial }) {
   const [name, setName] = useState('');
@@ -537,14 +608,10 @@ export default function Preguntas() {
               </Button>
             </Paper>
           ) : (
-            <Stack spacing={2}>
-              {groups.map(g => (
-                <GroupCard key={g.id} group={g}
-                  onGroupEdited={grp => setGDialog({ open: true, editing: grp })}
-                  onGroupDeleted={handleDeleteGroup}
-                  optionTemplates={templates} />
-              ))}
-            </Stack>
+            <GroupsDndList groups={groups} setGroups={setGroups}
+              onGroupEdited={grp => setGDialog({ open: true, editing: grp })}
+              onGroupDeleted={handleDeleteGroup}
+              optionTemplates={templates} />
           )}
 
           <GroupDialog open={gDialog.open} onClose={() => setGDialog({ open: false, editing: null })}
