@@ -36,8 +36,13 @@ export default function Login() {
       sessionStorage.setItem('name', encrypt(respon.data.name));
       sessionStorage.setItem('userId', encrypt(respon.data.userId));
 
-      // Redirigir al dashboard
-      window.location.href = '/dashboard';
+      // Redirigir según el rol
+      if (respon.data.rolName === 'Técnicos') {
+        window.location.href = '/mantenimiento/clientes';
+      } else {
+        // Redirigir al dashboard
+        window.location.href = '/dashboard';
+      }
     } catch (e) {
       if (e.message === 'Network Error') {
         Swealert({ ico: 'error', message: e.message });

@@ -19,6 +19,8 @@ import AnalisisInventario from '../pages/analisis-inventario';
 import Remisiones from '../pages/remisiones/index';
 import Herramientas from '../pages/herramientas';
 import PrestamosHerramientas from '../pages/prestamos-herramientas';
+import ClientesMantenimiento from '../pages/mantenimiento/ClientesMantenimiento';
+import FormularioMantenimiento from '../pages/mantenimiento/FormularioMantenimiento';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -91,6 +93,8 @@ export default function Router() {
         <Route path="/equipos/:id" element={<DetalleProyecto />} />
         <Route path="/analisis-inventario" element={<AnalisisInventario />} />
         <Route path="/remisiones" element={<Remisiones />} />
+        <Route path="/mantenimiento/clientes" element={<ClientesMantenimiento />} />
+        <Route path="/mantenimiento/formulario/:id" element={<FormularioMantenimiento />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

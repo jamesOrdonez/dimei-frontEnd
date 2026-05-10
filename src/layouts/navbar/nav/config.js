@@ -27,6 +27,12 @@ const navConfig = [
     icon: icon('ic_analytics'),
     adminOnly: true,
   },
+  {
+    title: 'Mantenimientos',
+    path: '/mantenimiento/clientes',
+    icon: <WrenchScrewdriverIcon className="h-6 w-6" />,
+    showForRoles: ['Administrador', 'Técnicos']
+  },
 
   // ── Inventario ───────────────────────────────────────────────────────────
   {
