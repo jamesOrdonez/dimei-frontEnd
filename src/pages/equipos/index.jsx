@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Chip } from '@mui/material';
 import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
@@ -49,6 +48,13 @@ export default function Equipos() {
   );
 
   const fields = [
+    {
+      name: 'nombre',
+      label: 'Nombre del equipo',
+      input: 'text',
+      grid: { xs: 12 },
+      required: true,
+    },
     {
       name: 'elevatorType',
       label: 'Tipo de ascensor',
@@ -102,6 +108,7 @@ export default function Equipos() {
   const mapData = (data) => {
     return data.map((item) => ({
       ...item,
+      'Nombre': item.nombre,
       'Tipo de ascensor': item.elevatorTypeName,
       'Tipo de sistema': item.typeDriveSystemName,
       'Cliente': item.customerName,
@@ -123,28 +130,9 @@ export default function Equipos() {
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
-        extraHeaders={[{ label: 'Estado', after: 'Cliente' }]}
-        renderExtraCell={({ item, headerLabel }) => {
-          if (headerLabel === 'Estado') {
-            const stateColors = {
-              Creado: 'default',
-              Iniciado: 'info',
-              Finalizado: 'success',
-              Cancelado: 'error',
-            };
-            return (
-              <Chip
-                label={item.state}
-                color={stateColors[item.state] || 'default'}
-                size="small"
-                variant="outlined"
-                sx={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.65rem' }}
-              />
-            );
-          }
-          return null;
-        }}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo']}
+
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'questionGroupId', 'lastMaintenance', 'user']}
+
         customFilters={customFilters}
       />
     </>

@@ -285,9 +285,16 @@ export default function ClientesMantenimiento() {
                                   }}
                                 >
                                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                                    <Typography variant="body2" fontWeight="700">
-                                      {equipo.elevatorTypeName} #{equipo.id}
-                                    </Typography>
+                                    <Box>
+                                      <Typography variant="body2" fontWeight="700">
+                                        {equipo.nombre || `${equipo.elevatorTypeName} #${equipo.id}`}
+                                      </Typography>
+                                      {equipo.nombre && (
+                                        <Typography variant="caption" color="text.secondary">
+                                          {equipo.elevatorTypeName} #{equipo.id}
+                                        </Typography>
+                                      )}
+                                    </Box>
                                     <Chip 
                                       label={equipo.state} 
                                       size="small" 
