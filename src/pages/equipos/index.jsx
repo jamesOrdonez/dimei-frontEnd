@@ -21,6 +21,8 @@ export default function Equipos() {
     fetchCustomers();
   }, []);
 
+  //status options
+
   const statusOptions = useMemo(
     () => [
       { value: 'Creado', label: 'Creado' },
