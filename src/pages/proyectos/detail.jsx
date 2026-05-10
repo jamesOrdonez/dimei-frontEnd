@@ -298,9 +298,15 @@ export default function DetalleProyecto() {
           <Divider sx={{ mb: 3 }} />
           
           <Grid container spacing={4}>
+            {project?.nombre && (
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant="caption" color="text.secondary" display="block">Nombre del Equipo</Typography>
+                <Typography variant="body1" fontWeight="500">{project.nombre}</Typography>
+              </Grid>
+            )}
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Cliente</Typography>
-              <Typography variant="body1" fontWeight="500">{project?.customer || 'N/A'}</Typography>
+              <Typography variant="body1" fontWeight="500">{project?.customerName || project?.customer || 'N/A'}</Typography>
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Tipo de Ascensor</Typography>
