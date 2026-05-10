@@ -21,6 +21,7 @@ import Herramientas from '../pages/herramientas';
 import PrestamosHerramientas from '../pages/prestamos-herramientas';
 import ClientesMantenimiento from '../pages/mantenimiento/ClientesMantenimiento';
 import FormularioMantenimiento from '../pages/mantenimiento/FormularioMantenimiento';
+import AdminMantenimiento from '../pages/mantenimiento/AdminMantenimiento';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -95,6 +96,7 @@ export default function Router() {
         <Route path="/remisiones" element={<Remisiones />} />
         <Route path="/mantenimiento/clientes" element={<ClientesMantenimiento />} />
         <Route path="/mantenimiento/formulario/:id" element={<FormularioMantenimiento />} />
+        <Route path="/mantenimiento/historial" element={<AdminMantenimiento />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

@@ -9,7 +9,6 @@ import {
   Button, 
   CircularProgress,
   Chip,
-  Collapse,
   IconButton,
   Divider,
   Paper,
@@ -18,8 +17,6 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
-  FormControl,
-  FormLabel,
   TextField,
   Dialog,
   DialogTitle,
@@ -33,15 +30,13 @@ import {
 import { 
   ChevronLeftIcon,
   CameraIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  PencilIcon,
-  TrashIcon,
-  UserIcon
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { decrypt } from '../../utils/crypto.js';
+import { pdf } from '@react-pdf/renderer';
+import MaintenanceReportPdf from './MaintenanceReportPdf';
 
 // --- Custom Signature Canvas Component ---
 const SignaturePad = ({ onSave, title, onCancel }) => {
@@ -144,6 +139,13 @@ const SignaturePad = ({ onSave, title, onCancel }) => {
         />
       </Box>
       <Grid container spacing={1} sx={{ mt: 2 }}>
+        {onCancel && (
+          <Grid item xs={12}>
+            <Button fullWidth variant="text" onClick={onCancel} sx={{ textTransform: 'none', color: '#64748b', fontWeight: '700', mb: 1 }}>
+              Volver a firmas guardadas
+            </Button>
+          </Grid>
+        )}
         <Grid item xs={4}>
           <Button fullWidth variant="outlined" color="warning" onClick={undo} disabled={history.length === 0} sx={{ textTransform: 'none', borderRadius: 2 }}>
             Deshacer
@@ -177,7 +179,6 @@ export default function FormularioMantenimiento() {
   const [signatureStep, setSignatureStep] = useState('technician'); // 'technician' | 'customer'
   const [savedSignatures, setSavedSignatures] = useState([]);
   const [technicianSignature, setTechnicianSignature] = useState(null);
-  const [customerSignature, setCustomerSignature] = useState(null);
   const [isDrawingNewTech, setIsDrawingNewTech] = useState(false);
 
   const userId = decrypt(sessionStorage.getItem('userId'));
@@ -192,6 +193,7 @@ export default function FormularioMantenimiento() {
   useEffect(() => {
     fetchData();
     fetchMySignatures();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchData = async () => {
@@ -310,6 +312,11 @@ export default function FormularioMantenimiento() {
 
   const handleStartSignature = () => {
     if (!validateForm()) return;
+    if (savedSignatures.length > 0) {
+      setIsDrawingNewTech(false);
+    } else {
+      setIsDrawingNewTech(true);
+    }
     setShowSignatureFlow(true);
     setSignatureStep('technician');
   };
@@ -328,30 +335,54 @@ export default function FormularioMantenimiento() {
   const handleFinalSubmit = async (custSig) => {
     try {
       setLoading(true);
-      setShowSignatureFlow(false); // Close modal immediately
+      const answersArray = Object.keys(answers).map(qId => ({
+        question_id: parseInt(qId, 10),
+        answer_text: answers[qId].text || '',
+        selected_options: answers[qId].optionIds || [],
+        photos: (answers[qId].photos || []).map(p => p.preview)
+      }));
+
       const payload = {
         project_id: id,
         technician_id: userId,
         customer_signature: custSig,
         technician_signature: technicianSignature,
-        answers: answers
+        answers: answersArray
       };
 
       await axios.post('/saveMaintenanceReport', payload);
+      
+      // Generate PDF
+      const techName = decrypt(sessionStorage.getItem('name'));
+      const blob = await pdf(
+        <MaintenanceReportPdf 
+          data={{ ...payload, technicianSignature, customerSignature: custSig }} 
+          equipo={equipo} 
+          group={questionGroup}
+          technicianName={techName}
+          backendUrl={backendUrl}
+        />
+      ).toBlob();
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Mantenimiento_${equipo?.elevatorTypeName}_${id}.pdf`;
+      link.click();
 
       Swal.fire({
         title: '¡Mantenimiento Finalizado!',
-        text: "El reporte se ha guardado exitosamente.",
+        text: "El reporte se ha guardado y el PDF ha sido generado.",
         icon: 'success',
         confirmButtonText: 'Aceptar'
       }).then(() => {
-        setSignatureStep('technician'); // Reset for next time
+        setSignatureStep('technician');
         navigate('/mantenimiento/clientes');
       });
     } catch (error) {
       console.error("Error saving maintenance report:", error);
       Swal.fire('Error', 'No se pudo guardar el reporte de mantenimiento', 'error');
-      setShowSignatureFlow(true); // Re-open if error to allow retry
+      setShowSignatureFlow(true);
     } finally {
       setLoading(false);
     }
@@ -504,6 +535,7 @@ export default function FormularioMantenimiento() {
                 </Stack>
               ) : (
                 <SignaturePad 
+                  key="tech-sig"
                   title="Dibuja tu firma técnica" 
                   onSave={handleSaveTechSignature} 
                   onCancel={savedSignatures.length > 0 ? () => setIsDrawingNewTech(false) : null} 
@@ -513,8 +545,9 @@ export default function FormularioMantenimiento() {
           ) : (
             <Box>
               <SignaturePad 
+                key="cust-sig"
                 title="Solicite la firma del cliente" 
-                onSave={(base64) => { setCustomerSignature(base64); handleFinalSubmit(base64); }} 
+                onSave={(base64) => { handleFinalSubmit(base64); }} 
               />
               <Button 
                 fullWidth 

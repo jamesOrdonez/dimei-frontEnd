@@ -31,7 +31,13 @@ const navConfig = [
     title: 'Mantenimientos',
     path: '/mantenimiento/clientes',
     icon: <WrenchScrewdriverIcon className="h-6 w-6" />,
-    showForRoles: ['Administrador', 'Técnicos']
+    showForRoles: ['Técnicos']
+  },
+  {
+    title: 'Historial Mantenimientos',
+    path: '/mantenimiento/historial',
+    icon: <ClipboardDocumentListIcon className="h-6 w-6" />,
+    showForRoles: ['Administrador']
   },
 
   // ── Inventario ───────────────────────────────────────────────────────────

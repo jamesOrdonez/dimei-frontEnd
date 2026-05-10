@@ -69,6 +69,15 @@ export default function Dashboard() {
 
           <Grid item xs={12} sm={6} md={3}>
             <AppWidgetSummary 
+              title="Total Equipos" 
+              total={stats.totalEquipments} 
+              color="warning"
+              icon={'mdi:elevator-passenger'} 
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <AppWidgetSummary 
               title="Ítems en Inventario" 
               total={stats.totalItems} 
               color="info" 

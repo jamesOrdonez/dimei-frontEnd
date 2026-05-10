@@ -19,17 +19,61 @@ import {
 import { 
   MagnifyingGlassIcon, 
   MapPinIcon, 
-  PhoneIcon,
   ChevronDownIcon,
   WrenchScrewdriverIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
-import { usePermissions } from '../../context/PermissionsContext';
+import { pdf } from '@react-pdf/renderer';
+import MaintenanceReportPdf from './MaintenanceReportPdf';
 
 export default function ClientesMantenimiento() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const backendUrl = 'http://localhost:8080';
+
+  const handleDownloadLastPDF = async (equipo) => {
+    if (!equipo.lastMaintenance?.id) return;
+    try {
+      const res = await axios.get(`/getMaintenanceReport/${equipo.lastMaintenance.id}`);
+      const report = res.data.data;
+      
+      const resGroup = await axios.get(`/getOneQuestionGroup/${equipo.questionGroupId}`);
+      const group = resGroup.data.data;
+      
+      const techName = equipo.lastMaintenance.technician;
+      
+      const answersMap = {};
+      (report.answers || []).forEach(ans => {
+        answersMap[ans.question_id] = {
+          question_id: ans.question_id,
+          optionIds: ans.selected_options || [],
+          text: ans.answer_text,
+          photos: (ans.photos || []).map(p => ({ preview: p }))
+        };
+      });
+
+      const blob = await pdf(
+        <MaintenanceReportPdf 
+          data={{ ...report, answers: answersMap, technicianSignature: report.technician_signature, customerSignature: report.customer_signature }} 
+          equipo={equipo} 
+          group={group}
+          technicianName={techName}
+          backendUrl={backendUrl}
+        />
+      ).toBlob();
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Reporte_${equipo.elevatorTypeName}_${equipo.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
+      link.click();
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("No se pudo generar el PDF");
+    }
+  };
   const [clientes, setClientes] = useState([]);
   const [equiposByClient, setEquiposByClient] = useState({}); // { clientId: [] }
   const [loadingEquipos, setLoadingEquipos] = useState({}); // { clientId: true/false }
@@ -40,6 +84,7 @@ export default function ClientesMantenimiento() {
 
   useEffect(() => {
     fetchClientes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company]);
 
   const fetchClientes = async () => {
@@ -252,7 +297,7 @@ export default function ClientesMantenimiento() {
                                     />
                                   </Box>
 
-                                  <Box sx={{ mt: -0.5, mb: 0.5 }}>
+                                  <Box sx={{ mt: -0.5, mb: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Typography variant="caption" sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                       {equipo.lastMaintenance ? (
                                         <>
@@ -266,6 +311,23 @@ export default function ClientesMantenimiento() {
                                         </>
                                       )}
                                     </Typography>
+
+                                    {equipo.lastMaintenance && (
+                                      <IconButton 
+                                        size="small" 
+                                        onClick={(e) => { e.stopPropagation(); handleDownloadLastPDF(equipo); }}
+                                        sx={{ 
+                                          p: 0.8, 
+                                          color: '#3b82f6',
+                                          bgcolor: 'rgba(59, 130, 246, 0.08)',
+                                          '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.15)' },
+                                          borderRadius: 2
+                                        }}
+                                        title="Descargar Reporte PDF"
+                                      >
+                                        <ArrowDownTrayIcon className="h-4 w-4" />
+                                      </IconButton>
+                                    )}
                                   </Box>
                                   
                                   <Stack direction="row" spacing={2}>

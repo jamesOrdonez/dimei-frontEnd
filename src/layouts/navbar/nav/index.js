@@ -83,7 +83,7 @@ export default function Nav({ openNav, onCloseNav }) {
         return item; // Sin restricciones → siempre visible
       })
       .filter(Boolean);
-  }, [isAdmin, hasPermission]);
+  }, [isAdmin, hasPermission, rolName]);
 
 
   const renderContent = (
