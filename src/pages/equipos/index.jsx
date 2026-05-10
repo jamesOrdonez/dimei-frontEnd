@@ -1,13 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { IconButton, Chip } from '@mui/material';
-import { Icon } from '@iconify/react';
+import { Chip } from '@mui/material';
 import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
-export default function Proyectos() {
-  const navigate = useNavigate();
+export default function Equipos() {
   const [customers, setCustomers] = useState([]);
   const { hasPermission, isAdmin } = usePermissions();
 
@@ -15,7 +12,7 @@ export default function Proyectos() {
     const fetchCustomers = async () => {
       try {
         const company = sessionStorage.getItem('company');
-        const response = await axios.get(`/getClientes/${company}`);
+        const response = await axios.get(`/getClientes/${company}?tipo=equipo`);
         const result = Array.isArray(response.data) ? response.data : response.data.data || [];
         setCustomers(result);
       } catch (error) {
@@ -24,10 +21,6 @@ export default function Proyectos() {
     };
     fetchCustomers();
   }, []);
-
-  const handleView = (item) => {
-    navigate(`/proyectos/${item.id}`);
-  };
 
   const statusOptions = useMemo(
     () => [
@@ -79,7 +72,7 @@ export default function Proyectos() {
       label: 'Cliente',
       input: 'select',
       optionLabel: 'nombre',
-      endpoint: `/getClientes/${sessionStorage.getItem('company')}?tipo=cliente`,
+      endpoint: `/getClientes/${sessionStorage.getItem('company')}?tipo=equipo`,
       grid: { xs: 12 },
       required: true,
     },
@@ -118,15 +111,15 @@ export default function Proyectos() {
   return (
     <>
       <BaseGrid
-        title="Proyectos"
-        endpoint={`/getProjects/${sessionStorage.getItem('company')}?tipo=proyecto`}
+        title="Equipos"
+        endpoint={`/getProjects/${sessionStorage.getItem('company')}?tipo=equipo`}
         saveEndpoint="/saveProject"
         updateEndpoint="/updateProject"
         deleteEndpoint="/deleteProject"
         fetchOneEndpoint="/getOneProject"
         fields={fields}
         mapData={mapData}
-        formAdditionalValues={{ tipo: 'proyecto' }}
+        formAdditionalValues={{ tipo: 'equipo' }}
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
@@ -151,21 +144,6 @@ export default function Proyectos() {
           }
           return null;
         }}
-        renderExtraActions={(item) => (
-          (hasPermission(PERMISOS.VER_PROYECTOS) || hasPermission(PERMISOS.CREAR_PROYECTOS)) && (
-            <IconButton
-              sx={{
-                color: 'info.main',
-                border: '1.5px solid',
-                borderColor: 'info.light',
-                borderRadius: 1.5,
-              }}
-              onClick={() => handleView(item)}
-            >
-              <Icon icon="lucide:eye" width={20} />
-            </IconButton>
-          )
-        )}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo']}
         customFilters={customFilters}
       />

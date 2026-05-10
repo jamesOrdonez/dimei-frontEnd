@@ -34,14 +34,17 @@ const ALLOWED_PERMISSIONS = [
   'Anexar actas de entrega',
   'Pedir material adicional',
   'Visualizar proyectos',
+  'Ver herramientas y préstamos',
+  'Crear herramientas',
+  'Crear préstamos de herramientas',
+  'Devolver herramientas',
 ];
-
-const BASE_ROLES = ['Almacenista', 'Diseñador', 'Administrador'];
 
 const ROL_COLORS = {
   Almacenista: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
   Diseñador: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
   Administrador: { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' },
+  Técnicos: { bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
 };
 
 const getChipStyle = (name) => {
@@ -154,8 +157,8 @@ export default function RolesManagement() {
   };
 
   const handleDeleteRol = async (rol) => {
-    if (BASE_ROLES.includes(rol.name)) {
-      Swal.fire('No permitido', 'Los roles base del sistema no pueden eliminarse.', 'warning');
+    if (rol.editable === false || rol.editable === 0) {
+      Swal.fire('No permitido', 'Los roles predefinidos del sistema no pueden eliminarse.', 'warning');
       return;
     }
     const result = await Swal.fire({
@@ -256,14 +259,14 @@ export default function RolesManagement() {
                       <Typography variant="body2" fontWeight={selectedRol?.id === rol.id ? 700 : 500}>
                         {rol.name}
                       </Typography>
-                      {BASE_ROLES.includes(rol.name) && (
+                      {(!rol.editable || rol.editable === 0) && (
                         <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem' }}>
                           Rol base
                         </Typography>
                       )}
                     </Box>
                   </Box>
-                  {!BASE_ROLES.includes(rol.name) && (
+                  {(rol.editable && rol.editable !== 0) && (
                     <Tooltip title="Eliminar rol" placement="right">
                       <IconButton
                         size="small"

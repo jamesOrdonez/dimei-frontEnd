@@ -2,8 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import {
   Box, Chip, IconButton, Tooltip, Dialog, DialogTitle, DialogContent,
-  DialogActions, Button, TextField, Select, MenuItem, FormControl,
-  InputLabel, Typography, Paper, CircularProgress
+  DialogActions, Button, TextField, Typography, Paper, CircularProgress,
 } from '@mui/material';
 import {
   ClockIcon, ArrowPathIcon, DocumentTextIcon
@@ -11,7 +10,9 @@ import {
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 import ToolLoanPDF from '../herramientas/ToolLoanPDF.jsx';
+import ToolReturnTransfer from './ToolReturnTransfer.jsx';
 
 const STATUS_COLORS = {
   'Prestado': 'primary',
@@ -20,16 +21,18 @@ const STATUS_COLORS = {
   'Perdido': 'error',
 };
 
-const STATUS_OPTIONS = ['Prestado', 'Devuelto', 'Devuelto Dañado', 'Perdido'];
+
 
 export default function PrestamosHerramientas() {
+  const { hasPermission } = usePermissions();
+
   const company = sessionStorage.getItem('company');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Status change modal
+  // Return modal
   const [statusModal, setStatusModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
-  const [newStatus, setNewStatus] = useState('');
+  const [returnItems, setReturnItems] = useState([]);  // right-panel selection
   const [statusObs, setStatusObs] = useState('');
   const [savingStatus, setSavingStatus] = useState(false);
 
@@ -40,7 +43,57 @@ export default function PrestamosHerramientas() {
 
   const openStatusChange = (loan) => {
     setSelectedLoan(loan);
-    setNewStatus(loan.status);
+
+    // Agrupar devoluciones por herramienta y estado
+    const groupedReturns = {};
+    
+    (loan.statusHistory || [])
+      .filter(h => h.tool_id != null && h.qty != null)
+      .forEach(h => {
+        const key = `${h.tool_id}_${h.status}`;
+        if (!groupedReturns[key]) {
+          groupedReturns[key] = {
+            tool_id: h.tool_id,
+            status: h.status,
+            qty: 0,
+          };
+        }
+        groupedReturns[key].qty += h.qty;
+      });
+
+    // Soporte legacy: si hay ítems con devoluciones parciales pero sin historial (antes de la migración)
+    (loan.loanItems || []).forEach(li => {
+      if (li.returned_quantity > 0) {
+        const hasHistory = Object.values(groupedReturns).some(g => g.tool_id === li.tool_id);
+        if (!hasHistory) {
+          // Asumimos 'Devuelto' genérico
+          groupedReturns[`${li.tool_id}_Legacy`] = {
+            tool_id: li.tool_id,
+            status: li.status === 'Prestado' ? 'Devuelto' : li.status,
+            qty: li.returned_quantity,
+          };
+        }
+      }
+    });
+
+    const historyRows = Object.keys(groupedReturns).map((key) => {
+      const g = groupedReturns[key];
+      const loanItem = (loan.loanItems || []).find(li => li.tool_id === g.tool_id);
+      return {
+        loanItemId: loanItem?.id || g.tool_id,
+        historyId: `grouped_${key}`, // clave única
+        tool_id: g.tool_id,
+        description: loanItem?.tool?.description || `Herramienta #${g.tool_id}`,
+        group: loanItem?.tool?.ToolGroup?.name || '-',
+        loanedQty: loanItem?.quantity || '-',
+        returnQty: g.qty,
+        remainingQty: loanItem ? loanItem.quantity - (loanItem.returned_quantity || 0) : 0,
+        status: g.status,
+        alreadyReturned: true,
+      };
+    });
+
+    setReturnItems(historyRows);
     setStatusObs('');
     setStatusModal(true);
   };
@@ -51,7 +104,9 @@ export default function PrestamosHerramientas() {
     setLoadingHistory(true);
     try {
       const res = await axios.get(`/toolLoanHistory/${loan.id}`);
-      setHistory(res.data.data || []);
+      const historyData = res.data.data || [];
+      const sortedHistory = historyData.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setHistory(sortedHistory);
     } catch (e) {
       console.error(e);
     } finally {
@@ -59,14 +114,20 @@ export default function PrestamosHerramientas() {
     }
   };
 
-  const handleStatusSave = async () => {
-    if (!newStatus) return;
+  const handleReturnSave = async () => {
+    // Solo enviar los ítems nuevos, no los que ya estaban devueltos
+    const newItems = returnItems.filter(i => !i.alreadyReturned);
+    if (newItems.length === 0) return;
     setSavingStatus(true);
     try {
       await axios.put(`/changeToolLoanStatus/${selectedLoan.id}`, {
-        status: newStatus,
         observations: statusObs,
         fkUser: decrypt(sessionStorage.getItem('userId')),
+        returnedItems: newItems.map(i => ({
+          loanItemId: i.loanItemId,
+          returnQty: i.returnQty,
+          status: i.status,
+        })),
       });
       setStatusModal(false);
       setRefreshKey(k => k + 1);
@@ -116,6 +177,7 @@ export default function PrestamosHerramientas() {
     'N° Herramientas': (loan.loanItems || []).length,
     status: loan.status,
     loanItems: loan.loanItems,
+    statusHistory: loan.statusHistory,
     BorrowerUser: loan.BorrowerUser,
     CreatedBy: loan.CreatedBy,
   }));
@@ -128,7 +190,7 @@ export default function PrestamosHerramientas() {
         endpoint={`/getToolLoan/${company}`}
         fields={[]}
         mapData={mapLoansData}
-        excludeKeys={['status', 'loanItems', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
+        excludeKeys={['status', 'loanItems', 'statusHistory', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
         hideCreate={true}
         hideEdit={true}
         hideDelete={true}
@@ -150,11 +212,13 @@ export default function PrestamosHerramientas() {
         }}
         renderExtraActions={(item) => (
           <Box display="flex" gap={1}>
-            <Tooltip title="Cambiar Estado">
-              <IconButton size="small" color="primary" onClick={() => openStatusChange(item)}>
-                <ArrowPathIcon className="h-5 w-5" />
-              </IconButton>
-            </Tooltip>
+            {hasPermission(PERMISOS.DEVOLVER_HERRAMIENTAS) && (
+              <Tooltip title="Devolución">
+                <IconButton size="small" color="primary" onClick={() => openStatusChange(item)}>
+                  <ArrowPathIcon className="h-5 w-5" />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Ver Historial">
               <IconButton size="small" color="secondary" onClick={() => openHistory(item)}>
                 <ClockIcon className="h-5 w-5" />
@@ -169,45 +233,47 @@ export default function PrestamosHerramientas() {
         )}
       />
 
-      {/* CHANGE STATUS MODAL */}
-      <Dialog open={statusModal} onClose={() => setStatusModal(false)} maxWidth="sm" fullWidth>
+      {/* RETURN TOOLS MODAL */}
+      <Dialog open={statusModal} onClose={() => setStatusModal(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Cambiar Estado — Préstamo #{selectedLoan?.id}
+          Registrar Devolución — Préstamo #{selectedLoan?.id}
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" color="text.secondary" mb={2}>
             Prestado a: <strong>{selectedLoan?.['Prestado a']}</strong>
           </Typography>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Nuevo Estado</InputLabel>
-            <Select value={newStatus} label="Nuevo Estado" onChange={(e) => setNewStatus(e.target.value)}>
-              {STATUS_OPTIONS.map(s => (
-                <MenuItem key={s} value={s}>
-                  <Chip label={s} color={STATUS_COLORS[s] || 'default'} size="small" sx={{ mr: 1 }} />
-                  {s}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Observaciones del cambio"
-            value={statusObs}
-            onChange={(e) => setStatusObs(e.target.value)}
+
+          <ToolReturnTransfer
+            loanItems={selectedLoan?.loanItems || []}
+            selected={returnItems}
+            onChange={setReturnItems}
           />
+
+          {/* Observaciones y guardar solo si quedan herramientas pendientes */}
+          {returnItems.some(i => !i.alreadyReturned) && (
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              label="Observaciones"
+              value={statusObs}
+              onChange={(e) => setStatusObs(e.target.value)}
+              sx={{ mt: 2 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setStatusModal(false)} color="inherit">Cancelar</Button>
-          <Button
-            onClick={handleStatusSave}
-            variant="contained"
-            disabled={savingStatus || !newStatus}
-            startIcon={savingStatus && <CircularProgress size={16} color="inherit" />}
-          >
-            Guardar
-          </Button>
+          <Button onClick={() => setStatusModal(false)} color="inherit">Cerrar</Button>
+          {returnItems.some(i => !i.alreadyReturned) && (
+            <Button
+              onClick={handleReturnSave}
+              variant="contained"
+              disabled={savingStatus || returnItems.filter(i => !i.alreadyReturned).length === 0}
+              startIcon={savingStatus && <CircularProgress size={16} color="inherit" />}
+            >
+              Guardar Devolución
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

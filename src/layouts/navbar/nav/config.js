@@ -27,6 +27,18 @@ const navConfig = [
     icon: icon('ic_analytics'),
     adminOnly: true,
   },
+  {
+    title: 'Mantenimientos',
+    path: '/mantenimiento/clientes',
+    icon: <WrenchScrewdriverIcon className="h-6 w-6" />,
+    showForRoles: ['Técnicos']
+  },
+  {
+    title: 'Historial Mantenimientos',
+    path: '/mantenimiento/historial',
+    icon: <ClipboardDocumentListIcon className="h-6 w-6" />,
+    showForRoles: ['Administrador']
+  },
 
   // ── Inventario ───────────────────────────────────────────────────────────
   {
@@ -48,7 +60,8 @@ const navConfig = [
         path: '/herramientas',
         icon: <WrenchIcon className="h-5 w-5" />,
         requiredPermissions: [
-          PERMISOS.INGRESAR_MATERIAL, // Exclusivo de Almacenista → Admin + Almacenista
+          PERMISOS.VER_HERRAMIENTAS,
+          PERMISOS.CREAR_HERRAMIENTAS,
         ],
       },
       {
@@ -71,6 +84,19 @@ const navConfig = [
     title: 'Proyectos',
     path: '/proyectos',
     icon: <ArchiveBoxIcon className="h-6 w-6" />,
+    requiredPermissions: [
+      PERMISOS.CREAR_PROYECTOS,
+      PERMISOS.CONSULTAR_LISTAS,
+      PERMISOS.ANEXAR_ACTAS,
+      PERMISOS.PEDIR_MATERIAL,
+      PERMISOS.HACER_REMISIONES,
+      PERMISOS.VER_PROYECTOS,
+    ],
+  },
+  {
+    title: 'Equipos',
+    path: '/equipos',
+    icon: <WrenchScrewdriverIcon className="h-6 w-6" />,
     requiredPermissions: [
       PERMISOS.CREAR_PROYECTOS,
       PERMISOS.CONSULTAR_LISTAS,
@@ -120,9 +146,9 @@ const navConfig = [
         path: '/prestamos-herramientas',
         icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
         requiredPermissions: [
-          PERMISOS.INGRESAR_MATERIAL,
-          PERMISOS.HACER_REMISIONES,
-          PERMISOS.CREAR_ITEMS,
+          PERMISOS.VER_HERRAMIENTAS,
+          PERMISOS.CREAR_PRESTAMOS,
+          PERMISOS.DEVOLVER_HERRAMIENTAS,
         ],
       },
       {

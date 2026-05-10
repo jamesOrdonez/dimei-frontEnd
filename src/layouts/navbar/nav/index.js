@@ -59,6 +59,7 @@ export default function Nav({ openNav, onCloseNav }) {
         if (item.children) {
           const visibleChildren = item.children.filter((child) => {
             if (child.adminOnly) return isAdmin;
+            if (child.showForRoles && !child.showForRoles.includes(rolName)) return false;
             if (child.requiredPermissions?.length > 0) {
               if (isAdmin) return true;
               return child.requiredPermissions.some((p) => hasPermission(p));
@@ -74,6 +75,7 @@ export default function Nav({ openNav, onCloseNav }) {
 
         // Ítem hoja → mismo comportamiento anterior
         if (item.adminOnly) return isAdmin ? item : null;
+        if (item.showForRoles && !item.showForRoles.includes(rolName)) return null;
         if (item.requiredPermissions?.length > 0) {
           if (isAdmin) return item;
           return item.requiredPermissions.some((p) => hasPermission(p)) ? item : null;
@@ -81,7 +83,7 @@ export default function Nav({ openNav, onCloseNav }) {
         return item; // Sin restricciones → siempre visible
       })
       .filter(Boolean);
-  }, [isAdmin, hasPermission]);
+  }, [isAdmin, hasPermission, rolName]);
 
 
   const renderContent = (
