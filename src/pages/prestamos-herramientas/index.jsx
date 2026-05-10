@@ -40,20 +40,57 @@ export default function PrestamosHerramientas() {
 
   const openStatusChange = (loan) => {
     setSelectedLoan(loan);
-    // Pre-cargar en el panel derecho los ítems que ya fueron devueltos
-    const alreadyReturned = (loan.loanItems || [])
-      .filter(li => li.status && li.status !== 'Prestado')
-      .map(li => ({
-        loanItemId: li.id,
-        tool_id: li.tool_id,
-        description: li.tool?.description || `Herramienta #${li.tool_id}`,
-        group: li.tool?.ToolGroup?.name || '-',
-        loanedQty: li.quantity,
-        returnQty: li.returned_quantity ?? li.quantity,
-        status: li.status,
-        alreadyReturned: true,   // bandera para no reenviar al backend
-      }));
-    setReturnItems(alreadyReturned);
+
+    // Agrupar devoluciones por herramienta y estado
+    const groupedReturns = {};
+    
+    (loan.statusHistory || [])
+      .filter(h => h.tool_id != null && h.qty != null)
+      .forEach(h => {
+        const key = `${h.tool_id}_${h.status}`;
+        if (!groupedReturns[key]) {
+          groupedReturns[key] = {
+            tool_id: h.tool_id,
+            status: h.status,
+            qty: 0,
+          };
+        }
+        groupedReturns[key].qty += h.qty;
+      });
+
+    // Soporte legacy: si hay ítems con devoluciones parciales pero sin historial (antes de la migración)
+    (loan.loanItems || []).forEach(li => {
+      if (li.returned_quantity > 0) {
+        const hasHistory = Object.values(groupedReturns).some(g => g.tool_id === li.tool_id);
+        if (!hasHistory) {
+          // Asumimos 'Devuelto' genérico
+          groupedReturns[`${li.tool_id}_Legacy`] = {
+            tool_id: li.tool_id,
+            status: li.status === 'Prestado' ? 'Devuelto' : li.status,
+            qty: li.returned_quantity,
+          };
+        }
+      }
+    });
+
+    const historyRows = Object.keys(groupedReturns).map((key) => {
+      const g = groupedReturns[key];
+      const loanItem = (loan.loanItems || []).find(li => li.tool_id === g.tool_id);
+      return {
+        loanItemId: loanItem?.id || g.tool_id,
+        historyId: `grouped_${key}`, // clave única
+        tool_id: g.tool_id,
+        description: loanItem?.tool?.description || `Herramienta #${g.tool_id}`,
+        group: loanItem?.tool?.ToolGroup?.name || '-',
+        loanedQty: loanItem?.quantity || '-',
+        returnQty: g.qty,
+        remainingQty: loanItem ? loanItem.quantity - (loanItem.returned_quantity || 0) : 0,
+        status: g.status,
+        alreadyReturned: true,
+      };
+    });
+
+    setReturnItems(historyRows);
     setStatusObs('');
     setStatusModal(true);
   };
@@ -64,7 +101,9 @@ export default function PrestamosHerramientas() {
     setLoadingHistory(true);
     try {
       const res = await axios.get(`/toolLoanHistory/${loan.id}`);
-      setHistory(res.data.data || []);
+      const historyData = res.data.data || [];
+      const sortedHistory = historyData.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setHistory(sortedHistory);
     } catch (e) {
       console.error(e);
     } finally {
@@ -135,6 +174,7 @@ export default function PrestamosHerramientas() {
     'N° Herramientas': (loan.loanItems || []).length,
     status: loan.status,
     loanItems: loan.loanItems,
+    statusHistory: loan.statusHistory,
     BorrowerUser: loan.BorrowerUser,
     CreatedBy: loan.CreatedBy,
   }));
@@ -147,7 +187,7 @@ export default function PrestamosHerramientas() {
         endpoint={`/getToolLoan/${company}`}
         fields={[]}
         mapData={mapLoansData}
-        excludeKeys={['status', 'loanItems', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
+        excludeKeys={['status', 'loanItems', 'statusHistory', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
         hideCreate={true}
         hideEdit={true}
         hideDelete={true}

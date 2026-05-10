@@ -21,6 +21,7 @@ const STATUS_COLORS = {
   'Devuelto': 'success',
   'Devuelto Dañado': 'warning',
   'Perdido': 'error',
+  'Parcial': 'info',
 };
 
 const RETURN_STATUS_OPTIONS = ['Devuelto', 'Devuelto Dañado', 'Perdido'];
@@ -43,19 +44,30 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
   const [rightSelected, setRightSelected] = useState([]);  // items marcados en panel der.
 
   // ── helpers ──────────────────────────────────────────────────────────────────
-  const selectedIds = new Set(selected.map(r => r.loanItemId));
+  // Solo excluir del panel izquierdo los ítems que el usuario está moviendo
+  // (no los alreadyReturned, que son solo informativos en el panel derecho)
+  const newReturnIds = new Set(
+    selected.filter(r => !r.alreadyReturned).map(r => r.loanItemId)
+  );
+  // Panel izquierdo: ítems con cantidad pendiente y que no estén en proceso de devolución nueva
+  const available = loanItems.filter(li =>
+    !newReturnIds.has(li.id) && (li.quantity - (li.returned_quantity || 0)) > 0
+  );
 
-  const available = loanItems.filter(li => !selectedIds.has(li.id));
-
-  const buildRow = (li) => ({
-    loanItemId: li.id,
-    tool_id: li.tool_id,
-    description: li.tool?.description || `Herramienta #${li.tool_id}`,
-    group: li.tool?.ToolGroup?.name || '-',
-    loanedQty: li.quantity,
-    returnQty: li.quantity,
-    status: 'Devuelto',
-  });
+  const buildRow = (li) => {
+    const remainingQty = li.quantity - (li.returned_quantity || 0);
+    return {
+      loanItemId: li.id,
+      tool_id: li.tool_id,
+      description: li.tool?.description || `Herramienta #${li.tool_id}`,
+      group: li.tool?.ToolGroup?.name || '-',
+      loanedQty: li.quantity,
+      returnedQty: li.returned_quantity || 0,  // ya devuelto
+      remainingQty,                              // máximo a devolver ahora
+      returnQty: remainingQty,                   // default = todo lo que falta
+      status: 'Devuelto',
+    };
+  };
 
   // ── toggle selección ──────────────────────────────────────────────────────────
   const toggleLeft = (li) => {
@@ -182,7 +194,11 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                       </ListItemIcon>
                       <ListItemText
                         primary={li.tool?.description || `Herramienta #${li.tool_id}`}
-                        secondary={`Grupo: ${li.tool?.ToolGroup?.name || 'N/A'} — Prestado: ${li.quantity}`}
+                        secondary={
+                          (li.returned_quantity || 0) > 0
+                            ? `Grupo: ${li.tool?.ToolGroup?.name || 'N/A'} — Prestado: ${li.quantity} · Ya devuelto: ${li.returned_quantity} · Pendiente: ${li.quantity - li.returned_quantity}`
+                            : `Grupo: ${li.tool?.ToolGroup?.name || 'N/A'} — Prestado: ${li.quantity}`
+                        }
                       />
                     </Box>
                     {/* Fila inferior: controles (solo si está marcado) */}
@@ -201,10 +217,10 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                           label="Cant."
                           value={row.returnQty}
                           onChange={e => {
-                            const val = Math.max(1, Math.min(Number(e.target.value), li.quantity));
+                            const val = Math.max(1, Math.min(Number(e.target.value), row.remainingQty));
                             updateLeft(li.id, { returnQty: val });
                           }}
-                          inputProps={{ min: 1, max: li.quantity, style: { textAlign: 'center' } }}
+                          inputProps={{ min: 1, max: row.remainingQty, style: { textAlign: 'center' } }}
                           sx={{ width: 80 }}
                         />
                         <FormControl size="small" sx={{ flex: 1 }}>
@@ -260,11 +276,11 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
         <Grid item xs={12} md={5}>
           <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box p={2} borderBottom="1px solid #e0e0e0" bgcolor="#f9fafb" sx={{ borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
-              <Typography variant="subtitle1" fontWeight="600">A Devolver</Typography>
+              <Typography variant="subtitle1" fontWeight="600">Historial de devoluciones</Typography>
               <Typography variant="body2" color="text.secondary">
-                {selected.filter(r => r.alreadyReturned).length} ya devueltas
+                {selected.filter(r => r.alreadyReturned).length} registros devueltos
                 {selected.filter(r => !r.alreadyReturned).length > 0 &&
-                  ` · ${selected.filter(r => !r.alreadyReturned).length} nuevas`}
+                  ` · ${selected.filter(r => !r.alreadyReturned).length} nueva(s)`}
               </Typography>
             </Box>
             <List sx={{ height: 350, overflow: 'auto', p: 0 }}>
@@ -272,20 +288,20 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                 /* ── Fila YA devuelta: solo visual, sin controles ── */
                 if (row.alreadyReturned) {
                   const bgMap = {
-                    'Devuelto':       'rgba(34,197,94,0.08)',
-                    'Devuelto Dañado': 'rgba(245,158,11,0.08)',
-                    'Perdido':        'rgba(239,68,68,0.08)',
+                    'Devuelto':        'rgba(34,197,94,0.08)',
+                    'Devuelto Dañado':  'rgba(245,158,11,0.08)',
+                    'Perdido':         'rgba(239,68,68,0.08)',
                   };
                   return (
                     <ListItem
-                      key={row.loanItemId}
+                      key={row.historyId ?? `${row.loanItemId}-${row.status}-${row.returnQty}`}
                       alignItems="flex-start"
                       sx={{
                         borderBottom: '1px solid #f0f0f0',
                         bgcolor: bgMap[row.status] || 'transparent',
                         flexDirection: 'column',
                         gap: 0.3,
-                        opacity: 0.85,
+                        opacity: 0.9,
                         cursor: 'default',
                       }}
                     >
@@ -299,7 +315,7 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                         <Typography variant="body2" fontWeight="500">{row.description}</Typography>
                       </Box>
                       <Typography variant="caption" color="text.secondary" pl={0.5}>
-                        {row.group} — Devuelto: {row.returnQty} / {row.loanedQty}
+                        {row.group} — Cantidad: {row.returnQty}
                       </Typography>
                     </ListItem>
                   );
@@ -337,10 +353,10 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                         label="Cant."
                         value={row.returnQty}
                         onChange={e => {
-                          const val = Math.max(1, Math.min(Number(e.target.value), row.loanedQty));
+                          const val = Math.max(1, Math.min(Number(e.target.value), row.remainingQty));
                           updateRight(row.loanItemId, { returnQty: val });
                         }}
-                        inputProps={{ min: 1, max: row.loanedQty, style: { textAlign: 'center' } }}
+                        inputProps={{ min: 1, max: row.remainingQty, style: { textAlign: 'center' } }}
                         sx={{ width: 80 }}
                       />
                       <FormControl size="small" sx={{ flex: 1 }}>
