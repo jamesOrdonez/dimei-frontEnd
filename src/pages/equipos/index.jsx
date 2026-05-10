@@ -1,13 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { IconButton, Chip } from '@mui/material';
-import { Icon } from '@iconify/react';
+import { Chip } from '@mui/material';
 import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 export default function Equipos() {
-  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const { hasPermission, isAdmin } = usePermissions();
 
@@ -24,10 +21,6 @@ export default function Equipos() {
     };
     fetchCustomers();
   }, []);
-
-  const handleView = (item) => {
-    navigate(`/proyectos/${item.id}`); // Both use the same detail view as they share the table
-  };
 
   const statusOptions = useMemo(
     () => [
@@ -151,21 +144,6 @@ export default function Equipos() {
           }
           return null;
         }}
-        renderExtraActions={(item) => (
-          (hasPermission(PERMISOS.VER_PROYECTOS) || hasPermission(PERMISOS.CREAR_PROYECTOS)) && (
-            <IconButton
-              sx={{
-                color: 'info.main',
-                border: '1.5px solid',
-                borderColor: 'info.light',
-                borderRadius: 1.5,
-              }}
-              onClick={() => handleView(item)}
-            >
-              <Icon icon="lucide:eye" width={20} />
-            </IconButton>
-          )
-        )}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo']}
         customFilters={customFilters}
       />

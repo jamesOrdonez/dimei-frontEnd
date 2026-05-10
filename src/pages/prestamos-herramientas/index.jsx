@@ -2,8 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import {
   Box, Chip, IconButton, Tooltip, Dialog, DialogTitle, DialogContent,
-  DialogActions, Button, TextField, Select, MenuItem, FormControl,
-  InputLabel, Typography, Paper, CircularProgress
+  DialogActions, Button, TextField, Typography, Paper, CircularProgress,
 } from '@mui/material';
 import {
   ClockIcon, ArrowPathIcon, DocumentTextIcon
@@ -12,6 +11,7 @@ import BaseGrid from '../../components/grid/base.grid.tsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
 import ToolLoanPDF from '../herramientas/ToolLoanPDF.jsx';
+import ToolReturnTransfer from './ToolReturnTransfer.jsx';
 
 const STATUS_COLORS = {
   'Prestado': 'primary',
@@ -20,16 +20,16 @@ const STATUS_COLORS = {
   'Perdido': 'error',
 };
 
-const STATUS_OPTIONS = ['Prestado', 'Devuelto', 'Devuelto Dañado', 'Perdido'];
+
 
 export default function PrestamosHerramientas() {
   const company = sessionStorage.getItem('company');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Status change modal
+  // Return modal
   const [statusModal, setStatusModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
-  const [newStatus, setNewStatus] = useState('');
+  const [returnItems, setReturnItems] = useState([]);  // right-panel selection
   const [statusObs, setStatusObs] = useState('');
   const [savingStatus, setSavingStatus] = useState(false);
 
@@ -40,7 +40,20 @@ export default function PrestamosHerramientas() {
 
   const openStatusChange = (loan) => {
     setSelectedLoan(loan);
-    setNewStatus(loan.status);
+    // Pre-cargar en el panel derecho los ítems que ya fueron devueltos
+    const alreadyReturned = (loan.loanItems || [])
+      .filter(li => li.status && li.status !== 'Prestado')
+      .map(li => ({
+        loanItemId: li.id,
+        tool_id: li.tool_id,
+        description: li.tool?.description || `Herramienta #${li.tool_id}`,
+        group: li.tool?.ToolGroup?.name || '-',
+        loanedQty: li.quantity,
+        returnQty: li.returned_quantity ?? li.quantity,
+        status: li.status,
+        alreadyReturned: true,   // bandera para no reenviar al backend
+      }));
+    setReturnItems(alreadyReturned);
     setStatusObs('');
     setStatusModal(true);
   };
@@ -59,14 +72,20 @@ export default function PrestamosHerramientas() {
     }
   };
 
-  const handleStatusSave = async () => {
-    if (!newStatus) return;
+  const handleReturnSave = async () => {
+    // Solo enviar los ítems nuevos, no los que ya estaban devueltos
+    const newItems = returnItems.filter(i => !i.alreadyReturned);
+    if (newItems.length === 0) return;
     setSavingStatus(true);
     try {
       await axios.put(`/changeToolLoanStatus/${selectedLoan.id}`, {
-        status: newStatus,
         observations: statusObs,
         fkUser: decrypt(sessionStorage.getItem('userId')),
+        returnedItems: newItems.map(i => ({
+          loanItemId: i.loanItemId,
+          returnQty: i.returnQty,
+          status: i.status,
+        })),
       });
       setStatusModal(false);
       setRefreshKey(k => k + 1);
@@ -150,7 +169,7 @@ export default function PrestamosHerramientas() {
         }}
         renderExtraActions={(item) => (
           <Box display="flex" gap={1}>
-            <Tooltip title="Cambiar Estado">
+            <Tooltip title="Devolución">
               <IconButton size="small" color="primary" onClick={() => openStatusChange(item)}>
                 <ArrowPathIcon className="h-5 w-5" />
               </IconButton>
@@ -169,45 +188,47 @@ export default function PrestamosHerramientas() {
         )}
       />
 
-      {/* CHANGE STATUS MODAL */}
-      <Dialog open={statusModal} onClose={() => setStatusModal(false)} maxWidth="sm" fullWidth>
+      {/* RETURN TOOLS MODAL */}
+      <Dialog open={statusModal} onClose={() => setStatusModal(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Cambiar Estado — Préstamo #{selectedLoan?.id}
+          Registrar Devolución — Préstamo #{selectedLoan?.id}
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" color="text.secondary" mb={2}>
             Prestado a: <strong>{selectedLoan?.['Prestado a']}</strong>
           </Typography>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Nuevo Estado</InputLabel>
-            <Select value={newStatus} label="Nuevo Estado" onChange={(e) => setNewStatus(e.target.value)}>
-              {STATUS_OPTIONS.map(s => (
-                <MenuItem key={s} value={s}>
-                  <Chip label={s} color={STATUS_COLORS[s] || 'default'} size="small" sx={{ mr: 1 }} />
-                  {s}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Observaciones del cambio"
-            value={statusObs}
-            onChange={(e) => setStatusObs(e.target.value)}
+
+          <ToolReturnTransfer
+            loanItems={selectedLoan?.loanItems || []}
+            selected={returnItems}
+            onChange={setReturnItems}
           />
+
+          {/* Observaciones y guardar solo si quedan herramientas pendientes */}
+          {returnItems.some(i => !i.alreadyReturned) && (
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              label="Observaciones"
+              value={statusObs}
+              onChange={(e) => setStatusObs(e.target.value)}
+              sx={{ mt: 2 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setStatusModal(false)} color="inherit">Cancelar</Button>
-          <Button
-            onClick={handleStatusSave}
-            variant="contained"
-            disabled={savingStatus || !newStatus}
-            startIcon={savingStatus && <CircularProgress size={16} color="inherit" />}
-          >
-            Guardar
-          </Button>
+          <Button onClick={() => setStatusModal(false)} color="inherit">Cerrar</Button>
+          {returnItems.some(i => !i.alreadyReturned) && (
+            <Button
+              onClick={handleReturnSave}
+              variant="contained"
+              disabled={savingStatus || returnItems.filter(i => !i.alreadyReturned).length === 0}
+              startIcon={savingStatus && <CircularProgress size={16} color="inherit" />}
+            >
+              Guardar Devolución
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
