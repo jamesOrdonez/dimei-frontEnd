@@ -48,7 +48,8 @@ const navConfig = [
         path: '/herramientas',
         icon: <WrenchIcon className="h-5 w-5" />,
         requiredPermissions: [
-          PERMISOS.INGRESAR_MATERIAL, // Exclusivo de Almacenista → Admin + Almacenista
+          PERMISOS.VER_HERRAMIENTAS,
+          PERMISOS.CREAR_HERRAMIENTAS,
         ],
       },
       {
@@ -133,9 +134,9 @@ const navConfig = [
         path: '/prestamos-herramientas',
         icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
         requiredPermissions: [
-          PERMISOS.INGRESAR_MATERIAL,
-          PERMISOS.HACER_REMISIONES,
-          PERMISOS.CREAR_ITEMS,
+          PERMISOS.VER_HERRAMIENTAS,
+          PERMISOS.CREAR_PRESTAMOS,
+          PERMISOS.DEVOLVER_HERRAMIENTAS,
         ],
       },
       {

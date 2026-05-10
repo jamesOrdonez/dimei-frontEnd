@@ -34,6 +34,10 @@ const ALLOWED_PERMISSIONS = [
   'Anexar actas de entrega',
   'Pedir material adicional',
   'Visualizar proyectos',
+  'Ver herramientas y préstamos',
+  'Crear herramientas',
+  'Crear préstamos de herramientas',
+  'Devolver herramientas',
 ];
 
 const ROL_COLORS = {

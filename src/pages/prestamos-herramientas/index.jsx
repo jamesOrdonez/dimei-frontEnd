@@ -10,6 +10,7 @@ import {
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 import ToolLoanPDF from '../herramientas/ToolLoanPDF.jsx';
 import ToolReturnTransfer from './ToolReturnTransfer.jsx';
 
@@ -23,6 +24,8 @@ const STATUS_COLORS = {
 
 
 export default function PrestamosHerramientas() {
+  const { hasPermission } = usePermissions();
+
   const company = sessionStorage.getItem('company');
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -209,11 +212,13 @@ export default function PrestamosHerramientas() {
         }}
         renderExtraActions={(item) => (
           <Box display="flex" gap={1}>
-            <Tooltip title="Devolución">
-              <IconButton size="small" color="primary" onClick={() => openStatusChange(item)}>
-                <ArrowPathIcon className="h-5 w-5" />
-              </IconButton>
-            </Tooltip>
+            {hasPermission(PERMISOS.DEVOLVER_HERRAMIENTAS) && (
+              <Tooltip title="Devolución">
+                <IconButton size="small" color="primary" onClick={() => openStatusChange(item)}>
+                  <ArrowPathIcon className="h-5 w-5" />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Ver Historial">
               <IconButton size="small" color="secondary" onClick={() => openHistory(item)}>
                 <ClockIcon className="h-5 w-5" />

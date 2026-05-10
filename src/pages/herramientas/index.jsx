@@ -262,8 +262,8 @@ export default function Herramientas() {
         onDataChange={setGridData}
         mapData={mapToolsData}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'amount', 'lent_amount']}
-        hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
-        hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
+        hideCreate={!hasPermission(PERMISOS.CREAR_HERRAMIENTAS)}
+        hideEdit={!isAdmin}
         hideDelete={!isAdmin}
         extraHeaders={[
           { label: 'Precio', after: 'Unidad' },
@@ -271,7 +271,7 @@ export default function Herramientas() {
         ]}
         extraHeaderActions={
           <Box display="flex" gap={2}>
-            {hasPermission(PERMISOS.HACER_REMISIONES) && (
+            {hasPermission(PERMISOS.CREAR_PRESTAMOS) && (
               <BaseButton
                 color="green"
                 text="Registrar Préstamo"

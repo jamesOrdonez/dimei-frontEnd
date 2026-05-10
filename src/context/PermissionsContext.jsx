@@ -20,6 +20,10 @@ export const PERMISOS = {
     ANEXAR_ACTAS: 'Anexar actas de entrega',
     PEDIR_MATERIAL: 'Pedir material adicional',
     VER_PROYECTOS: 'Visualizar proyectos',
+    VER_HERRAMIENTAS: 'Ver herramientas y préstamos',
+    CREAR_HERRAMIENTAS: 'Crear herramientas',
+    CREAR_PRESTAMOS: 'Crear préstamos de herramientas',
+    DEVOLVER_HERRAMIENTAS: 'Devolver herramientas',
 };
 
 export function PermissionsProvider({ children }) {
