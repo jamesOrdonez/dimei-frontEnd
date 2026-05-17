@@ -23,10 +23,33 @@ const mapData = (raw) =>
     };
   });
 
+const fetchImageAsBase64 = async (url) => {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  try {
+    const response = await axios.get(url, { responseType: 'blob' });
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(response.data);
+    });
+  } catch (error) {
+    console.error('Error fetching image for PDF:', url, error);
+    return null;
+  }
+};
+
 const handleDownloadPDF = async (report) => {
   try {
     // Compute at call time — axios is guaranteed to be configured by now
-    const backendUrl = (axios.defaults.baseURL || '').replace('/api/v1/', '');
+    const backendUrl = (axios.defaults.baseURL || '').replace(/\/api\/v1\/?$/, '');
+    const getFullUrl = (path) => {
+      if (!path) return null;
+      if (path.startsWith('data:') || path.startsWith('blob:')) return path;
+      const safePath = path.startsWith('/') ? path : `/${path}`;
+      return `${backendUrl}${safePath}`;
+    };
+
     const resReport = await axios.get(`/getMaintenanceReport/${report.id}`);
     const fullReport = resReport.data.data;
 
@@ -35,23 +58,31 @@ const handleDownloadPDF = async (report) => {
     );
     const group = resGroup.data.data;
 
+    const technicianSignatureBase64 = await fetchImageAsBase64(getFullUrl(fullReport.technician_signature));
+    const customerSignatureBase64 = await fetchImageAsBase64(getFullUrl(fullReport.customer_signature));
+
     const answersMap = {};
-    (fullReport.answers || []).forEach((ans) => {
+    for (const ans of (fullReport.answers || [])) {
+      const photosBase64 = [];
+      for (const p of (ans.photos || [])) {
+        const b64 = await fetchImageAsBase64(getFullUrl(p));
+        if (b64) photosBase64.push({ preview: b64 });
+      }
       answersMap[ans.question_id] = {
         question_id: ans.question_id,
         optionIds: ans.selected_options || [],
         text: ans.answer_text,
-        photos: (ans.photos || []).map((p) => ({ preview: p })),
+        photos: photosBase64,
       };
-    });
+    }
 
     const blob = await pdf(
       <MaintenanceReportPdf
         data={{
           ...fullReport,
           answers: answersMap,
-          technicianSignature: fullReport.technician_signature,
-          customerSignature: fullReport.customer_signature,
+          technicianSignature: technicianSignatureBase64,
+          customerSignature: customerSignatureBase64,
         }}
         equipo={{
           id: report.projectData.id,
