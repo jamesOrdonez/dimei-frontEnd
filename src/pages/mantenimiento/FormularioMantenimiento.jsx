@@ -33,6 +33,7 @@ import {
   PencilIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import { BASE_URL } from '../../App';
 import Swal from 'sweetalert2';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
@@ -180,9 +181,10 @@ export default function FormularioMantenimiento() {
   const [savedSignatures, setSavedSignatures] = useState([]);
   const [technicianSignature, setTechnicianSignature] = useState(null);
   const [isDrawingNewTech, setIsDrawingNewTech] = useState(false);
+  const [customerName, setCustomerName] = useState('');
 
   const userId = decrypt(sessionStorage.getItem('userId'));
-  const backendUrl = 'http://localhost:8080'; // Should ideally come from a config file
+  const backendUrl = BASE_URL.replace('/api/v1/', '');
 
   const getImageUrl = (path) => {
     if (!path) return '';
@@ -223,11 +225,34 @@ export default function FormularioMantenimiento() {
 
   const fetchMySignatures = async () => {
     try {
-      const res = await axios.get(`/getMySignatures/${userId}`);
+      const res = await axios.get('/getMySignatures');
       setSavedSignatures(res.data.data || []);
       if (res.data.data?.length === 0) setIsDrawingNewTech(true);
     } catch (error) {
       console.error("Error fetching signatures:", error);
+    }
+  };
+
+  const handleDeleteSignature = async (sig) => {
+    const result = await Swal.fire({
+      title: '¿Eliminar firma?',
+      text: `Se eliminará "${sig.name || 'Firma Guardada'}" de forma permanente.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await axios.delete(`/deleteSignature/${sig.id}`);
+      const remaining = savedSignatures.filter(s => s.id !== sig.id);
+      setSavedSignatures(remaining);
+      if (remaining.length === 0) setIsDrawingNewTech(true);
+      Swal.fire({ title: 'Eliminada', icon: 'success', timer: 1500, showConfirmButton: false });
+    } catch (error) {
+      Swal.fire('Error', 'No se pudo eliminar la firma', 'error');
     }
   };
 
@@ -333,6 +358,10 @@ export default function FormularioMantenimiento() {
   };
 
   const handleFinalSubmit = async (custSig) => {
+    if (!customerName.trim()) {
+      Swal.fire('Atención', 'Por favor ingresa el nombre completo del cliente antes de guardar la firma.', 'warning');
+      return;
+    }
     try {
       setLoading(true);
       const answersArray = Object.keys(answers).map(qId => ({
@@ -347,19 +376,25 @@ export default function FormularioMantenimiento() {
         technician_id: userId,
         customer_signature: custSig,
         technician_signature: technicianSignature,
+        customer_name: customerName.trim(),
         answers: answersArray
       };
 
       await axios.post('/saveMaintenanceReport', payload);
       
-      // Generate PDF
+      // Generate PDF — pass original answers state (keyed by questionId) not the backend payload format
       const techName = decrypt(sessionStorage.getItem('name'));
       const blob = await pdf(
         <MaintenanceReportPdf 
-          data={{ ...payload, technicianSignature, customerSignature: custSig }} 
+          data={{ 
+            technicianSignature, 
+            customerSignature: custSig,
+            answers  // original state: { [questionId]: { optionIds, text, photos } }
+          }} 
           equipo={equipo} 
           group={questionGroup}
           technicianName={techName}
+          customerName={customerName.trim()}
           backendUrl={backendUrl}
         />
       ).toBlob();
@@ -370,19 +405,21 @@ export default function FormularioMantenimiento() {
       link.download = `Mantenimiento_${equipo?.elevatorTypeName}_${id}.pdf`;
       link.click();
 
-      Swal.fire({
+      setShowSignatureFlow(false);
+
+      await Swal.fire({
         title: '¡Mantenimiento Finalizado!',
         text: "El reporte se ha guardado y el PDF ha sido generado.",
         icon: 'success',
         confirmButtonText: 'Aceptar'
-      }).then(() => {
-        setSignatureStep('technician');
-        navigate('/mantenimiento/clientes');
       });
+
+      setSignatureStep('technician');
+      setCustomerName('');
+      navigate('/mantenimiento/clientes');
     } catch (error) {
       console.error("Error saving maintenance report:", error);
       Swal.fire('Error', 'No se pudo guardar el reporte de mantenimiento', 'error');
-      setShowSignatureFlow(true);
     } finally {
       setLoading(false);
     }
@@ -505,21 +542,40 @@ export default function FormularioMantenimiento() {
                   <Grid container spacing={2}>
                     {savedSignatures.map((sig) => (
                       <Grid item xs={6} key={sig.id}>
-                        <Paper 
-                          onClick={() => { setTechnicianSignature(sig.signature); setSignatureStep('customer'); }}
-                          sx={{ 
-                            p: 1, 
-                            border: '2px solid #f1f5f9', 
-                            cursor: 'pointer', 
-                            transition: 'all 0.2s',
-                            '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' } 
-                          }}
-                        >
-                          <img src={getImageUrl(sig.signature)} alt="Firma" style={{ width: '100%', height: 'auto', display: 'block' }} />
-                          <Typography variant="caption" align="center" display="block" sx={{ mt: 1, fontWeight: '700', color: '#64748b' }}>
-                            {sig.name || 'Firma Guardada'}
-                          </Typography>
-                        </Paper>
+                        <Box sx={{ position: 'relative' }}>
+                          <Paper 
+                            onClick={() => { setTechnicianSignature(sig.signature); setSignatureStep('customer'); }}
+                            sx={{ 
+                              p: 1, 
+                              border: '2px solid #f1f5f9', 
+                              cursor: 'pointer', 
+                              transition: 'all 0.2s',
+                              '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' } 
+                            }}
+                          >
+                            <img src={getImageUrl(sig.signature)} alt="Firma" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                            <Typography variant="caption" align="center" display="block" sx={{ mt: 1, fontWeight: '700', color: '#64748b' }}>
+                              {sig.name || 'Firma Guardada'}
+                            </Typography>
+                          </Paper>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteSignature(sig); }}
+                            sx={{
+                              position: 'absolute',
+                              top: -8,
+                              right: -8,
+                              bgcolor: '#ef4444',
+                              color: '#fff',
+                              width: 22,
+                              height: 22,
+                              '&:hover': { bgcolor: '#dc2626' },
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                          >
+                            <Box sx={{ fontSize: 13, fontWeight: 800, lineHeight: 1 }}>×</Box>
+                          </IconButton>
+                        </Box>
                       </Grid>
                     ))}
                   </Grid>
@@ -544,6 +600,17 @@ export default function FormularioMantenimiento() {
             </Box>
           ) : (
             <Box>
+              <TextField
+                fullWidth
+                label="Nombre completo del cliente"
+                placeholder="Ej: Juan Pérez García"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                required
+                sx={{ mb: 2 }}
+                inputProps={{ maxLength: 120 }}
+                helperText="Este nombre quedará registrado junto a la firma en el reporte."
+              />
               <SignaturePad 
                 key="cust-sig"
                 title="Solicite la firma del cliente" 

@@ -16,6 +16,11 @@ const TOKEN = sessionStorage.getItem('Token');
 axios.defaults.baseURL = BASE_URL;
 axios.defaults.headers.common['Authorization'] = TOKEN;
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+
+// Ensure SweetAlert2 always appears above MUI Dialogs (z-index 1300)
+const swalStyle = document.createElement('style');
+swalStyle.textContent = '.swal2-container { z-index: 9999 !important; }';
+document.head.appendChild(swalStyle);
 // ----------------------------------------------------------------------
 
 export default function App() {
