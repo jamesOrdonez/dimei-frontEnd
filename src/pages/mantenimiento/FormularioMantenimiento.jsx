@@ -225,7 +225,7 @@ export default function FormularioMantenimiento() {
 
   const fetchMySignatures = async () => {
     try {
-      const res = await axios.get(`/getMySignatures/${userId}`);
+      const res = await axios.get('/getMySignatures');
       setSavedSignatures(res.data.data || []);
       if (res.data.data?.length === 0) setIsDrawingNewTech(true);
     } catch (error) {
@@ -382,11 +382,15 @@ export default function FormularioMantenimiento() {
 
       await axios.post('/saveMaintenanceReport', payload);
       
-      // Generate PDF
+      // Generate PDF — pass original answers state (keyed by questionId) not the backend payload format
       const techName = decrypt(sessionStorage.getItem('name'));
       const blob = await pdf(
         <MaintenanceReportPdf 
-          data={{ ...payload, technicianSignature, customerSignature: custSig }} 
+          data={{ 
+            technicianSignature, 
+            customerSignature: custSig,
+            answers  // original state: { [questionId]: { optionIds, text, photos } }
+          }} 
           equipo={equipo} 
           group={questionGroup}
           technicianName={techName}
