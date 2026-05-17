@@ -170,7 +170,7 @@ export default function PrestamosHerramientas() {
   const mapLoansData = (loans) => loans.map(loan => ({
     id: loan.id,
     date: loan.date,  // preservar fecha raw para el PDF
-    Fecha: loan.date ? new Date(loan.date).toLocaleDateString('es-CO') : 'Sin fecha',
+    Fecha: loan.date ? `${new Date(loan.date).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}  ${new Date(loan.date).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}` : 'Sin fecha',
     'Prestado a': loan.BorrowerUser?.name || 'S/N',
     'Registrado por': loan.CreatedBy?.name || 'S/N',
     Observaciones: loan.observations || '-',
@@ -190,7 +190,7 @@ export default function PrestamosHerramientas() {
         endpoint={`/getToolLoan/${company}`}
         fields={[]}
         mapData={mapLoansData}
-        excludeKeys={['status', 'loanItems', 'statusHistory', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
+        excludeKeys={['date', 'status', 'loanItems', 'statusHistory', 'BorrowerUser', 'CreatedBy', 'toolLoan']}
         hideCreate={true}
         hideEdit={true}
         hideDelete={true}
