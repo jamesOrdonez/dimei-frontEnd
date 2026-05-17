@@ -32,7 +32,7 @@ export default function AdminMantenimiento() {
   const [search, setSearch] = useState('');
   
   const company = sessionStorage.getItem('company');
-  const backendUrl = 'http://localhost:8080';
+  const backendUrl = axios.defaults.baseURL?.replace('/api/v1/', '') ?? '';
 
   useEffect(() => {
     fetchReports();
@@ -86,6 +86,7 @@ export default function AdminMantenimiento() {
           }} 
           group={group}
           technicianName={report.technicianData?.name}
+          customerName={fullReport.customer_name || ''}
           backendUrl={backendUrl}
         />
       ).toBlob();

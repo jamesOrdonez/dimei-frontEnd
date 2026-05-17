@@ -31,7 +31,7 @@ import MaintenanceReportPdf from './MaintenanceReportPdf';
 export default function ClientesMantenimiento() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const backendUrl = 'http://localhost:8080';
+  const backendUrl = axios.defaults.baseURL?.replace('/api/v1/', '') ?? '';
 
   const handleDownloadLastPDF = async (equipo) => {
     if (!equipo.lastMaintenance?.id) return;
@@ -60,6 +60,7 @@ export default function ClientesMantenimiento() {
           equipo={equipo} 
           group={group}
           technicianName={techName}
+          customerName={report.customer_name || ''}
           backendUrl={backendUrl}
         />
       ).toBlob();

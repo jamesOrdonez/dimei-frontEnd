@@ -180,9 +180,10 @@ export default function FormularioMantenimiento() {
   const [savedSignatures, setSavedSignatures] = useState([]);
   const [technicianSignature, setTechnicianSignature] = useState(null);
   const [isDrawingNewTech, setIsDrawingNewTech] = useState(false);
+  const [customerName, setCustomerName] = useState('');
 
   const userId = decrypt(sessionStorage.getItem('userId'));
-  const backendUrl = 'http://localhost:8080'; // Should ideally come from a config file
+  const backendUrl = '';
 
   const getImageUrl = (path) => {
     if (!path) return '';
@@ -333,6 +334,10 @@ export default function FormularioMantenimiento() {
   };
 
   const handleFinalSubmit = async (custSig) => {
+    if (!customerName.trim()) {
+      Swal.fire('Atención', 'Por favor ingresa el nombre completo del cliente antes de guardar la firma.', 'warning');
+      return;
+    }
     try {
       setLoading(true);
       const answersArray = Object.keys(answers).map(qId => ({
@@ -347,6 +352,7 @@ export default function FormularioMantenimiento() {
         technician_id: userId,
         customer_signature: custSig,
         technician_signature: technicianSignature,
+        customer_name: customerName.trim(),
         answers: answersArray
       };
 
@@ -360,6 +366,7 @@ export default function FormularioMantenimiento() {
           equipo={equipo} 
           group={questionGroup}
           technicianName={techName}
+          customerName={customerName.trim()}
           backendUrl={backendUrl}
         />
       ).toBlob();
@@ -370,19 +377,21 @@ export default function FormularioMantenimiento() {
       link.download = `Mantenimiento_${equipo?.elevatorTypeName}_${id}.pdf`;
       link.click();
 
-      Swal.fire({
+      setShowSignatureFlow(false);
+
+      await Swal.fire({
         title: '¡Mantenimiento Finalizado!',
         text: "El reporte se ha guardado y el PDF ha sido generado.",
         icon: 'success',
         confirmButtonText: 'Aceptar'
-      }).then(() => {
-        setSignatureStep('technician');
-        navigate('/mantenimiento/clientes');
       });
+
+      setSignatureStep('technician');
+      setCustomerName('');
+      navigate('/mantenimiento/clientes');
     } catch (error) {
       console.error("Error saving maintenance report:", error);
       Swal.fire('Error', 'No se pudo guardar el reporte de mantenimiento', 'error');
-      setShowSignatureFlow(true);
     } finally {
       setLoading(false);
     }
@@ -544,6 +553,17 @@ export default function FormularioMantenimiento() {
             </Box>
           ) : (
             <Box>
+              <TextField
+                fullWidth
+                label="Nombre completo del cliente"
+                placeholder="Ej: Juan Pérez García"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                required
+                sx={{ mb: 2 }}
+                inputProps={{ maxLength: 120 }}
+                helperText="Este nombre quedará registrado junto a la firma en el reporte."
+              />
               <SignaturePad 
                 key="cust-sig"
                 title="Solicite la firma del cliente" 

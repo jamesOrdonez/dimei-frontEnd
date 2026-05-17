@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   signatureLine: { borderTop: '1 solid #475569', width: '100%', textAlign: 'center', paddingTop: 5, fontSize: 8, fontWeight: 'bold' }
 });
 
-export default function MaintenanceReportPdf({ data, equipo, group, technicianName, backendUrl }) {
+export default function MaintenanceReportPdf({ data, equipo, group, technicianName, customerName, backendUrl }) {
   const getFullUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('data:') || path.startsWith('blob:')) return path;
@@ -104,6 +104,9 @@ export default function MaintenanceReportPdf({ data, equipo, group, technicianNa
               {data.customerSignature && <Image style={styles.signatureImg} src={getFullUrl(data.customerSignature)} />}
             </View>
             <Text style={styles.signatureLine}>Firma del Cliente</Text>
+            {customerName ? (
+              <Text style={{ fontSize: 7, color: '#64748b', marginTop: 2 }}>{customerName}</Text>
+            ) : null}
           </View>
         </View>
       </Page>
