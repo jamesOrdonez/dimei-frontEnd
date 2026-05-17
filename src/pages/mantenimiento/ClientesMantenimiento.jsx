@@ -25,13 +25,14 @@ import {
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import { BASE_URL } from '../../App';
 import { pdf } from '@react-pdf/renderer';
 import MaintenanceReportPdf from './MaintenanceReportPdf';
 
 export default function ClientesMantenimiento() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const backendUrl = axios.defaults.baseURL?.replace('/api/v1/', '') ?? '';
+  const backendUrl = BASE_URL.replace('/api/v1/', '');
 
   const handleDownloadLastPDF = async (equipo) => {
     if (!equipo.lastMaintenance?.id) return;
