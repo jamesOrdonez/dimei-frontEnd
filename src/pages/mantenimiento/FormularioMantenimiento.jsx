@@ -189,7 +189,10 @@ export default function FormularioMantenimiento() {
   const getImageUrl = (path) => {
     if (!path) return '';
     if (path.startsWith('data:') || path.startsWith('blob:')) return path;
-    return `${backendUrl}${path}`;
+    const base = BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/';
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const token = sessionStorage.getItem('Token') || '';
+    return `${base}${cleanPath}?token=${encodeURIComponent(token)}`;
   };
 
   useEffect(() => {
