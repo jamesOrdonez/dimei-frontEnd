@@ -4,9 +4,7 @@ import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { pdf } from '@react-pdf/renderer';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import MaintenanceReportPdf from './MaintenanceReportPdf';
-import { BASE_URL } from '../../App';
 
-const backendUrl = BASE_URL.replace('/api/v1/', '');
 const company = sessionStorage.getItem('company');
 
 const mapData = (raw) =>
@@ -27,6 +25,8 @@ const mapData = (raw) =>
 
 const handleDownloadPDF = async (report) => {
   try {
+    // Compute at call time — axios is guaranteed to be configured by now
+    const backendUrl = (axios.defaults.baseURL || '').replace('/api/v1/', '');
     const resReport = await axios.get(`/getMaintenanceReport/${report.id}`);
     const fullReport = resReport.data.data;
 
