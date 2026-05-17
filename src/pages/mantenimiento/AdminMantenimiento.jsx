@@ -42,12 +42,12 @@ const fetchImageAsBase64 = async (url) => {
 const handleDownloadPDF = async (report) => {
   try {
     // Compute at call time — axios is guaranteed to be configured by now
-    const backendUrl = (axios.defaults.baseURL || '').replace(/\/api\/v1\/?$/, '');
+    const base = axios.defaults.baseURL || '';
     const getFullUrl = (path) => {
       if (!path) return null;
       if (path.startsWith('data:') || path.startsWith('blob:')) return path;
-      const safePath = path.startsWith('/') ? path : `/${path}`;
-      return `${backendUrl}${safePath}`;
+      const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      return `${base.endsWith('/') ? base : base + '/'}${cleanPath}`;
     };
 
     const resReport = await axios.get(`/getMaintenanceReport/${report.id}`);
@@ -96,7 +96,7 @@ const handleDownloadPDF = async (report) => {
         group={group}
         technicianName={report.technicianData?.name}
         customerName={fullReport.customer_name || ''}
-        backendUrl={backendUrl}
+        backendUrl={base}
       />
     ).toBlob();
 
