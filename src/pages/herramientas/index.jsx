@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import axios from 'axios';
-import { Button, Tooltip, Box, Grid } from '@mui/material';
+import { Button, Tooltip, Box, Grid, Dialog, IconButton, Fade } from '@mui/material';
+import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import FormDialog from '../../components/form/form.dialog.tsx';
 import { 
@@ -24,12 +25,20 @@ export default function Herramientas() {
 
   const [openModal, setOpenModal] = useState(false);
   const [openLoanModal, setOpenLoanModal] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+
+  // Builds the URL to display a tool image from its stored filename
+  const getToolImgSrc = (item) => {
+    if (!item.img) return null;
+    return `${axios.defaults.baseURL}/getTool/image/${item.id}?v=${item.img}`;
+  };
 
   const [movementType, setMovementType] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [gridData, setGridData] = useState([]);
-  const [projects, setProjects] = useState([]);
+
+  const company = sessionStorage.getItem('company');
 
   const inventoryStats = useMemo(() => {
     const totalValue = gridData.reduce((acc, item) => acc + (Number(item.amount) * Number(item.price || 0)), 0);
@@ -46,14 +55,6 @@ export default function Herramientas() {
     setMovementType(type);
     setOpenModal(true);
   };
-
-  const company = sessionStorage.getItem('company');
-
-  useEffect(() => {
-    axios.get(`/getProjects/${company}`).then(res => {
-      setProjects(res.data.data || []);
-    }).catch(err => console.error("Error fetching projects", err));
-  }, [company]);
 
   const fields = [
     {
@@ -261,7 +262,8 @@ export default function Herramientas() {
         fields={fields}
         onDataChange={setGridData}
         mapData={mapToolsData}
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'amount', 'lent_amount']}
+        excludeKeys={['img', 'company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'amount', 'lent_amount']}
+        firstHeader={{ label: 'Foto' }}
         hideCreate={!hasPermission(PERMISOS.CREAR_HERRAMIENTAS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
@@ -296,6 +298,42 @@ export default function Herramientas() {
           </Box>
         }
         renderExtraCell={({ item, headerLabel }) => {
+          if (headerLabel === 'Foto') {
+            const src = getToolImgSrc(item);
+            return src ? (
+              <Tooltip title="Ver imagen" placement="top">
+                <Box
+                  component="img"
+                  src={src}
+                  alt={item.description}
+                  onClick={() => setLightboxSrc(src)}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1.5,
+                    objectFit: 'cover',
+                    cursor: 'zoom-in',
+                    border: '2px solid',
+                    borderColor: 'divider',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'scale(1.08)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                    },
+                  }}
+                />
+              </Tooltip>
+            ) : (
+              <Box sx={{
+                width: 48, height: 48, borderRadius: 1.5,
+                bgcolor: 'rgba(59,130,246,0.06)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1.5px dashed #cbd5e1'
+              }}>
+                <PhotoIcon style={{ width: 22, height: 22, color: '#94a3b8' }} />
+              </Box>
+            );
+          }
           if (headerLabel === 'Precio') return item.price != null && item.price !== '' ? fCurrency(item.price) : '-';
           if (headerLabel === 'ENTRADA/SALIDA') return (
             <div className="flex items-center gap-2">
@@ -345,6 +383,55 @@ export default function Herramientas() {
         title={`${movementType === 'entrance' ? 'Entrada' : 'Salida'} de herramientas`}
         saveEndpoint={movementType === 'entrance' ? `/entranceTool` : `/exitTool`}
       />
+      {/* ── Lightbox ─────────────────────────────────── */}
+      <Dialog
+        open={!!lightboxSrc}
+        onClose={() => setLightboxSrc(null)}
+        maxWidth={false}
+        TransitionComponent={Fade}
+        PaperProps={{
+          sx: {
+            background: 'transparent',
+            boxShadow: 'none',
+            overflow: 'visible',
+            m: 2,
+          },
+        }}
+        sx={{ '& .MuiBackdrop-root': { backdropFilter: 'blur(6px)', bgcolor: 'rgba(0,0,0,0.75)' } }}
+      >
+        <Box sx={{ position: 'relative', display: 'inline-block' }}>
+          {/* Close button */}
+          <IconButton
+            onClick={() => setLightboxSrc(null)}
+            sx={{
+              position: 'absolute',
+              top: -18,
+              right: -18,
+              bgcolor: 'white',
+              color: '#1e293b',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+              '&:hover': { bgcolor: '#f1f5f9' },
+              zIndex: 10,
+            }}
+          >
+            <XMarkIcon style={{ width: 20, height: 20 }} />
+          </IconButton>
+
+          <Box
+            component="img"
+            src={lightboxSrc}
+            alt="Herramienta"
+            sx={{
+              display: 'block',
+              maxWidth: '85vw',
+              maxHeight: '80vh',
+              borderRadius: 3,
+              boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+              objectFit: 'contain',
+            }}
+          />
+        </Box>
+      </Dialog>
     </>
   );
 }
