@@ -144,9 +144,16 @@ export default function BaseTable({
                     const value = item[header.label];
                     // Render image if header is named img or Imagen
                     if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase())) {
+                      // Auto-detect the image endpoint from the stored filename prefix.
+                      // Filenames are saved as 'tool-{ts}.ext' or 'item-{ts}.ext' by each controller.
+                      const getImageEndpoint = (filename: string) => {
+                        if (filename.startsWith('tool-')) return 'getTool/image';
+                        if (filename.startsWith('item-')) return 'getItem/image';
+                        return 'getItem/image'; // fallback
+                      };
                       const src = value && typeof value === 'string' && value.startsWith('http') 
                         ? value 
-                        : value ? `${axios.defaults.baseURL}/getItem/image/${item.id}?v=${value}` : null;
+                        : value ? `${axios.defaults.baseURL}/${getImageEndpoint(value)}/${item.id}?v=${value}` : null;
                       return (
                         <TableCell key={header.label}>
                           {src ? (

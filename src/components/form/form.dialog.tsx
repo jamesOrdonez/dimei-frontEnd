@@ -50,6 +50,9 @@ interface FormDialogProps {
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
 }
 
+/** Returns true if any field in the form definition is of type 'file' */
+const hasFileFields = (fields: BaseField[]) => fields.some((f) => f.input === 'file');
+
 export default function FormDialog({
   open,
   onClose,
@@ -109,7 +112,10 @@ export default function FormDialog({
   }, [open, initialValues, mode, endpoint, updateEndpoint, fetchOneEndpoint]);
 
   const handleSave = async () => {
-    const hasFile = Object.values(currentData).some((val) => val instanceof File);
+    // Use FormData if there is a new File selected OR if the form has file-type fields
+    // (so multer always processes the request and req.file is available on the backend)
+    const hasNewFile = Object.values(currentData).some((val) => val instanceof File);
+    const useFormData = hasNewFile || hasFileFields(fields);
 
     let mappedData = currentData;
     if (mapPayload) {
@@ -125,15 +131,22 @@ export default function FormDialog({
     };
     let headers = {};
 
-    if (hasFile) {
+    if (useFormData) {
       const formData = new FormData();
       Object.keys(payload).forEach((key) => {
-        if (payload[key] !== null && payload[key] !== undefined) {
-          formData.append(key, payload[key]);
+        const val = payload[key];
+        if (val === null || val === undefined) return;
+        if (val instanceof File) {
+          formData.append(key, val);
+        } else if (key === 'img') {
+          // Skip — backend keeps current image when req.file is absent
+        } else if (typeof val !== 'object') {
+          formData.append(key, val);
         }
       });
+
       payload = formData;
-      headers = { 'Content-Type': 'multipart/form-data' };
+      headers = { 'Content-Type': undefined };
     }
 
     if (mode === 'create') {
