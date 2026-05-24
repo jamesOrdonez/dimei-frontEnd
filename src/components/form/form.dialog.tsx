@@ -135,12 +135,17 @@ export default function FormDialog({
       const formData = new FormData();
       Object.keys(payload).forEach((key) => {
         const val = payload[key];
-        if (val === null || val === undefined) return;
         if (val instanceof File) {
+          // New file selected by user — append directly
           formData.append(key, val);
         } else if (key === 'img') {
-          // Skip — backend keeps current image when req.file is absent
-        } else if (typeof val !== 'object') {
+          // Special case: null/undefined = user cleared the image → send '' to signal removal.
+          // Non-null string = existing filename → skip (backend keeps current file unchanged).
+          if (val === null || val === undefined) {
+            formData.append('img', '');
+          }
+        } else if (val !== null && val !== undefined && typeof val !== 'object') {
+          // Append primitives; skip objects/arrays
           formData.append(key, val);
         }
       });
