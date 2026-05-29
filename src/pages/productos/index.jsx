@@ -1,8 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 export default function Productos() {
   const { hasPermission, isAdmin } = usePermissions();
+  const [productGroups, setProductGroups] = useState([]);
+  const company = sessionStorage.getItem('company');
+
+  useEffect(() => {
+    axios.get(`/getProductGroup/${company}`).then(res => {
+      setProductGroups(res.data.data || res.data || []);
+    }).catch(err => console.error("Error fetching product groups", err));
+  }, [company]);
+
+  const mapProductsData = (products) => {
+    return products.map(item => ({
+      ...item,
+      Grupo: item.group_product?.name || 'S/N'
+    }));
+  };
 
   const fields = useMemo(() => [
     {
@@ -42,6 +58,20 @@ export default function Productos() {
         deleteEndpoint="/deleteProduct"
         fetchOneEndpoint="/getOneproduct"
         fields={fields}
+        mapData={mapProductsData}
+        customFilters={[
+          {
+            key: 'name',
+            label: 'Nombre',
+            type: 'text'
+          },
+          {
+            key: 'Grupo',
+            label: 'Grupo',
+            type: 'select',
+            options: productGroups.map(g => ({ value: g.name || g.description, label: g.name || g.description }))
+          }
+        ]}
         hideCreate={!hasPermission(PERMISOS.CREAR_PRODUCTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
