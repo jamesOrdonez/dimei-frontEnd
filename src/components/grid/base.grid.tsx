@@ -150,6 +150,7 @@ export default function BaseGrid({
     });
 
     setFilteredData(filtered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, data, activeFilters]);
 
   const handleFilterChange = (key: string, value: any) => {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import numeral from 'numeral';
 import { fCurrency } from '../../../utils/formatNumber';
 
 const styles = StyleSheet.create({
