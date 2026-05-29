@@ -352,31 +352,6 @@ function FormItemTransfer({ name, value, onChange }: FormItemTransferProps) {
     });
   }, []);
 
-  const handleRightFieldChangeLocal = useCallback((itemId: any, field: string, val: any) => {
-    setLocalItems((prev) => {
-      const next = prev.map((pi) => {
-        const id = pi.item_id ?? pi.fk_item ?? pi.id;
-        return String(id) === String(itemId) ? { ...pi, [field]: val } : pi;
-      });
-      valueRef.current = next;
-      return next;
-    });
-  }, []);
-
-  const flushToParent = useCallback(() => {
-    onChangeRef.current({ target: { name: nameRef.current, value: valueRef.current } });
-  }, []);
-
-  const handleRightQuantityBlur = useCallback(
-    (itemId: any, quantity: any) => {
-      if (quantity === '' || isNaN(Number(quantity)) || Number(quantity) <= 0) {
-        handleRightFieldChangeLocal(itemId, 'quantity', 1);
-      }
-      flushToParent();
-    },
-    [handleRightFieldChangeLocal, flushToParent]
-  );
-
   // ─── Move items ─────────────────────────────────────────────────────────
 
   const moveRight = useCallback(() => {
