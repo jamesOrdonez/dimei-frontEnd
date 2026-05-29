@@ -136,14 +136,21 @@ export default function BaseGrid({
     Object.entries(activeFilters).forEach(([key, value]) => {
       if (value) {
         filtered = filtered.filter(item => {
-          // Flexible match (direct or nested)
           const itemValue = item[key];
+          const filterConf = customFilters.find(f => f.key === key);
+          
+          if (filterConf?.type === 'text') {
+            return itemValue?.toString().toLowerCase().includes(value.toString().toLowerCase());
+          }
+          
+          // Flexible match (direct or nested) for select
           return itemValue === value || itemValue?.toString() === value?.toString();
         });
       }
     });
 
     setFilteredData(filtered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, data, activeFilters]);
 
   const handleFilterChange = (key: string, value: any) => {

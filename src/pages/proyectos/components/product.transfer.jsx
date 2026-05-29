@@ -14,7 +14,8 @@ import {
   ListItemText,
   ListItemIcon,
   Checkbox,
-  Button
+  Button,
+  Tooltip
 } from '@mui/material';
 import axios from 'axios';
 import { Loader } from '../../../components/loaders';
@@ -210,7 +211,11 @@ export default function ProductTransfer({ projectId, company, project, onSuccess
                     />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={item.description || item.name} 
+                    primary={
+                      <Tooltip title={item.description || 'Sin descripción'} placement="top">
+                        <Typography variant="body2">{item.name || item.description || 'Sin nombre'}</Typography>
+                      </Tooltip>
+                    } 
                     secondary={`Grupo: ${productGroups.find(g => String(g.id) === String(item.fk_group_product))?.name || 'N/A'}`}
                   />
                   {leftSelected.some(s => String(s.id) === String(item.id)) && (
@@ -283,7 +288,11 @@ export default function ProductTransfer({ projectId, company, project, onSuccess
                     />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={item.description || item.name || item.product_name} 
+                    primary={
+                      <Tooltip title={item.description || item.product_description || 'Sin descripción'} placement="top">
+                        <Typography variant="body2">{item.name || item.product_name || item.description || 'Sin nombre'}</Typography>
+                      </Tooltip>
+                    } 
                     secondary={`ID: ${item.product_id || item.id} - Cantidad: ${item.quantity || 0}`}
                   />
                 </ListItem>

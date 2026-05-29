@@ -22,7 +22,11 @@ export default function BaseDialog({
   return (
       <Dialog
         open={open}
-        onClose={onClose}
+        onClose={(_event, reason) => {
+          // Only allow closing via the X button or action buttons (not backdrop/Escape)
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+          onClose();
+        }}
         scroll={scroll}
         aria-labelledby="scroll-dialog-title"
         aria-describedby="scroll-dialog-description"

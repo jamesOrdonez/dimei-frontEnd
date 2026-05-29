@@ -4,7 +4,8 @@ import { Icon } from '@iconify/react';
 export interface CustomFilter {
   key: string;
   label: string;
-  options: { value: any; label: string }[];
+  type?: 'text' | 'select';
+  options?: { value: any; label: string }[];
 }
 
 interface GridHeaderProps {
@@ -90,38 +91,45 @@ export default function GridHeader({
               }}
             />
 
-            {customFilters.map((filter) => (
-              <TextField
-                key={filter.key}
-                select
-                label={filter.label}
-                value={activeFilters[filter.key] || ''}
-                onChange={(e) => onFilterChange && onFilterChange(filter.key, e.target.value)}
-                sx={{ 
-                  minWidth: { xs: '100%', sm: 160 },
-                  '& .MuiInputBase-root': {
-                    borderRadius: 2,
-                    bgcolor: '#F4F6F8',
-                    height: 50,
-                    '& fieldset': { border: 'none' },
-                  }
-                }}
-              >
-                <MenuItem value=""><em>Todos</em></MenuItem>
-                {filter.options.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            ))}
+            {customFilters.map((filter) => {
+              const isText = filter.type === 'text';
+              return (
+                <TextField
+                  key={filter.key}
+                  select={!isText}
+                  placeholder={isText ? `Buscar ${filter.label.toLowerCase()}` : undefined}
+                  label={filter.label}
+                  value={activeFilters[filter.key] || ''}
+                  onChange={(e) => onFilterChange && onFilterChange(filter.key, e.target.value)}
+                  sx={{ 
+                    minWidth: { xs: '100%', sm: 160 },
+                    '& .MuiInputBase-root': {
+                      borderRadius: 2,
+                      bgcolor: '#F4F6F8',
+                      height: 50,
+                      '& fieldset': { border: 'none' },
+                    }
+                  }}
+                >
+                  {!isText && <MenuItem value=""><em>Todos</em></MenuItem>}
+                  {!isText && filter.options?.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              );
+            })}
           </Stack>
           
-          <Stack 
-            direction="row" 
-            spacing={2} 
-            alignItems="center" 
-            sx={{ flexWrap: 'wrap' }}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 2, 
+              alignItems: 'center', 
+              justifyContent: { xs: 'flex-start', md: 'flex-end' } 
+            }}
           >
             <Stack direction="row" spacing={0.5} sx={{ bgcolor: '#F4F6F8', p: 0.5, borderRadius: 2 }}>
              <IconButton 
@@ -171,7 +179,7 @@ export default function GridHeader({
                 Nuevo
               </Button>
             )}
-          </Stack>
+          </Box>
         </Stack>
       </Box>
     </Box>

@@ -1,12 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import axios from 'axios';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
-import { fCurrency } from '../../utils/formatNumber';
-export default function Usuarios() {
+export default function Productos() {
   const { hasPermission, isAdmin } = usePermissions();
+  const [productGroups, setProductGroups] = useState([]);
+  const company = sessionStorage.getItem('company');
 
-  
-  const hasToHide = (values) => values.variable === '0' || !values.variable;
+  useEffect(() => {
+    axios.get(`/getProductGroup/${company}`).then(res => {
+      setProductGroups(res.data.data || res.data || []);
+    }).catch(err => console.error("Error fetching product groups", err));
+  }, [company]);
+
+  const mapProductsData = (products) => {
+    return products.map(item => ({
+      ...item,
+      Grupo: item.group_product?.name || 'S/N'
+    }));
+  };
 
   const fields = useMemo(() => [
     {
@@ -30,30 +42,6 @@ export default function Usuarios() {
       grid: { xs: 12 },
     },
     {
-      name: 'variable',
-      label: '¿Es variable?',
-      input: 'select',
-      options: [
-        { label: 'Si', value: '1' },
-        { label: 'No', value: '0' },
-      ],
-      grid: { xs: 12 },
-    },
-    {
-      name: 'value1',
-      label: 'Valor 1',
-      input: 'number',
-      grid: { xs: 12, md: 6 },
-      hasToHide: ({ values }) => hasToHide(values),
-    },
-    {
-      name: 'value2',
-      label: 'Valor 2',
-      input: 'number',
-      grid: { xs: 12, md: 6 },
-      hasToHide: ({ values }) => hasToHide(values),
-    },
-    {
       name: 'net_items',
       input: 'itemTransfer',
       grid: { xs: 12 },
@@ -70,28 +58,33 @@ export default function Usuarios() {
         deleteEndpoint="/deleteProduct"
         fetchOneEndpoint="/getOneproduct"
         fields={fields}
+        mapData={mapProductsData}
+        customFilters={[
+          {
+            key: 'name',
+            label: 'Nombre',
+            type: 'text'
+          },
+          {
+            key: 'Grupo',
+            label: 'Grupo',
+            type: 'select',
+            options: productGroups.map(g => ({ value: g.name || g.description, label: g.name || g.description }))
+          }
+        ]}
         hideCreate={!hasPermission(PERMISOS.CREAR_PRODUCTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
         formMaxWidth="md"
         formAdditionalValues={{ mathOperation: '+' }}
-        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'variable', 'mathOperation', 'value1', 'value2', 'group_item', 'net_items']}
+        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items']}
         extraHeaders={[
           { label: 'Grupo', after: 'name' },
-          { label: '¿Es Variable?', after: 'description' },
-          { label: 'Valor 1', after: '¿Es Variable?' },
-          { label: 'Valor 2', after: 'Valor 1' },
         ]}
         renderExtraCell={({ item, headerLabel }) => {
           switch (headerLabel) {
             case 'Grupo':
               return item.group_product?.name || '-';
-            case '¿Es Variable?':
-              return item.variable === '1' || item.variable === 1 ? 'Si' : 'No';
-            case 'Valor 1':
-              return item.value1 != null ? fCurrency(item.value1) : '-';
-            case 'Valor 2':
-              return item.value2 != null ? fCurrency(item.value2) : '-';
             default:
               return null;
           }

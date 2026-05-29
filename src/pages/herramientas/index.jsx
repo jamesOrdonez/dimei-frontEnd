@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Tooltip, Box, Grid, Dialog, IconButton, Fade } from '@mui/material';
 import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -37,8 +37,15 @@ export default function Herramientas() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [gridData, setGridData] = useState([]);
+  const [toolGroups, setToolGroups] = useState([]);
 
   const company = sessionStorage.getItem('company');
+
+  useEffect(() => {
+    axios.get(`/getToolGroup/${company}`).then(res => {
+      setToolGroups(res.data.data || res.data || []);
+    }).catch(err => console.error("Error fetching tool groups", err));
+  }, [company]);
 
   const inventoryStats = useMemo(() => {
     const totalValue = gridData.reduce((acc, item) => acc + (Number(item.amount) * Number(item.price || 0)), 0);
@@ -267,6 +274,19 @@ export default function Herramientas() {
         hideCreate={!hasPermission(PERMISOS.CREAR_HERRAMIENTAS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
+        customFilters={[
+          {
+            key: 'description',
+            label: 'Nombre',
+            type: 'text'
+          },
+          {
+            key: 'Grupo',
+            label: 'Grupo',
+            type: 'select',
+            options: toolGroups.map(g => ({ value: g.name || g.description, label: g.name || g.description }))
+          }
+        ]}
         extraHeaders={[
           { label: 'Precio', after: 'Unidad' },
           { label: 'ENTRADA/SALIDA' },

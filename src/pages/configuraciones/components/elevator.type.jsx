@@ -54,7 +54,7 @@ export default function ElevatorType() {
       deleteEndpoint="/deleteElevatorType"
       fetchOneEndpoint="/getOneElevatorTypes"
       hideDelete={true}
-      excludeKeys={['company', 'question_group_id']}
+      excludeKeys={['company', 'question_group_id', 'state']}
       fields={fields}
       mapData={mapData}
     />

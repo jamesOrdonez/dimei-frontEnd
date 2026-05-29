@@ -116,10 +116,6 @@ export default function RemisionPDF({ remision }) {
 
             {remision.products.map((prod, pIdx) => (
               <View key={`prod-${pIdx}`}>
-                <View style={styles.row}>
-                  <Text style={[styles.colMain, { fontWeight: 'bold' }]}>#{prod.product_id || prod.id} - {prod.name}</Text>
-                  <Text style={[styles.colQty, { fontWeight: 'bold' }]}>{prod.cantidad}</Text>
-                </View>
                 {/* COMPONENTES DEL PRODUCTO */}
                 {(prod.components || []).map((comp, cIdx) => (
                   <View key={`comp-${pIdx}-${cIdx}`} style={styles.subRow}>
@@ -127,6 +123,10 @@ export default function RemisionPDF({ remision }) {
                     <Text style={styles.colQty}>{comp.totalQuantity}</Text>
                   </View>
                 ))}
+                <View style={styles.row}>
+                  <Text style={[styles.colMain, { fontWeight: 'bold' }]}>#{prod.product_id || prod.id} - {prod.name}</Text>
+                  <Text style={[styles.colQty, { fontWeight: 'bold' }]}>{prod.cantidad}</Text>
+                </View>
               </View>
             ))}
           </View>
