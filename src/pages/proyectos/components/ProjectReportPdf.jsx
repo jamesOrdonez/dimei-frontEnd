@@ -156,7 +156,7 @@ export default function ProjectReportPdf({ project }) {
           <Text style={styles.sectionTitle}>Información del Proyecto</Text>
           <View style={styles.row}>
             <Text style={styles.colLabel}>Cliente:</Text>
-            <Text style={styles.colValue}>{project.customer || 'N/A'}</Text>
+            <Text style={styles.colValue}>{project.customerName || project.customer || 'N/A'}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.colLabel}>Tipo de Ascensor:</Text>
@@ -193,15 +193,7 @@ export default function ProjectReportPdf({ project }) {
 
               {project.products.map((prod, index) => (
                 <View key={`prod-${index}`}>
-                  <View style={styles.tableRow}>
-                    <Text style={[styles.tableColDesc, { fontFamily: 'Helvetica-Bold' }]}>
-                      {prod.product_name || 'Producto sin nombre'}
-                    </Text>
-                    <Text style={styles.tableColQty}>{prod.quantity}</Text>
-                    <Text style={styles.tableColPrice}>{fCurrency(prod.total_price)}</Text>
-                    <Text style={styles.tableColTotal}>{fCurrency(prod.total_price * prod.quantity)}</Text>
-                  </View>
-                  {/* Desglose de Items del Producto */}
+                  {/* Desglose de Items del Producto (primero) */}
                   {prod.items && prod.items.length > 0 && (
                     <View style={styles.productItemsContainer}>
                       <View style={styles.itemRow}>
@@ -220,6 +212,16 @@ export default function ProjectReportPdf({ project }) {
                       ))}
                     </View>
                   )}
+                  
+                  {/* Resumen del Producto (debajo) */}
+                  <View style={styles.tableRow}>
+                    <Text style={[styles.tableColDesc, { fontFamily: 'Helvetica-Bold' }]}>
+                      {prod.product_name || 'Producto sin nombre'}
+                    </Text>
+                    <Text style={styles.tableColQty}>{prod.quantity}</Text>
+                    <Text style={styles.tableColPrice}>{fCurrency(prod.total_price)}</Text>
+                    <Text style={styles.tableColTotal}>{fCurrency(prod.total_price * prod.quantity)}</Text>
+                  </View>
                 </View>
               ))}
             </View>
