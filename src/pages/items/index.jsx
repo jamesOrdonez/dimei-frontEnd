@@ -32,6 +32,7 @@ export default function Items() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [gridData, setGridData] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [itemGroups, setItemGroups] = useState([]);
   const [qrMenuAnchor, setQrMenuAnchor] = useState(null);
   const [selectedQRItem, setSelectedQRItem] = useState(null);
   const inventoryStats = useMemo(() => {
@@ -65,6 +66,10 @@ export default function Items() {
     axios.get(`/getProjects/${company}`).then(res => {
       setProjects(res.data.data || []);
     }).catch(err => console.error("Error fetching projects", err));
+
+    axios.get(`/getItemGroup/${company}`).then(res => {
+      setItemGroups(res.data.data || res.data || []);
+    }).catch(err => console.error("Error fetching item groups", err));
   }, [company]);
 
   const handleDownloadQR = () => {
@@ -301,6 +306,19 @@ export default function Items() {
         hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
         hideDelete={!isAdmin}
+        customFilters={[
+          {
+            key: 'description',
+            label: 'Nombre',
+            type: 'text'
+          },
+          {
+            key: 'Grupo',
+            label: 'Grupo',
+            type: 'select',
+            options: itemGroups.map(g => ({ value: g.name || g.description, label: g.name || g.description }))
+          }
+        ]}
         extraHeaders={[
           { label: 'Precio', after: 'Unidad' },
           { label: 'ENTRADA/SALIDA' },
