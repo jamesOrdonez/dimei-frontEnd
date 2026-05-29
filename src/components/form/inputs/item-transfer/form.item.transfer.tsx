@@ -60,7 +60,7 @@ interface LeftRowProps {
 
 const LeftItemRow = memo(
   ({ item, groupName, isSelected, variable, quantity, value1, value2, onToggle, onFieldChange }: LeftRowProps) => {
-    const isVariable = variable === '1';
+    const isVariable = String(variable) === '1';
     return (
       <React.Fragment>
         <ListItem
@@ -105,7 +105,7 @@ const LeftItemRow = memo(
               <FormControl fullWidth size="small" sx={{ mb: 1 }}>
                 <InputLabel>¿Es variable?</InputLabel>
                 <Select
-                  value={variable}
+                  value={String(variable || '0')}
                   label="¿Es variable?"
                   onChange={(e) => onFieldChange(item.id, 'variable', e.target.value)}
                 >
@@ -177,7 +177,7 @@ interface RightRowProps {
 
 const RightItemRow = memo(
   ({ item, displayName, isSelectedRight, onToggle }: RightRowProps) => {
-    const isVariable = item.variable === '1';
+    const isVariable = String(item.variable) === '1';
 
     return (
       <React.Fragment>
