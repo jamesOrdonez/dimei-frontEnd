@@ -25,7 +25,7 @@ export default function Unidad_medida() {
         deleteEndpoint="/unitOfMeasuremet"
         hideDelete={true}
         fields={fields}
-        excludeKeys={['company', 'created_at', 'updated_at', 'unitOfMeasure']}
+        excludeKeys={['company', 'created_at', 'updated_at', 'unitOfMeasure', 'state']}
         formAdditionalValues={{ company: sessionStorage.getItem('company') }}
         extraHeaders={['NOMBRE']}
         renderExtraCell={({ item, headerLabel }) => {

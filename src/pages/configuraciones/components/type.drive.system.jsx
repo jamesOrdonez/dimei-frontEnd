@@ -20,7 +20,7 @@ export default function TypeDriveSystem() {
       deleteEndpoint="/deleteTypeDriveSystems"
       fetchOneEndpoint="/getOneTypeDriveSystems"
       hideDelete={true}
-      excludeKeys={['company']}
+      excludeKeys={['company', 'state']}
       fields={fields}
     />
   );

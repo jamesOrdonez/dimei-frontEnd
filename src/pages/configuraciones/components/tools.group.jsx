@@ -10,17 +10,6 @@ export default function ToolsGroup() {
       grid: { xs: 12, md: 12 },
       required: true,
     },
-    {
-      name: 'state',
-      label: 'Estado',
-      input: 'select',
-      options: [
-        { label: 'Activo', value: 1 },
-        { label: 'Inactivo', value: 0 },
-      ],
-      grid: { xs: 12, md: 12 },
-      required: true,
-    },
   ];
 
   return (
@@ -38,13 +27,6 @@ export default function ToolsGroup() {
         fields={fields}
         excludeKeys={['company', 'created_at', 'updated_at', 'state']}
         formAdditionalValues={{ company: sessionStorage.getItem('company'), state: 1 }}
-        extraHeaders={['ESTADO']}
-        renderExtraCell={({ item, headerLabel }) => {
-          if (headerLabel === 'ESTADO') {
-            return item.state === 1 || item.state === '1' ? 'Activo' : 'Inactivo';
-          }
-          return null;
-        }}
       />
     </>
   );

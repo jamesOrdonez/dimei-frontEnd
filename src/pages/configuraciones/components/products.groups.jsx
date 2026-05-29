@@ -20,7 +20,7 @@ export default function ProductsGroup() {
       deleteEndpoint="/deleteProductGroup"
       fetchOneEndpoint="/getOneProductGroup"
       hideDelete={true}
-      excludeKeys={['company']}
+      excludeKeys={['company', 'state']}
       fields={fields}
     />
   );
