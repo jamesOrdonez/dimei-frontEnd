@@ -271,7 +271,10 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                 components: (p.items || []).map((comp) => ({
                   id: comp.item_id,
                   name: comp.item_name,
-                  quantity: comp.quantity, // reference quantity
+                  quantity: comp.quantity,
+                  variable: comp.variable,
+                  value1: comp.value1,
+                  value2: comp.value2,
                 })),
               });
             }
@@ -279,11 +282,23 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
           }, [])
           .map((p) => ({
             ...p,
-            components: p.components.map((comp) => ({
-              id: comp.id,
-              name: comp.name,
-              totalQuantity: Number(comp.quantity) * Number(p.cantidad),
-            })),
+            components: p.components.map((comp) => {
+              const travel = Number(project?.travel || 0);
+              let itemQtyNeeded = 0;
+              if (String(comp.variable) === '1') {
+                const v1 = Number(comp.value1 || 0);
+                const v2 = Number(comp.value2 || 0);
+                itemQtyNeeded = (travel * v1) + v2;
+              } else {
+                itemQtyNeeded = Number(comp.quantity || 0);
+              }
+
+              return {
+                id: comp.id,
+                name: comp.name,
+                totalQuantity: itemQtyNeeded * Number(p.cantidad),
+              };
+            }),
           })),
         items: selectedItems
           .filter((i) => !i.stored)
