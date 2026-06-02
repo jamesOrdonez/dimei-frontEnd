@@ -334,7 +334,7 @@ export default function AnalisisInventario() {
           <Grid item xs={12} md={2.5}>
             <Select fullWidth size="small" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} sx={{ bgcolor: '#fff', borderRadius: 2 }} displayEmpty>
               <MenuItem value="all">Proyecto: Todos</MenuItem>
-              {projects.map((p, i) => <MenuItem key={i} value={p.id}>{p.id} - {p.customer}</MenuItem>)}
+              {projects.map((p, i) => <MenuItem key={i} value={p.id}>{p.id}) {p.customerName || p.customer} - {p.elevatorTypeName}</MenuItem>)}
             </Select>
           </Grid>
           <Grid item xs={12} md={2.5}>
