@@ -127,8 +127,39 @@ const styles = StyleSheet.create({
 export default function ProjectReportPdf({ project }) {
   if (!project) return null;
 
-  // Calculamos los totales
-  const productsTotal = (project.products || []).reduce(
+  const travelVal = parseFloat(project.travel) || 0;
+
+  const processedProducts = (project.products || []).map((prod) => {
+    let productTotalUnit = 0;
+    const processedItems = (prod.items || []).map((item) => {
+      let finalQuantity = Number(item.quantity) || 1;
+      
+      if (item.variable === 1 || item.variable === '1') {
+        const val1 = Number(item.value1) || 0;
+        const val2 = Number(item.value2) || 0;
+        finalQuantity = parseFloat(((travelVal * val1) + val2).toFixed(2));
+      }
+
+      const itemPrice = Number(item.price) || 0;
+      const itemTotal = finalQuantity * itemPrice;
+      
+      productTotalUnit += itemTotal;
+      
+      return {
+        ...item,
+        quantity: finalQuantity,
+        total: itemTotal
+      };
+    });
+
+    return {
+      ...prod,
+      items: processedItems,
+      total_price: productTotalUnit
+    };
+  });
+
+  const productsTotal = processedProducts.reduce(
     (acc, prod) => acc + (prod.total_price || 0) * (prod.quantity || 0),
     0
   );
@@ -159,11 +190,11 @@ export default function ProjectReportPdf({ project }) {
           </View>
           <View style={styles.row}>
             <Text style={styles.colLabel}>Tipo de Ascensor:</Text>
-            <Text style={styles.colValue}>{project.elevatorType || 'N/A'}</Text>
+            <Text style={styles.colValue}>{project.elevatorTypeName || 'N/A'}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.colLabel}>Sistema Motriz:</Text>
-            <Text style={styles.colValue}>{project.typeDriveSystem || 'N/A'}</Text>
+            <Text style={styles.colValue}>{project.typeDriveSystemName || 'N/A'}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.colLabel}>Número de Paradas:</Text>
@@ -179,7 +210,7 @@ export default function ProjectReportPdf({ project }) {
           </View>
         </View>
 
-        {project.products && project.products.length > 0 && (
+        {processedProducts && processedProducts.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Productos del Proyecto</Text>
             <View style={styles.table}>
@@ -190,7 +221,7 @@ export default function ProjectReportPdf({ project }) {
                 <Text style={[styles.tableColTotal, styles.colHeader]}>Total</Text>
               </View>
 
-              {project.products.map((prod, index) => (
+              {processedProducts.map((prod, index) => (
                 <View key={`prod-${index}`}>
                   {/* Desglose de Items del Producto (primero) */}
                   {prod.items && prod.items.length > 0 && (
