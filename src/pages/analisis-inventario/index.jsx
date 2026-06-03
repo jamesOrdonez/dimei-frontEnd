@@ -136,14 +136,149 @@ export default function AnalisisInventario() {
 
   const handleExportPDF = async () => {
     setAnchorEl(null);
-    const projectName = selectedProjectObj ? `${selectedProjectObj.id}` : null;
-    const blob = await pdf(
-      <InventoryComparisonPdf data={filteredData} categories={categories} summary={summary} projectName={projectName} projectObj={selectedProjectObj} />
-    ).toBlob();
+
+    let pdfElement;
+
+    if (selectedProject === 'all') {
+      // 1. Group by project
+      const projectIdsWithAllocations = new Set();
+      filteredData.forEach(item => {
+        item.allocations?.forEach(a => {
+          if (a.quantity > 0) {
+            projectIdsWithAllocations.add(String(a.projectId));
+          }
+        });
+      });
+
+      const projectsData = [];
+      projects.forEach(p => {
+        if (projectIdsWithAllocations.has(String(p.id))) {
+          const projectItems = [];
+          filteredData.forEach(item => {
+            const alloc = item.allocations?.find(a => String(a.projectId) === String(p.id));
+            if (alloc && alloc.quantity > 0) {
+              projectItems.push({
+                ...item,
+                separated_inventory: alloc.quantity
+              });
+            }
+          });
+
+          if (projectItems.length > 0) {
+            const projectSummary = projectItems.reduce((acc, item) => {
+              acc.totalItems += 1;
+              acc.committed += item.separated_inventory;
+              if (item.available_inventory > 0) acc.available += item.available_inventory;
+
+              const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
+              if (available_active < 0) {
+                acc.toBuyItems += 1;
+                const deficit = Math.abs(available_active);
+                acc.toBuyUnits += deficit;
+                acc.toBuyCost += deficit * (item.price || 0);
+              }
+              return acc;
+            }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
+
+            projectsData.push({
+              projectObj: p,
+              items: projectItems,
+              summary: projectSummary
+            });
+          }
+        }
+      });
+
+      const processedProjectIds = new Set(projectsData.map(pd => String(pd.projectObj.id)));
+      projectIdsWithAllocations.forEach(projIdStr => {
+        if (!processedProjectIds.has(projIdStr)) {
+          const projectItems = [];
+          filteredData.forEach(item => {
+            const alloc = item.allocations?.find(a => String(a.projectId) === projIdStr);
+            if (alloc && alloc.quantity > 0) {
+              projectItems.push({
+                ...item,
+                separated_inventory: alloc.quantity
+              });
+            }
+          });
+
+          if (projectItems.length > 0) {
+            const projectSummary = projectItems.reduce((acc, item) => {
+              acc.totalItems += 1;
+              acc.committed += item.separated_inventory;
+              if (item.available_inventory > 0) acc.available += item.available_inventory;
+
+              const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
+              if (available_active < 0) {
+                acc.toBuyItems += 1;
+                const deficit = Math.abs(available_active);
+                acc.toBuyUnits += deficit;
+                acc.toBuyCost += deficit * (item.price || 0);
+              }
+              return acc;
+            }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
+
+            projectsData.push({
+              projectObj: {
+                id: projIdStr,
+                customerName: 'S/N',
+                elevatorTypeName: 'S/N',
+                typeDriveSystemName: 'S/N'
+              },
+              items: projectItems,
+              summary: projectSummary
+            });
+          }
+        }
+      });
+
+      // 2. Free items
+      const freeItems = [];
+      filteredData.forEach(item => {
+        if (item.available_inventory > 0) {
+          freeItems.push({
+            ...item,
+            separated_inventory: 0
+          });
+        }
+      });
+
+      const freeSummary = freeItems.reduce((acc, item) => {
+        acc.totalItems += 1;
+        acc.committed = 0;
+        acc.available += item.available_inventory;
+        return acc;
+      }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
+
+      pdfElement = (
+        <InventoryComparisonPdf
+          categories={categories}
+          isGrouped={true}
+          projectsData={projectsData}
+          freeData={{ items: freeItems, summary: freeSummary }}
+        />
+      );
+    } else {
+      const projectName = selectedProjectObj ? `${selectedProjectObj.id}` : null;
+      pdfElement = (
+        <InventoryComparisonPdf
+          data={filteredData}
+          categories={categories}
+          summary={summary}
+          projectName={projectName}
+          projectObj={selectedProjectObj}
+          isGrouped={false}
+        />
+      );
+    }
+
+    const blob = await pdf(pdfElement).toBlob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = projectName ? `reporte_inventario_${projectName}.pdf` : 'reporte_inventario.pdf';
+    const downloadName = selectedProjectObj ? `reporte_inventario_${selectedProjectObj.id}.pdf` : 'reporte_inventario.pdf';
+    link.download = downloadName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
