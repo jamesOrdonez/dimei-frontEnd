@@ -415,17 +415,6 @@ export default function FormularioMantenimiento() {
         photos: (answers[qId].photos || []).map(p => p.preview)
       }));
 
-      const payload = {
-        project_id: id,
-        technician_id: userId,
-        customer_signature: custSig,
-        technician_signature: technicianSignature,
-        customer_name: customerName.trim(),
-        answers: answersArray
-      };
-
-      await axios.post('/saveMaintenanceReport', payload);
-      
       // Generate PDF — pass original answers state (keyed by questionId) not the backend payload format
       const techName = decrypt(sessionStorage.getItem('name'));
       const blob = await pdf(
@@ -442,6 +431,25 @@ export default function FormularioMantenimiento() {
           backendUrl={backendUrl}
         />
       ).toBlob();
+
+      // Convert PDF to Base64
+      const pdfBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+
+      const payload = {
+        project_id: id,
+        technician_id: userId,
+        customer_signature: custSig,
+        technician_signature: technicianSignature,
+        customer_name: customerName.trim(),
+        pdf_base64: pdfBase64,
+        answers: answersArray
+      };
+
+      await axios.post('/saveMaintenanceReport', payload);
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
