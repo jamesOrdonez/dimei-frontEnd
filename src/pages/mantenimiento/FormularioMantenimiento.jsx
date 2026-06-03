@@ -338,6 +338,47 @@ export default function FormularioMantenimiento() {
     return true;
   };
 
+  const fetchImageAsBase64 = async (path) => {
+    if (!path) return null;
+    if (path.startsWith('data:') || path.startsWith('blob:')) return path;
+    try {
+      const url = getImageUrl(path);
+      const response = await axios.get(url, { responseType: 'blob' });
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(response.data);
+      });
+    } catch (error) {
+      console.error('Error fetching image as base64:', error);
+      return null;
+    }
+  };
+
+  const handleSelectSavedSignature = async (sig) => {
+    try {
+      Swal.fire({
+        title: 'Cargando firma...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      const base64 = await fetchImageAsBase64(sig.signature);
+      Swal.close();
+      if (base64) {
+        setTechnicianSignature(base64);
+        setSignatureStep('customer');
+      } else {
+        Swal.fire('Error', 'No se pudo cargar la firma seleccionada.', 'error');
+      }
+    } catch (error) {
+      Swal.close();
+      console.error(error);
+      Swal.fire('Error', 'No se pudo cargar la firma seleccionada.', 'error');
+    }
+  };
+
   const handleStartSignature = () => {
     if (!validateForm()) return;
     if (savedSignatures.length > 0) {
@@ -542,12 +583,21 @@ export default function FormularioMantenimiento() {
                   <Typography variant="body2" color="text.secondary" fontWeight="600">
                     Selecciona una firma guardada o dibuja una nueva:
                   </Typography>
+                  <Button 
+                    fullWidth 
+                    variant="outlined"
+                    startIcon={<PencilIcon className="h-4 w-4"/>} 
+                    onClick={() => setIsDrawingNewTech(true)}
+                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: '700' }}
+                  >
+                    Dibujar Nueva Firma
+                  </Button>
                   <Grid container spacing={2}>
                     {savedSignatures.map((sig) => (
                       <Grid item xs={6} key={sig.id}>
                         <Box sx={{ position: 'relative' }}>
                           <Paper 
-                            onClick={() => { setTechnicianSignature(sig.signature); setSignatureStep('customer'); }}
+                            onClick={() => handleSelectSavedSignature(sig)}
                             sx={{ 
                               p: 1, 
                               border: '2px solid #f1f5f9', 
@@ -582,15 +632,6 @@ export default function FormularioMantenimiento() {
                       </Grid>
                     ))}
                   </Grid>
-                  <Button 
-                    fullWidth 
-                    variant="outlined"
-                    startIcon={<PencilIcon className="h-4 w-4"/>} 
-                    onClick={() => setIsDrawingNewTech(true)}
-                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: '700' }}
-                  >
-                    Dibujar Nueva Firma
-                  </Button>
                 </Stack>
               ) : (
                 <SignaturePad 
