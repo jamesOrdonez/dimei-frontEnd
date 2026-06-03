@@ -323,6 +323,13 @@ export default function FormularioMantenimiento() {
       }
       const selectedOptions = q.options?.filter(opt => ans?.optionIds?.includes(opt.id.toString())) || [];
       const optionRequiresEvidence = selectedOptions.some(opt => opt.requires_photo);
+      const optionRequiresJustification = selectedOptions.some(opt => opt.requires_justification || opt.requires_justification === 1);
+      if (optionRequiresJustification) {
+        if (!ans?.text || !ans.text.trim()) {
+          Swal.fire('Atención', `La opción seleccionada en la pregunta "${q.text}" requiere justificación escrita.`, 'warning');
+          return false;
+        }
+      }
       if (q.type === 'fotos' || optionRequiresEvidence) {
         const minRequired = q.min_photos > 0 ? q.min_photos : (optionRequiresEvidence ? 1 : 0);
         if (photoCount < minRequired) {
@@ -497,6 +504,7 @@ export default function FormularioMantenimiento() {
           const selectedOptions = question.options?.filter(opt => ans?.optionIds?.includes(opt.id.toString())) || [];
           const requiresEvidenceByOption = selectedOptions.some(opt => opt.requires_photo);
           const showPhotoSection = question.type === 'fotos' || requiresEvidenceByOption;
+          const requiresJustificationByOption = selectedOptions.some(opt => opt.requires_justification || opt.requires_justification === 1);
 
           return (
             <Card key={question.id} sx={{ borderRadius: 4, border: '1px solid #f1f5f9' }}>
@@ -521,6 +529,21 @@ export default function FormularioMantenimiento() {
 
                 {question.type === 'abierta' && (
                   <TextField fullWidth multiline rows={3} placeholder="Respuesta..." value={ans?.text || ''} onChange={(e) => handleAnswerChange(question.id, e.target.value, 'texto')} />
+                )}
+
+                {requiresJustificationByOption && (
+                  <Box sx={{ mt: 2 }}>
+                    <TextField 
+                      fullWidth 
+                      multiline 
+                      rows={3} 
+                      label="Justificación requerida" 
+                      placeholder="Escribe la justificación aquí..." 
+                      value={ans?.text || ''} 
+                      onChange={(e) => handleAnswerChange(question.id, e.target.value, 'texto')} 
+                      required
+                    />
+                  </Box>
                 )}
 
                 {showPhotoSection && (
