@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Grid } from '@mui/material';
 import BaseText from './inputs/input-text/base.text.tsx';
 import BaseSelect from './inputs/input-select/base.select.tsx';
@@ -57,23 +57,33 @@ interface BaseFormProps {
 export default function BaseForm({ fields, initialValues, onChange, mode = 'create' }: BaseFormProps) {
   const [formData, setFormData] = useState<Record<string, any>>(initialValues || {});
 
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+
+  const formDataRef = useRef(formData);
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
   useEffect(() => {
     if (initialValues) {
       setFormData(initialValues);
     }
   }, [initialValues]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<any>) => {
     const { name, value, files, type } = e.target;
     const newData = {
-      ...formData,
+      ...formDataRef.current,
       [name]: type === 'file' ? files?.[0] : value,
     };
     setFormData(newData);
-    if (onChange) {
-      onChange(newData);
+    if (onChangeRef.current) {
+      onChangeRef.current(newData);
     }
-  };
+  }, []);
 
   let autoFocusSet = false;
 

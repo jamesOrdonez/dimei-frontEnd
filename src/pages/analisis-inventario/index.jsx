@@ -4,7 +4,7 @@ import {
   Paper, Typography, Box, TextField, MenuItem, Select,
   ToggleButton, ToggleButtonGroup, Grid, Card, CardContent,
   LinearProgress, Chip, InputAdornment, IconButton, Tooltip,
-  Menu, MenuItem as MuiMenuItem
+  Menu, MenuItem as MuiMenuItem, TablePagination
 } from '@mui/material';
 import {
   MagnifyingGlassIcon, ListBulletIcon, Squares2X2Icon,
@@ -33,6 +33,9 @@ export default function AnalisisInventario() {
   const [anchorEl, setAnchorEl] = useState(null);
   const openExportMenu = Boolean(anchorEl);
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const company = sessionStorage.getItem('company');
 
   useEffect(() => {
@@ -58,10 +61,11 @@ export default function AnalisisInventario() {
       if (selectedCategory !== 'all' && String(item.category) !== String(selectedCategory)) return false;
       if (selectedProveedor !== 'all' && item.proveedor !== selectedProveedor) return false;
       const available = item.available_inventory;
+      const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : available;
       const lowThreshold = item.low_stock || 0;
       if (selectedStatus === 'good' && available <= lowThreshold) return false;
       if (selectedStatus === 'low' && (available > lowThreshold || available <= 0)) return false;
-      if (selectedStatus === 'buy' && available > 0) return false;
+      if (selectedStatus === 'buy' && available_active >= 0) return false;
       if (selectedProject !== 'all' && item.separated_inventory <= 0) return false;
       return true;
     });
@@ -71,15 +75,32 @@ export default function AnalisisInventario() {
     return Array.from(new Set(data.map(d => d.proveedor).filter(p => p && p !== '-'))).sort();
   }, [data]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [searchText, selectedCategory, selectedStatus, selectedProject, selectedProveedor]);
+
+  const paginatedData = useMemo(() => {
+    return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [filteredData, page, rowsPerPage]);
+
+  const handleChangePage = (event, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   const summary = useMemo(() => {
     return filteredData.reduce((acc, item) => {
       acc.totalItems += 1;
       acc.committed += Math.max(0, item.separated_inventory);
       if (item.available_inventory > 0) acc.available += item.available_inventory;
-      if (item.available_inventory <= 0) {
+      
+      const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
+      if (available_active < 0) {
         acc.toBuyItems += 1;
-        const deficit = Math.abs(Math.min(0, item.available_inventory));
-        if (deficit > 0) { acc.toBuyUnits += deficit; acc.toBuyCost += deficit * (item.price || 0); }
+        const deficit = Math.abs(available_active);
+        acc.toBuyUnits += deficit; 
+        acc.toBuyCost += deficit * (item.price || 0); 
       }
       return acc;
     }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
@@ -93,7 +114,8 @@ export default function AnalisisInventario() {
     const exportData = filteredData.map(row => {
       const catObj = categories.find(c => String(c.id) === String(row.category));
       const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
-      const deficit = row.available_inventory < 0 ? Math.abs(row.available_inventory) : 0;
+      const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
+      const deficit = available_active < 0 ? Math.abs(available_active) : 0;
       return {
         "ID": row.id, "Ítem": row.item_name, "Categoría": catName, "Proveedor": row.proveedor || '-',
         "Total Inv.": Math.max(0, row.total_inventory),
@@ -114,14 +136,149 @@ export default function AnalisisInventario() {
 
   const handleExportPDF = async () => {
     setAnchorEl(null);
-    const projectName = selectedProjectObj ? `${selectedProjectObj.id} - ${selectedProjectObj.customer}` : null;
-    const blob = await pdf(
-      <InventoryComparisonPdf data={filteredData} categories={categories} summary={summary} projectName={projectName} />
-    ).toBlob();
+
+    let pdfElement;
+
+    if (selectedProject === 'all') {
+      // 1. Group by project
+      const projectIdsWithAllocations = new Set();
+      filteredData.forEach(item => {
+        item.allocations?.forEach(a => {
+          if (a.quantity > 0) {
+            projectIdsWithAllocations.add(String(a.projectId));
+          }
+        });
+      });
+
+      const projectsData = [];
+      projects.forEach(p => {
+        if (projectIdsWithAllocations.has(String(p.id))) {
+          const projectItems = [];
+          filteredData.forEach(item => {
+            const alloc = item.allocations?.find(a => String(a.projectId) === String(p.id));
+            if (alloc && alloc.quantity > 0) {
+              projectItems.push({
+                ...item,
+                separated_inventory: alloc.quantity
+              });
+            }
+          });
+
+          if (projectItems.length > 0) {
+            const projectSummary = projectItems.reduce((acc, item) => {
+              acc.totalItems += 1;
+              acc.committed += item.separated_inventory;
+              if (item.available_inventory > 0) acc.available += item.available_inventory;
+
+              const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
+              if (available_active < 0) {
+                acc.toBuyItems += 1;
+                const deficit = Math.abs(available_active);
+                acc.toBuyUnits += deficit;
+                acc.toBuyCost += deficit * (item.price || 0);
+              }
+              return acc;
+            }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
+
+            projectsData.push({
+              projectObj: p,
+              items: projectItems,
+              summary: projectSummary
+            });
+          }
+        }
+      });
+
+      const processedProjectIds = new Set(projectsData.map(pd => String(pd.projectObj.id)));
+      projectIdsWithAllocations.forEach(projIdStr => {
+        if (!processedProjectIds.has(projIdStr)) {
+          const projectItems = [];
+          filteredData.forEach(item => {
+            const alloc = item.allocations?.find(a => String(a.projectId) === projIdStr);
+            if (alloc && alloc.quantity > 0) {
+              projectItems.push({
+                ...item,
+                separated_inventory: alloc.quantity
+              });
+            }
+          });
+
+          if (projectItems.length > 0) {
+            const projectSummary = projectItems.reduce((acc, item) => {
+              acc.totalItems += 1;
+              acc.committed += item.separated_inventory;
+              if (item.available_inventory > 0) acc.available += item.available_inventory;
+
+              const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
+              if (available_active < 0) {
+                acc.toBuyItems += 1;
+                const deficit = Math.abs(available_active);
+                acc.toBuyUnits += deficit;
+                acc.toBuyCost += deficit * (item.price || 0);
+              }
+              return acc;
+            }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
+
+            projectsData.push({
+              projectObj: {
+                id: projIdStr,
+                customerName: 'S/N',
+                elevatorTypeName: 'S/N',
+                typeDriveSystemName: 'S/N'
+              },
+              items: projectItems,
+              summary: projectSummary
+            });
+          }
+        }
+      });
+
+      // 2. Free items
+      const freeItems = [];
+      filteredData.forEach(item => {
+        if (item.available_inventory > 0) {
+          freeItems.push({
+            ...item,
+            separated_inventory: 0
+          });
+        }
+      });
+
+      const freeSummary = freeItems.reduce((acc, item) => {
+        acc.totalItems += 1;
+        acc.committed = 0;
+        acc.available += item.available_inventory;
+        return acc;
+      }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
+
+      pdfElement = (
+        <InventoryComparisonPdf
+          categories={categories}
+          isGrouped={true}
+          projectsData={projectsData}
+          freeData={{ items: freeItems, summary: freeSummary }}
+        />
+      );
+    } else {
+      const projectName = selectedProjectObj ? `${selectedProjectObj.id}` : null;
+      pdfElement = (
+        <InventoryComparisonPdf
+          data={filteredData}
+          categories={categories}
+          summary={summary}
+          projectName={projectName}
+          projectObj={selectedProjectObj}
+          isGrouped={false}
+        />
+      );
+    }
+
+    const blob = await pdf(pdfElement).toBlob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = projectName ? `reporte_inventario_${projectName}.pdf` : 'reporte_inventario.pdf';
+    const downloadName = selectedProjectObj ? `reporte_inventario_${selectedProjectObj.id}.pdf` : 'reporte_inventario.pdf';
+    link.download = downloadName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -143,13 +300,14 @@ export default function AnalisisInventario() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {filteredData.length > 0 ? filteredData.map((row) => {
+          {paginatedData.length > 0 ? paginatedData.map((row) => {
             const total = Math.max(0, row.total_inventory);
             const comp = Math.max(0, row.separated_inventory);
             const lib = Math.max(0, row.available_inventory);
-            const deficit = row.available_inventory < 0 ? Math.abs(row.available_inventory) : 0;
+            const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
+            const deficit = available_active < 0 ? Math.abs(available_active) : 0;
             const ratio = total > 0 ? (lib / total) * 100 : 0;
-            const isBuy = row.available_inventory < 0;
+            const isBuy = available_active < 0;
             const isNone = row.available_inventory === 0;
             const lowThreshold = row.low_stock || 0;
             const isLow = !isNone && !isBuy && lib <= lowThreshold;
@@ -209,13 +367,14 @@ export default function AnalisisInventario() {
 
   const renderCardsView = () => (
     <Grid container spacing={2}>
-      {filteredData.length > 0 ? filteredData.map((row) => {
+      {paginatedData.length > 0 ? paginatedData.map((row) => {
         const total = Math.max(0, row.total_inventory);
         const comp = Math.max(0, row.separated_inventory);
         const lib = Math.max(0, row.available_inventory);
-        const deficit = row.available_inventory < 0 ? Math.abs(row.available_inventory) : 0;
+        const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
+        const deficit = available_active < 0 ? Math.abs(available_active) : 0;
         const compRatio = total > 0 ? (comp / total) * 100 : 0;
-        const isBuy = row.available_inventory < 0;
+        const isBuy = available_active < 0;
         const isNone = row.available_inventory === 0;
         const lowThreshold = row.low_stock || 0;
         const isLow = !isNone && !isBuy && lib <= lowThreshold;
@@ -286,7 +445,7 @@ export default function AnalisisInventario() {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8fafc', minHeight: '100%' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8fafc', flexGrow: 1 }}>
       {/* Header */}
       <Box mb={4}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
@@ -334,7 +493,7 @@ export default function AnalisisInventario() {
           <Grid item xs={12} md={2.5}>
             <Select fullWidth size="small" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} sx={{ bgcolor: '#fff', borderRadius: 2 }} displayEmpty>
               <MenuItem value="all">Proyecto: Todos</MenuItem>
-              {projects.map((p, i) => <MenuItem key={i} value={p.id}>{p.id} - {p.customer}</MenuItem>)}
+              {projects.map((p, i) => <MenuItem key={i} value={p.id}>{p.id}) {p.customerName || p.customer} - {p.elevatorTypeName}</MenuItem>)}
             </Select>
           </Grid>
           <Grid item xs={12} md={2.5}>
@@ -417,10 +576,21 @@ export default function AnalisisInventario() {
           </Grid>
 
           <Typography variant="body2" color="#64748b" mb={2}>
-            Mostrando <strong>{filteredData.length}</strong> de <strong>{data.length}</strong> ítems
+            Mostrando <strong>{paginatedData.length > 0 ? (page * rowsPerPage) + 1 : 0}</strong> - <strong>{Math.min((page + 1) * rowsPerPage, filteredData.length)}</strong> de <strong>{filteredData.length}</strong> ítems filtrados (Total: {data.length})
           </Typography>
 
           {viewMode === 'list' ? renderListView() : renderCardsView()}
+
+          <TablePagination
+            component="div"
+            count={filteredData.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Filas por página"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`}
+          />
         </>
       )}
     </Box>

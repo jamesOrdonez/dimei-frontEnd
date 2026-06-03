@@ -288,7 +288,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
               if (String(comp.variable) === '1') {
                 const v1 = Number(comp.value1 || 0);
                 const v2 = Number(comp.value2 || 0);
-                itemQtyNeeded = (travel * v1) + v2;
+                itemQtyNeeded = parseFloat(((travel * v1) + v2).toFixed(2));
               } else {
                 itemQtyNeeded = Number(comp.quantity || 0);
               }

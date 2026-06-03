@@ -53,7 +53,7 @@ export default function MaintenanceReportPdf({ data, equipo, group, technicianNa
           <Text style={styles.sectionTitle}>Información del Equipo</Text>
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Cliente:</Text> {equipo?.customerName}</Text></View>
-            <View style={styles.infoItem}><Text><Text style={styles.label}>Equipo:</Text> {equipo?.elevatorTypeName} #{equipo?.id}</Text></View>
+            <View style={styles.infoItem}><Text><Text style={styles.label}>Equipo:</Text> {equipo?.nombre}</Text></View>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Sistema Motriz:</Text> {equipo?.typeDriveSystemName || 'N/A'}</Text></View>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Paradas:</Text> {equipo?.stopNumber || 0}</Text></View>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Capacidad:</Text> {equipo?.capacity || 0} Kg</Text></View>
@@ -67,14 +67,22 @@ export default function MaintenanceReportPdf({ data, equipo, group, technicianNa
           <View style={styles.questionsContainer}>
             {group?.questions?.map((q, idx) => {
               const ans = data.answers?.[q.id];
-              const selectedOpts = q.options?.filter(o => ans?.optionIds?.includes(o.id.toString())).map(o => o.text).join(', ');
+              const selectedOptions = q.options?.filter(o => ans?.optionIds?.includes(o.id.toString())) || [];
+              const selectedOpts = selectedOptions.map(o => o.text).join(', ');
+              const requiresJustification = selectedOptions.some(o => o.requires_justification === 1 || o.requires_justification === true);
               
               return (
                 <View key={q.id} style={styles.questionCard}>
                   <Text style={styles.questionText}>{idx + 1}. {q.text}</Text>
                   
                   {selectedOpts && <Text style={styles.answerText}>R: {selectedOpts}</Text>}
-                  {ans?.text && <Text style={styles.answerText}>Obs: {ans.text}</Text>}
+                  {ans?.text && (
+                    requiresJustification ? (
+                      <Text style={styles.answerText}>Justificación: {ans.text}</Text>
+                    ) : (
+                      <Text style={styles.answerText}>Obs: {ans.text}</Text>
+                    )
+                  )}
                   
                   {ans?.photos?.length > 0 && (
                     <View style={styles.photoGrid}>

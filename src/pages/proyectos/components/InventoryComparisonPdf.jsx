@@ -41,45 +41,71 @@ const styles = StyleSheet.create({
   summaryValueRed: { fontSize: 12, color: '#e11d48', fontFamily: 'Helvetica-Bold' },
 });
 
-export default function InventoryComparisonPdf({ data, categories, summary, projectName }) {
-  if (!data) return null;
+export default function InventoryComparisonPdf({
+  data,
+  categories,
+  summary,
+  projectName,
+  projectObj,
+  isGrouped,
+  projectsData,
+  freeData
+}) {
+  if (!isGrouped && !data) return null;
 
-  return (
-    <Document>
+  const renderPage = (itemsList, sectionTitle, sectProjectObj, sectSummary, isFreeSection = false) => {
+    return (
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.headerContainer}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.title}>Reporte de Comparativa de Inventario</Text>
-            {projectName && (
-              <Text style={[styles.subtitle, { fontFamily: 'Helvetica-Bold', color: '#1e293b', fontSize: 11, marginBottom: 4 }]}>
-                Proyecto: {projectName}
+            {sectProjectObj ? (
+              <View style={{ marginBottom: 6, marginTop: 4 }}>
+                <Text style={[styles.subtitle, { fontFamily: 'Helvetica-Bold', color: '#1e293b', fontSize: 11, marginBottom: 2 }]}>
+                  Proyecto: {sectProjectObj.id}
+                </Text>
+                <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Cliente: </Text>{sectProjectObj.customerName || sectProjectObj.customer || 'S/N'}
+                </Text>
+                <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Tipo de Ascensor: </Text>{sectProjectObj.elevatorTypeName || 'S/N'}
+                </Text>
+                <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Sistema Motriz: </Text>{sectProjectObj.typeDriveSystemName || 'S/N'}
+                </Text>
+              </View>
+            ) : sectionTitle ? (
+              <Text style={[styles.subtitle, { fontFamily: 'Helvetica-Bold', color: '#1e293b', fontSize: 11, marginBottom: 4, marginTop: 4 }]}>
+                {sectionTitle}
               </Text>
-            )}
+            ) : null}
             <Text style={styles.subtitle}>Stock total, comprometido en proyectos, libre y déficit de compras.</Text>
             <Text style={styles.subtitle}>Generado el {new Date().toLocaleDateString()}</Text>
           </View>
           <Image style={styles.logo} src="/img/logo.png" />
         </View>
 
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>TOTAL ÍTEMS</Text>
-            <Text style={styles.summaryValue}>{summary.totalItems}</Text>
+        {sectSummary && (
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryLabel}>TOTAL ÍTEMS</Text>
+              <Text style={styles.summaryValue}>{sectSummary.totalItems}</Text>
+            </View>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryLabel}>COMPROMETIDO</Text>
+              <Text style={styles.summaryValue}>{sectSummary.committed} unds.</Text>
+            </View>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryLabel}>TOTAL DISP. LIBRE</Text>
+              <Text style={styles.summaryValue}>{sectSummary.available} unds.</Text>
+            </View>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryLabel}>TOTAL A COMPRAR</Text>
+              <Text style={styles.summaryValueRed}>{sectSummary.toBuyUnits} unds.</Text>
+              <Text style={styles.summaryValueRed}>{fCurrency(sectSummary.toBuyCost)}</Text>
+            </View>
           </View>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>COMPROMETIDO</Text>
-            <Text style={styles.summaryValue}>{summary.committed} unds.</Text>
-          </View>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>TOTAL DISP. LIBRE</Text>
-            <Text style={styles.summaryValue}>{summary.available} unds.</Text>
-          </View>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>TOTAL A COMPRAR</Text>
-            <Text style={styles.summaryValueRed}>{summary.toBuyUnits} unds.</Text>
-            <Text style={styles.summaryValueRed}>{fCurrency(summary.toBuyCost)}</Text>
-          </View>
-        </View>
+        )}
 
         <View style={styles.table}>
           <View style={styles.tableHeader}>
@@ -94,15 +120,17 @@ export default function InventoryComparisonPdf({ data, categories, summary, proj
             <Text style={[styles.colTotalBuy, styles.colHeader]}>SUMATORIA</Text>
           </View>
 
-          {data.map((row, index) => {
+          {itemsList.map((row, index) => {
             const catObj = categories.find(c => String(c.id) === String(row.category));
             const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
             
             const total = Math.max(0, row.total_inventory);
-            const comp = Math.max(0, row.separated_inventory);
+            const comp = isFreeSection ? 0 : Math.max(0, row.separated_inventory);
             const lib = Math.max(0, row.available_inventory);
-            const deficit = row.available_inventory < 0 ? Math.abs(row.available_inventory) : 0;
-            const isBuy = row.available_inventory < 0;
+            
+            const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
+            const deficit = !isFreeSection && available_active < 0 ? Math.abs(available_active) : 0;
+            const isBuy = !isFreeSection && available_active < 0;
 
             return (
               <View key={index} style={styles.tableRow} wrap={false}>
@@ -123,6 +151,23 @@ export default function InventoryComparisonPdf({ data, categories, summary, proj
           })}
         </View>
       </Page>
+    );
+  };
+
+  return (
+    <Document>
+      {isGrouped ? (
+        [
+          ...(projectsData || []).map((proj, idx) =>
+            renderPage(proj.items, null, proj.projectObj, proj.summary, false)
+          ),
+          ...(freeData && freeData.items && freeData.items.length > 0 ? [
+            renderPage(freeData.items, "Proyecto: Ítems Libres (Sin Asignar)", null, freeData.summary, true)
+          ] : [])
+        ]
+      ) : (
+        renderPage(data, projectName ? `Proyecto: ${projectName}` : null, projectObj, summary, false)
+      )}
     </Document>
   );
 }

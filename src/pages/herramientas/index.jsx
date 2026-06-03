@@ -272,7 +272,7 @@ export default function Herramientas() {
         excludeKeys={['img', 'company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'amount', 'lent_amount']}
         firstHeader={{ label: 'Foto' }}
         hideCreate={!hasPermission(PERMISOS.CREAR_HERRAMIENTAS)}
-        hideEdit={!isAdmin}
+        hideEdit={!hasPermission(PERMISOS.CREAR_HERRAMIENTAS)}
         hideDelete={!isAdmin}
         customFilters={[
           {

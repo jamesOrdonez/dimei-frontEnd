@@ -43,22 +43,38 @@ const LoadingIconButton = forwardRef(function LoadingIconButton({ loading, child
 
 // ─── OptionRow ────────────────────────────────────────────────────────────────
 function OptionRow({ option, onChange, onRemove }) {
-  const isChecked = option.requires_photo === true || option.requires_photo === 1;
+  const isCheckedPhoto = option.requires_photo === true || option.requires_photo === 1;
+  const isCheckedJustify = option.requires_justification === true || option.requires_justification === 1;
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ borderBottom: '1px solid #f1f5f9', pb: 1, '&:last-child': { borderBottom: 'none', pb: 0 } }}>
       <TextField size="small" placeholder="Texto de la opción" value={option.text}
         onChange={(e) => onChange({ ...option, text: e.target.value })} sx={{ flex: 1 }} />
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={isChecked}
-            onChange={(e) => onChange({ ...option, requires_photo: e.target.checked })}
-          />
-        }
-        label="Requiere foto"
-        sx={{ mx: 0, whiteSpace: 'nowrap', '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-      />
+      <Stack spacing={0.5} sx={{ minWidth: 160 }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              checked={isCheckedPhoto}
+              onChange={(e) => onChange({ ...option, requires_photo: e.target.checked })}
+              sx={{ p: 0.5 }}
+            />
+          }
+          label="Requiere foto"
+          sx={{ mx: 0, '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              checked={isCheckedJustify}
+              onChange={(e) => onChange({ ...option, requires_justification: e.target.checked })}
+              sx={{ p: 0.5 }}
+            />
+          }
+          label="Requiere justificación"
+          sx={{ mx: 0, '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+        />
+      </Stack>
       <IconButton size="small" color="error" onClick={onRemove}><TrashIcon className="h-4 w-4" /></IconButton>
     </Stack>
   );
@@ -81,10 +97,10 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
   }, [open, initial]);
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
-  const addOption = () => set('options', [...form.options, { text: '', requires_photo: false }]);
+  const addOption = () => set('options', [...form.options, { text: '', requires_photo: false, requires_justification: false }]);
   const updateOption = (i, val) => set('options', form.options.map((o, idx) => idx === i ? val : o));
   const removeOption = (i) => set('options', form.options.filter((_, idx) => idx !== i));
-  const loadTemplate = (tpl) => { set('options', tpl.options.map(o => ({ text: o.text, requires_photo: !!o.requires_photo }))); setTplOpen(false); };
+  const loadTemplate = (tpl) => { set('options', tpl.options.map(o => ({ text: o.text, requires_photo: !!o.requires_photo, requires_justification: !!o.requires_justification }))); setTplOpen(false); };
 
   const isChoice = form.type === 'unica' || form.type === 'multiple';
   const valid = form.text.trim() && (
@@ -163,7 +179,7 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
                         <Typography fontWeight={600} variant="body2">{tpl.name}</Typography>
                         <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
                           {tpl.options?.map((o, i) => (
-                            <Chip key={i} label={Number(o.requires_photo) === 1 ? `${o.text} 📷` : o.text} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                            <Chip key={i} label={`${o.text}${Number(o.requires_photo) === 1 ? ' 📷' : ''}${Number(o.requires_justification) === 1 ? ' ✍️' : ''}`} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
                           ))}
                         </Stack>
                       </Paper>
@@ -207,7 +223,7 @@ function SortableQuestion({ q, onEdit, deletingId, onDelete }) {
           {q.type === 'fotos' && (<Typography variant="caption" color="text.secondary">Fotos: mín {q.min_photos} – máx {q.max_photos}</Typography>)}
           {(q.type === 'unica' || q.type === 'multiple') && q.options?.length > 0 && (
             <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
-              {q.options.map(o => (<Chip key={o.id} label={Number(o.requires_photo) === 1 ? `${o.text} 📷` : o.text} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />))}
+               {q.options.map(o => (<Chip key={o.id} label={`${o.text}${Number(o.requires_photo) === 1 ? ' 📷' : ''}${Number(o.requires_justification) === 1 ? ' ✍️' : ''}`} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />))}
             </Stack>
           )}
         </Box>
@@ -234,7 +250,7 @@ function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates, drag
   const handleSaveQuestion = async (form) => {
     setSavingQ(true);
     try {
-      const payload = { ...form, group_id: group.id, options: (form.options || []).map(o => ({ text: o.text, requires_photo: o.requires_photo ? 1 : 0 })) };
+      const payload = { ...form, group_id: group.id, options: (form.options || []).map(o => ({ text: o.text, requires_photo: o.requires_photo ? 1 : 0, requires_justification: o.requires_justification ? 1 : 0 })) };
       if (qDialog.editing) {
         const res = await axios.put(`/updateQuestion/${qDialog.editing.id}`, payload);
         setQuestions(prev => prev.map(q => q.id === qDialog.editing.id ? res.data.data : q));
@@ -355,7 +371,7 @@ function OptionTemplateManager({ templates, onTemplatesChange }) {
     setOptions(sorted.map(o => ({ ...o })));
     setDialog({ open: true, editing: tpl });
   };
-  const addOpt = () => setOptions(prev => [...prev, { text: '', requires_photo: false }]);
+  const addOpt = () => setOptions(prev => [...prev, { text: '', requires_photo: false, requires_justification: false }]);
   const updateOpt = (i, val) => setOptions(prev => prev.map((o, idx) => idx === i ? val : o));
   const removeOpt = (i) => setOptions(prev => prev.filter((_, idx) => idx !== i));
 
@@ -416,7 +432,7 @@ function OptionTemplateManager({ templates, onTemplatesChange }) {
                   <Typography fontWeight={700} variant="body1">{tpl.name}</Typography>
                   <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
                     {tpl.options?.map((o, i) => (
-                      <Chip key={i} label={o.requires_photo ? `${o.text} 📷` : o.text}
+                      <Chip key={i} label={`${o.text}${o.requires_photo ? ' 📷' : ''}${o.requires_justification ? ' ✍️' : ''}`}
                         size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
                     ))}
                   </Stack>

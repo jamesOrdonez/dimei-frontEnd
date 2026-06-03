@@ -53,6 +53,20 @@ const handleDownloadPDF = async (report) => {
     const resReport = await axios.get(`/getMaintenanceReport/${report.id}`);
     const fullReport = resReport.data.data;
 
+    if (fullReport.pdf_path) {
+      const token = sessionStorage.getItem('Token') || '';
+      const url = `${getFullUrl(fullReport.pdf_path)}?token=${encodeURIComponent(token)}`;
+      const response = await axios.get(url, { responseType: 'blob' });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Reporte_${report.projectData.elevatorTypeData?.elevatorType}_${report.projectData.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
+      link.click();
+      URL.revokeObjectURL(blobUrl);
+      return;
+    }
+
     const resGroup = await axios.get(
       `/getOneQuestionGroup/${report.projectData.elevatorTypeData.question_group_id}`
     );

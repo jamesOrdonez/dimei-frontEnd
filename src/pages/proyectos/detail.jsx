@@ -310,11 +310,11 @@ export default function DetalleProyecto() {
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Tipo de Ascensor</Typography>
-              <Typography variant="body1" fontWeight="500">{project?.elevatorType || 'N/A'}</Typography>
+              <Typography variant="body1" fontWeight="500">{project?.elevatorTypeName || 'N/A'}</Typography>
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">Sistema Motriz</Typography>
-              <Typography variant="body1" fontWeight="500">{project.typeDriveSystem || 'N/A'}</Typography>
+              <Typography variant="body1" fontWeight="500">{project.typeDriveSystemName || 'N/A'}</Typography>
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>

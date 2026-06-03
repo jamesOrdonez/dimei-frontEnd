@@ -40,6 +40,26 @@ export default function ClientesMantenimiento() {
       const res = await axios.get(`/getMaintenanceReport/${equipo.lastMaintenance.id}`);
       const report = res.data.data;
       
+      if (report.pdf_path) {
+        const base = axios.defaults.baseURL || '';
+        const getFullUrl = (path) => {
+          if (!path) return '';
+          const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+          return `${base.endsWith('/') ? base : base + '/'}${cleanPath}`;
+        };
+        const token = sessionStorage.getItem('Token') || '';
+        const url = `${getFullUrl(report.pdf_path)}?token=${encodeURIComponent(token)}`;
+        const response = await axios.get(url, { responseType: 'blob' });
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `Reporte_${equipo.elevatorTypeName}_${equipo.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
+        link.click();
+        URL.revokeObjectURL(blobUrl);
+        return;
+      }
+      
       const resGroup = await axios.get(`/getOneQuestionGroup/${equipo.questionGroupId}`);
       const group = resGroup.data.data;
       

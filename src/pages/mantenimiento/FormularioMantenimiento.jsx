@@ -323,6 +323,13 @@ export default function FormularioMantenimiento() {
       }
       const selectedOptions = q.options?.filter(opt => ans?.optionIds?.includes(opt.id.toString())) || [];
       const optionRequiresEvidence = selectedOptions.some(opt => opt.requires_photo);
+      const optionRequiresJustification = selectedOptions.some(opt => opt.requires_justification || opt.requires_justification === 1);
+      if (optionRequiresJustification) {
+        if (!ans?.text || !ans.text.trim()) {
+          Swal.fire('Atención', `La opción seleccionada en la pregunta "${q.text}" requiere justificación escrita.`, 'warning');
+          return false;
+        }
+      }
       if (q.type === 'fotos' || optionRequiresEvidence) {
         const minRequired = q.min_photos > 0 ? q.min_photos : (optionRequiresEvidence ? 1 : 0);
         if (photoCount < minRequired) {
@@ -336,6 +343,47 @@ export default function FormularioMantenimiento() {
       }
     }
     return true;
+  };
+
+  const fetchImageAsBase64 = async (path) => {
+    if (!path) return null;
+    if (path.startsWith('data:') || path.startsWith('blob:')) return path;
+    try {
+      const url = getImageUrl(path);
+      const response = await axios.get(url, { responseType: 'blob' });
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(response.data);
+      });
+    } catch (error) {
+      console.error('Error fetching image as base64:', error);
+      return null;
+    }
+  };
+
+  const handleSelectSavedSignature = async (sig) => {
+    try {
+      Swal.fire({
+        title: 'Cargando firma...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      const base64 = await fetchImageAsBase64(sig.signature);
+      Swal.close();
+      if (base64) {
+        setTechnicianSignature(base64);
+        setSignatureStep('customer');
+      } else {
+        Swal.fire('Error', 'No se pudo cargar la firma seleccionada.', 'error');
+      }
+    } catch (error) {
+      Swal.close();
+      console.error(error);
+      Swal.fire('Error', 'No se pudo cargar la firma seleccionada.', 'error');
+    }
   };
 
   const handleStartSignature = () => {
@@ -374,17 +422,6 @@ export default function FormularioMantenimiento() {
         photos: (answers[qId].photos || []).map(p => p.preview)
       }));
 
-      const payload = {
-        project_id: id,
-        technician_id: userId,
-        customer_signature: custSig,
-        technician_signature: technicianSignature,
-        customer_name: customerName.trim(),
-        answers: answersArray
-      };
-
-      await axios.post('/saveMaintenanceReport', payload);
-      
       // Generate PDF — pass original answers state (keyed by questionId) not the backend payload format
       const techName = decrypt(sessionStorage.getItem('name'));
       const blob = await pdf(
@@ -401,6 +438,25 @@ export default function FormularioMantenimiento() {
           backendUrl={backendUrl}
         />
       ).toBlob();
+
+      // Convert PDF to Base64
+      const pdfBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+
+      const payload = {
+        project_id: id,
+        technician_id: userId,
+        customer_signature: custSig,
+        technician_signature: technicianSignature,
+        customer_name: customerName.trim(),
+        pdf_base64: pdfBase64,
+        answers: answersArray
+      };
+
+      await axios.post('/saveMaintenanceReport', payload);
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -448,6 +504,7 @@ export default function FormularioMantenimiento() {
           const selectedOptions = question.options?.filter(opt => ans?.optionIds?.includes(opt.id.toString())) || [];
           const requiresEvidenceByOption = selectedOptions.some(opt => opt.requires_photo);
           const showPhotoSection = question.type === 'fotos' || requiresEvidenceByOption;
+          const requiresJustificationByOption = selectedOptions.some(opt => opt.requires_justification || opt.requires_justification === 1);
 
           return (
             <Card key={question.id} sx={{ borderRadius: 4, border: '1px solid #f1f5f9' }}>
@@ -472,6 +529,21 @@ export default function FormularioMantenimiento() {
 
                 {question.type === 'abierta' && (
                   <TextField fullWidth multiline rows={3} placeholder="Respuesta..." value={ans?.text || ''} onChange={(e) => handleAnswerChange(question.id, e.target.value, 'texto')} />
+                )}
+
+                {requiresJustificationByOption && (
+                  <Box sx={{ mt: 2 }}>
+                    <TextField 
+                      fullWidth 
+                      multiline 
+                      rows={3} 
+                      label="Justificación requerida" 
+                      placeholder="Escribe la justificación aquí..." 
+                      value={ans?.text || ''} 
+                      onChange={(e) => handleAnswerChange(question.id, e.target.value, 'texto')} 
+                      required
+                    />
+                  </Box>
                 )}
 
                 {showPhotoSection && (
@@ -542,12 +614,21 @@ export default function FormularioMantenimiento() {
                   <Typography variant="body2" color="text.secondary" fontWeight="600">
                     Selecciona una firma guardada o dibuja una nueva:
                   </Typography>
+                  <Button 
+                    fullWidth 
+                    variant="outlined"
+                    startIcon={<PencilIcon className="h-4 w-4"/>} 
+                    onClick={() => setIsDrawingNewTech(true)}
+                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: '700' }}
+                  >
+                    Dibujar Nueva Firma
+                  </Button>
                   <Grid container spacing={2}>
                     {savedSignatures.map((sig) => (
                       <Grid item xs={6} key={sig.id}>
                         <Box sx={{ position: 'relative' }}>
                           <Paper 
-                            onClick={() => { setTechnicianSignature(sig.signature); setSignatureStep('customer'); }}
+                            onClick={() => handleSelectSavedSignature(sig)}
                             sx={{ 
                               p: 1, 
                               border: '2px solid #f1f5f9', 
@@ -582,15 +663,6 @@ export default function FormularioMantenimiento() {
                       </Grid>
                     ))}
                   </Grid>
-                  <Button 
-                    fullWidth 
-                    variant="outlined"
-                    startIcon={<PencilIcon className="h-4 w-4"/>} 
-                    onClick={() => setIsDrawingNewTech(true)}
-                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: '700' }}
-                  >
-                    Dibujar Nueva Firma
-                  </Button>
                 </Stack>
               ) : (
                 <SignaturePad 
