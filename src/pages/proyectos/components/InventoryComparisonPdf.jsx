@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   summaryValueRed: { fontSize: 12, color: '#e11d48', fontFamily: 'Helvetica-Bold' },
 });
 
-export default function InventoryComparisonPdf({ data, categories, summary, projectName }) {
+export default function InventoryComparisonPdf({ data, categories, summary, projectName, projectObj }) {
   if (!data) return null;
 
   return (
@@ -50,11 +50,26 @@ export default function InventoryComparisonPdf({ data, categories, summary, proj
         <View style={styles.headerContainer}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.title}>Reporte de Comparativa de Inventario</Text>
-            {projectName && (
+            {projectObj ? (
+              <View style={{ marginBottom: 6, marginTop: 4 }}>
+                <Text style={[styles.subtitle, { fontFamily: 'Helvetica-Bold', color: '#1e293b', fontSize: 11, marginBottom: 2 }]}>
+                  Proyecto: {projectName || projectObj.id}
+                </Text>
+                <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Cliente: </Text>{projectObj.customerName || projectObj.customer || 'S/N'}
+                </Text>
+                <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Tipo de Ascensor: </Text>{projectObj.elevatorTypeName || 'S/N'}
+                </Text>
+                <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Sistema Motriz: </Text>{projectObj.typeDriveSystemName || 'S/N'}
+                </Text>
+              </View>
+            ) : projectName ? (
               <Text style={[styles.subtitle, { fontFamily: 'Helvetica-Bold', color: '#1e293b', fontSize: 11, marginBottom: 4 }]}>
                 Proyecto: {projectName}
               </Text>
-            )}
+            ) : null}
             <Text style={styles.subtitle}>Stock total, comprometido en proyectos, libre y déficit de compras.</Text>
             <Text style={styles.subtitle}>Generado el {new Date().toLocaleDateString()}</Text>
           </View>

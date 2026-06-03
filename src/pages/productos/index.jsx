@@ -77,7 +77,7 @@ export default function Productos() {
         hideDelete={!isAdmin}
         formMaxWidth="md"
         formAdditionalValues={{ mathOperation: '+' }}
-        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items']}
+        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items', 'Grupo']}
         extraHeaders={[
           { label: 'Grupo', after: 'name' },
         ]}
