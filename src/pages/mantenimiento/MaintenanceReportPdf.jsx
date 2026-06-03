@@ -53,7 +53,7 @@ export default function MaintenanceReportPdf({ data, equipo, group, technicianNa
           <Text style={styles.sectionTitle}>Información del Equipo</Text>
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Cliente:</Text> {equipo?.customerName}</Text></View>
-            <View style={styles.infoItem}><Text><Text style={styles.label}>Equipo:</Text> {equipo?.elevatorTypeName} #{equipo?.id}</Text></View>
+            <View style={styles.infoItem}><Text><Text style={styles.label}>Equipo:</Text> {equipo?.nombre}</Text></View>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Sistema Motriz:</Text> {equipo?.typeDriveSystemName || 'N/A'}</Text></View>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Paradas:</Text> {equipo?.stopNumber || 0}</Text></View>
             <View style={styles.infoItem}><Text><Text style={styles.label}>Capacidad:</Text> {equipo?.capacity || 0} Kg</Text></View>
