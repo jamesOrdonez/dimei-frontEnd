@@ -545,7 +545,7 @@ export default function AnalisisInventario() {
                 <Box sx={{ bgcolor: '#fffbeb', p: 1.5, borderRadius: 2, mr: 2, display: 'flex' }}><SunIcon className="w-6 h-6 text-amber-500" /></Box>
                 <Box>
                   <Typography variant="caption" fontWeight={600} color="#94a3b8" letterSpacing={1}>COMPROMETIDO</Typography>
-                  <Typography variant="h4" fontWeight={800} color="#f59e0b" lineHeight={1}>{summary.committed}</Typography>
+                  <Typography variant="h4" fontWeight={800} color="#f59e0b" lineHeight={1}>{summary.committed.toFixed(2)}</Typography>
                 </Box>
               </Card>
             </Grid>
