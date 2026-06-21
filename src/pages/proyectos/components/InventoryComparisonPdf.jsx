@@ -21,15 +21,16 @@ const styles = StyleSheet.create({
   table: { display: 'flex', flexDirection: 'column', width: 'auto', marginTop: 10, borderStyle: 'solid', borderWidth: 1, borderColor: '#e2e8f0' },
   tableHeader: { flexDirection: 'row', backgroundColor: '#f8fafc', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
-  colId: { width: '6%', textAlign: 'center' },
-  colItem: { width: '20%' },
-  colProv: { width: '12%' },
-  colTotalInv: { width: '8%', textAlign: 'center' },
-  colComp: { width: '8%', textAlign: 'center' },
-  colLibre: { width: '8%', textAlign: 'center' },
-  colBuy: { width: '10%', textAlign: 'center' },
-  colPrice: { width: '14%', textAlign: 'right' },
-  colTotalBuy: { width: '14%', textAlign: 'right' },
+  colId: { width: '5%', textAlign: 'center' },
+  colItem: { width: '18%' },
+  colLoc: { width: '10%' },
+  colProv: { width: '10%' },
+  colTotalInv: { width: '7%', textAlign: 'center' },
+  colComp: { width: '7%', textAlign: 'center' },
+  colLibre: { width: '7%', textAlign: 'center' },
+  colBuy: { width: '8%', textAlign: 'center' },
+  colPrice: { width: '13%', textAlign: 'right' },
+  colTotalBuy: { width: '15%', textAlign: 'right' },
   colHeader: { fontFamily: 'Helvetica-Bold', fontSize: 9, color: '#475569' },
   rowText: { fontSize: 9, color: '#334155' },
   rowTextBold: { fontSize: 9, color: '#334155', fontFamily: 'Helvetica-Bold' },
@@ -111,6 +112,7 @@ export default function InventoryComparisonPdf({
           <View style={styles.tableHeader}>
             <Text style={[styles.colId, styles.colHeader]}>ID</Text>
             <Text style={[styles.colItem, styles.colHeader]}>ÍTEM</Text>
+            <Text style={[styles.colLoc, styles.colHeader]}>UBIC.</Text>
             <Text style={[styles.colProv, styles.colHeader]}>PROV.</Text>
             <Text style={[styles.colTotalInv, styles.colHeader]}>TOTAL INV.</Text>
             <Text style={[styles.colComp, styles.colHeader]}>COMPROMETIDO</Text>
@@ -139,6 +141,7 @@ export default function InventoryComparisonPdf({
                   <Text style={styles.rowTextBold}>{row.item_name}</Text>
                   <Text style={{ fontSize: 8, color: '#94a3b8' }}>{catName}</Text>
                 </View>
+                <Text style={[styles.colLoc, styles.rowText]}>{[row.position1, row.position2, row.position3].filter(Boolean).join('-') || '-'}</Text>
                 <Text style={[styles.colProv, styles.rowText]}>{row.proveedor || '-'}</Text>
                 <Text style={[styles.colTotalInv, styles.rowText]}>{total}</Text>
                 <Text style={[styles.colComp, styles.rowText]}>{comp > 0 ? comp : '—'}</Text>

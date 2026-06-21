@@ -75,7 +75,8 @@ export default function Remisiones() {
       items: (remision.remisionItems || []).map(ri => ({
         id: ri.item?.id || ri.fk_item,
         description: ri.item?.description || `Ítem ${ri.fk_item}`,
-        cantidad: ri.quantity
+        cantidad: ri.quantity,
+        ubicacion: [ri.item?.position1, ri.item?.position2, ri.item?.position3].filter(Boolean).join(' - ') || 'S/N'
       }))
     };
 

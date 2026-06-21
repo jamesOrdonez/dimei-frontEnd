@@ -27,11 +27,15 @@ export default function BaseFile({
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     onChange({
       target: {
         name,
         value: null,
         files: [],
+        type: 'file',
       },
     });
   };
@@ -78,7 +82,7 @@ export default function BaseFile({
                 </Tooltip>
               )}
               <Tooltip title="Subir archivo">
-                <IconButton onClick={handleClick} edge="end">
+                <IconButton onClick={(e) => { e.stopPropagation(); handleClick(); }} edge="end">
                   <Icon icon="eva:cloud-upload-fill" />
                 </IconButton>
               </Tooltip>

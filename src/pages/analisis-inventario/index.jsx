@@ -117,7 +117,9 @@ export default function AnalisisInventario() {
       const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
       const deficit = available_active < 0 ? Math.abs(available_active) : 0;
       return {
-        "ID": row.id, "Ítem": row.item_name, "Categoría": catName, "Proveedor": row.proveedor || '-',
+        "ID": row.id, "Ítem": row.item_name, "Categoría": catName, 
+        "Ubicación": [row.position1, row.position2, row.position3].filter(Boolean).join(' - ') || '-',
+        "Proveedor": row.proveedor || '-',
         "Total Inv.": Math.max(0, row.total_inventory),
         "Comprometido": Math.max(0, row.separated_inventory),
         "Disponible Libre": Math.max(0, row.available_inventory),
@@ -290,8 +292,9 @@ export default function AnalisisInventario() {
       <Table size="small">
         <TableHead sx={{ bgcolor: '#f8fafc' }}>
           <TableRow>
-            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '25%' }}>ÍTEM</TableCell>
-            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '15%' }}>PROVEEDOR</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '20%' }}>ÍTEM</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '12%' }}>UBICACIÓN</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '12%' }}>PROVEEDOR</TableCell>
             <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>TOTAL INV.</TableCell>
             <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>COMPROM.</TableCell>
             <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '18%' }}>DISP. LIBRE</TableCell>
@@ -318,6 +321,9 @@ export default function AnalisisInventario() {
                 <TableCell>
                   <Typography variant="body2" fontWeight={600} color="#1e293b" sx={{ lineHeight: 1.1, mb: 0.5 }}>{row.item_name}</Typography>
                   <Typography variant="caption" color="#94a3b8" sx={{ textTransform: 'uppercase' }}>{catName}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="#64748b" sx={{ fontSize: '0.8rem' }}>{[row.position1, row.position2, row.position3].filter(Boolean).join(' - ') || '-'}</Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" color="#64748b" sx={{ fontSize: '0.8rem' }}>{row.proveedor || '-'}</Typography>
@@ -388,7 +394,7 @@ export default function AnalisisInventario() {
                   <Box flex={1} mr={2}>
                     <Typography variant="body1" fontWeight={700} color="#1e293b" sx={{ lineHeight: 1.2 }}>{row.item_name}</Typography>
                     <Typography variant="caption" color="#94a3b8" sx={{ textTransform: 'uppercase' }}>{catName}</Typography>
-                    <Typography variant="caption" color="#64748b" display="block" mt={0.5}>Prov: {row.proveedor || '-'}</Typography>
+                    <Typography variant="caption" color="#64748b" display="block" mt={0.5}>Ubic: {[row.position1, row.position2, row.position3].filter(Boolean).join(' - ') || '-'} | Prov: {row.proveedor || '-'}</Typography>
                   </Box>
                   <Box display="flex" gap={1} alignItems="center">
                     {deficit > 0 && (

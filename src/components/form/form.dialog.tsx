@@ -114,7 +114,8 @@ export default function FormDialog({
   const handleSave = async () => {
     // Use FormData if there is a new File selected OR if the form has file-type fields
     // (so multer always processes the request and req.file is available on the backend)
-    const hasNewFile = Object.values(currentData).some((val) => val instanceof File);
+    const isFile = (val: any) => val instanceof File || (val && typeof val === 'object' && val.name && val.size !== undefined);
+    const hasNewFile = Object.values(currentData).some(isFile);
     const useFormData = hasNewFile || hasFileFields(fields);
 
     let mappedData = currentData;
@@ -135,7 +136,7 @@ export default function FormDialog({
       const formData = new FormData();
       Object.keys(payload).forEach((key) => {
         const val = payload[key];
-        if (val instanceof File) {
+        if (isFile(val)) {
           // New file selected by user — append directly
           formData.append(key, val);
         } else if (key === 'img') {
