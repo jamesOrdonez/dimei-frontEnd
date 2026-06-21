@@ -172,7 +172,7 @@ export default function Items() {
       label: 'Seleccione Proyecto',
       input: 'select',
       endpoint: `/getProjects/${sessionStorage.getItem('company')}`,
-      optionLabel: 'customer',
+      optionLabel: 'displayLabel',
       optionValue: 'id',
       grid: { xs: 12 },
       required: true,
@@ -222,16 +222,17 @@ export default function Items() {
     const remisionPDF = {
       remisionId: response.data.remisionId,
       projectId: payload.fk_proyect,
-      cliente: project?.customer || 'S/N',
+      cliente: project?.customerName || project?.customer || 'S/N',
       fecha: new Date().toLocaleDateString(),
       description: payload.description,
       items: (payload.net_items || []).map(item => {
         const gItem = gridData.find(gItem => gItem.id === item.id);
         return {
-          id: gItem.id,
-          description: gItem.description,
-          grupo: gItem.group,
-          cantidad: item.quantity
+          id: gItem?.id,
+          description: gItem?.description,
+          grupo: gItem?.group,
+          cantidad: item.quantity,
+          ubicacion: gItem?.location || 'S/N'
         }
       }),
       elaboradoPor: decrypt(sessionStorage.getItem('name')) || 'S/N',

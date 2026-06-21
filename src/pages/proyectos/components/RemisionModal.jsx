@@ -275,6 +275,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                   variable: comp.variable,
                   value1: comp.value1,
                   value2: comp.value2,
+                  ubicacion: comp.location || 'S/N',
                 })),
               });
             }
@@ -297,6 +298,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                 id: comp.id,
                 name: comp.name,
                 totalQuantity: itemQtyNeeded * Number(p.cantidad),
+                ubicacion: comp.ubicacion,
               };
             }),
           })),
@@ -312,6 +314,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                 item_id: i.item_id,
                 description: i.item_name,
                 cantidad: i.remisionQty,
+                ubicacion: i.location || 'S/N',
               });
             }
             return acc;

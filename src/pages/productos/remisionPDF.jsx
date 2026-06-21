@@ -19,8 +19,9 @@ const styles = StyleSheet.create({
     borderBottom: '1.5 solid #cbd5e1',
   },
 
-  colMain: { width: '75%', textAlign: 'left', paddingLeft: 5 },
-  colQty: { width: '25%', textAlign: 'center' },
+  colMain: { width: '60%', textAlign: 'left', paddingLeft: 5 },
+  colLoc: { width: '25%', textAlign: 'left', fontSize: 9 },
+  colQty: { width: '15%', textAlign: 'center' },
 
   // Sub-items (Components)
   subRow: {
@@ -111,6 +112,7 @@ export default function RemisionPDF({ remision }) {
             <Text style={styles.sectionTitle}>Productos en Remisión</Text>
             <View style={[styles.row, styles.tableHeader]}>
               <Text style={styles.colMain}>Producto / Componente</Text>
+              <Text style={styles.colLoc}>Ubicación</Text>
               <Text style={styles.colQty}>Cantidad</Text>
             </View>
 
@@ -120,11 +122,13 @@ export default function RemisionPDF({ remision }) {
                 {(prod.components || []).map((comp, cIdx) => (
                   <View key={`comp-${pIdx}-${cIdx}`} style={styles.subRow}>
                     <Text style={styles.colMain}>• #{comp.item_id || comp.id} - {comp.name}</Text>
+                    <Text style={styles.colLoc}>{comp.ubicacion}</Text>
                     <Text style={styles.colQty}>{comp.totalQuantity}</Text>
                   </View>
                 ))}
                 <View style={styles.row}>
                   <Text style={[styles.colMain, { fontWeight: 'bold' }]}>#{prod.product_id || prod.id} - {prod.name}</Text>
+                  <Text style={styles.colLoc}></Text>
                   <Text style={[styles.colQty, { fontWeight: 'bold' }]}>{prod.cantidad}</Text>
                 </View>
               </View>
@@ -138,12 +142,14 @@ export default function RemisionPDF({ remision }) {
             <Text style={styles.sectionTitle}>Items Adicionales</Text>
             <View style={[styles.row, styles.tableHeader]}>
               <Text style={styles.colMain}>Item</Text>
+              <Text style={styles.colLoc}>Ubicación</Text>
               <Text style={styles.colQty}>Cantidad</Text>
             </View>
 
             {remision.items.map((item, index) => (
               <View key={`item-${index}`} style={styles.row}>
                 <Text style={styles.colMain}>#{item.item_id || item.id} - {item.description}</Text>
+                <Text style={styles.colLoc}>{item.ubicacion}</Text>
                 <Text style={styles.colQty}>{item.cantidad}</Text>
               </View>
             ))}
