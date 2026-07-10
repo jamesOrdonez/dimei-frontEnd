@@ -221,7 +221,7 @@ export default function Items() {
     const project = projects.find(p => String(p.id) === String(payload.fk_proyect));
     const remisionPDF = {
       remisionId: response.data.remisionId,
-      projectId: payload.fk_proyect,
+      projectId: payload.fk_proyect ? String(payload.fk_proyect) : '',
       cliente: project?.customerName || project?.customer || 'S/N',
       fecha: new Date().toLocaleDateString(),
       description: payload.description,

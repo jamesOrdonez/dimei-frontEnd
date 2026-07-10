@@ -60,7 +60,7 @@ export default function Remisiones() {
     // Transform backend data to match RemisionPDF expected structure
     const remisionPDF = {
       remisionId: remision.id,
-      projectId: remision.fk_proyect,
+      projectId: remision.proyect?.id ? String(remision.proyect.id) : '',
       cliente: remision.customer,
       fecha: remision.date,
       description: remision.description,

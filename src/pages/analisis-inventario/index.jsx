@@ -38,6 +38,34 @@ export default function AnalisisInventario() {
 
   const company = sessionStorage.getItem('company');
 
+  const calculateDeficit = React.useCallback((item, specificProjectId) => {
+    const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
+    const globalDeficit = available_active < 0 ? Math.abs(available_active) : 0;
+    
+    if (globalDeficit === 0) return 0;
+    if (specificProjectId === 'all' || !specificProjectId) return globalDeficit;
+    
+    if (!item.allocations || item.allocations.length === 0) {
+      // Fallback si no hay allocations detalladas (no debería pasar normalmente)
+      return globalDeficit; 
+    }
+
+    // Ordenar allocations para asignar el déficit de forma determinista
+    // Proyectos más nuevos (ID mayor) asumen el déficit primero, ya que los viejos "reservaron" el stock.
+    const sortedAllocs = [...item.allocations].sort((a, b) => Number(b.projectId) - Number(a.projectId));
+    
+    let remainingDeficit = globalDeficit;
+    for (const alloc of sortedAllocs) {
+      const allocDeficit = Math.min(alloc.quantity, remainingDeficit);
+      if (String(alloc.projectId) === String(specificProjectId)) {
+        return allocDeficit;
+      }
+      remainingDeficit -= allocDeficit;
+      if (remainingDeficit <= 0) break;
+    }
+    return 0;
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     const params = selectedProject !== 'all' ? { projectId: selectedProject } : {};
@@ -65,7 +93,7 @@ export default function AnalisisInventario() {
       const lowThreshold = item.low_stock || 0;
       if (selectedStatus === 'good' && available <= lowThreshold) return false;
       if (selectedStatus === 'low' && (available > lowThreshold || available <= 0)) return false;
-      if (selectedStatus === 'buy' && available_active >= 0) return false;
+      if (selectedStatus === 'buy' && Math.ceil(calculateDeficit(item, selectedProject)) <= 0) return false;
       if (selectedProject !== 'all' && item.separated_inventory <= 0) return false;
       return true;
     });
@@ -95,16 +123,15 @@ export default function AnalisisInventario() {
       acc.committed += Math.max(0, item.separated_inventory);
       if (item.available_inventory > 0) acc.available += item.available_inventory;
       
-      const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
-      if (available_active < 0) {
+      const deficit = Math.ceil(calculateDeficit(item, selectedProject));
+      if (deficit > 0) {
         acc.toBuyItems += 1;
-        const deficit = Math.abs(available_active);
         acc.toBuyUnits += deficit; 
         acc.toBuyCost += deficit * (item.price || 0); 
       }
       return acc;
     }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
-  }, [filteredData]);
+  }, [filteredData, selectedProject, calculateDeficit]);
 
   const selectedProjectObj = useMemo(() =>
     projects.find(p => String(p.id) === String(selectedProject)), [projects, selectedProject]);
@@ -114,17 +141,16 @@ export default function AnalisisInventario() {
     const exportData = filteredData.map(row => {
       const catObj = categories.find(c => String(c.id) === String(row.category));
       const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
-      const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
-      const deficit = available_active < 0 ? Math.abs(available_active) : 0;
+      const deficit = Math.ceil(calculateDeficit(row, selectedProject));
       return {
         "ID": row.id, "Ítem": row.item_name, "Categoría": catName, 
         "Ubicación": [row.position1, row.position2, row.position3].filter(Boolean).join(' - ') || '-',
         "Proveedor": row.proveedor || '-',
-        "Total Inv.": Math.max(0, row.total_inventory),
-        "Comprometido": Math.max(0, row.separated_inventory),
-        "Disponible Libre": Math.max(0, row.available_inventory),
-        "A Comprar": deficit, "Precio Unitario": row.price || 0,
-        "Sumatoria a Comprar": deficit * (row.price || 0)
+        "Total Inv.": Number(Math.max(0, row.total_inventory).toFixed(2)),
+        "Comprometido": Number(Math.max(0, row.separated_inventory).toFixed(2)),
+        "Disponible Libre": Number(Math.max(0, row.available_inventory).toFixed(2)),
+        "A Comprar": Math.round(deficit), "Precio Unitario": row.price || 0,
+        "Sumatoria a Comprar": Math.round(deficit) * (row.price || 0)
       };
     });
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -161,7 +187,8 @@ export default function AnalisisInventario() {
             if (alloc && alloc.quantity > 0) {
               projectItems.push({
                 ...item,
-                separated_inventory: alloc.quantity
+                separated_inventory: alloc.quantity,
+                deficit: Math.ceil(calculateDeficit(item, String(p.id)))
               });
             }
           });
@@ -172,10 +199,9 @@ export default function AnalisisInventario() {
               acc.committed += item.separated_inventory;
               if (item.available_inventory > 0) acc.available += item.available_inventory;
 
-              const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
-              if (available_active < 0) {
+              const deficit = Math.ceil(calculateDeficit(item, String(p.id)));
+              if (deficit > 0) {
                 acc.toBuyItems += 1;
-                const deficit = Math.abs(available_active);
                 acc.toBuyUnits += deficit;
                 acc.toBuyCost += deficit * (item.price || 0);
               }
@@ -200,7 +226,8 @@ export default function AnalisisInventario() {
             if (alloc && alloc.quantity > 0) {
               projectItems.push({
                 ...item,
-                separated_inventory: alloc.quantity
+                separated_inventory: alloc.quantity,
+                deficit: Math.ceil(calculateDeficit(item, String(projIdStr)))
               });
             }
           });
@@ -211,10 +238,9 @@ export default function AnalisisInventario() {
               acc.committed += item.separated_inventory;
               if (item.available_inventory > 0) acc.available += item.available_inventory;
 
-              const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : item.available_inventory;
-              if (available_active < 0) {
+              const deficit = Math.ceil(calculateDeficit(item, String(projIdStr)));
+              if (deficit > 0) {
                 acc.toBuyItems += 1;
-                const deficit = Math.abs(available_active);
                 acc.toBuyUnits += deficit;
                 acc.toBuyCost += deficit * (item.price || 0);
               }
@@ -263,9 +289,13 @@ export default function AnalisisInventario() {
       );
     } else {
       const projectName = selectedProjectObj ? `${selectedProjectObj.id}` : null;
+      const pdfItems = filteredData.map(item => ({
+        ...item,
+        deficit: Math.ceil(calculateDeficit(item, selectedProject))
+      }));
       pdfElement = (
         <InventoryComparisonPdf
-          data={filteredData}
+          data={pdfItems}
           categories={categories}
           summary={summary}
           projectName={projectName}
@@ -304,13 +334,12 @@ export default function AnalisisInventario() {
         </TableHead>
         <TableBody>
           {paginatedData.length > 0 ? paginatedData.map((row) => {
-            const total = Math.max(0, row.total_inventory);
-            const comp = Math.max(0, row.separated_inventory);
-            const lib = Math.max(0, row.available_inventory);
-            const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
-            const deficit = available_active < 0 ? Math.abs(available_active) : 0;
+            const total = Number(Math.max(0, row.total_inventory).toFixed(2));
+            const comp = Number(Math.max(0, row.separated_inventory).toFixed(2));
+            const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
+            const deficit = Math.ceil(calculateDeficit(row, selectedProject));
             const ratio = total > 0 ? (lib / total) * 100 : 0;
-            const isBuy = available_active < 0;
+            const isBuy = deficit > 0;
             const isNone = row.available_inventory === 0;
             const lowThreshold = row.low_stock || 0;
             const isLow = !isNone && !isBuy && lib <= lowThreshold;
@@ -337,7 +366,7 @@ export default function AnalisisInventario() {
                 <TableCell align="center">
                   <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
                     {deficit > 0 && (
-                      <Chip size="small" label={`Comprar: ${deficit}`}
+                      <Chip size="small" label={`Comprar: ${Math.round(deficit)}`}
                         sx={{ bgcolor: '#fef2f2', color: '#e11d48', fontWeight: 700, px: 0.5, borderColor: '#fca5a5', border: '1px solid' }} />
                     )}
                     <Chip size="small" label={`● ${lib}`}
@@ -374,13 +403,12 @@ export default function AnalisisInventario() {
   const renderCardsView = () => (
     <Grid container spacing={2}>
       {paginatedData.length > 0 ? paginatedData.map((row) => {
-        const total = Math.max(0, row.total_inventory);
-        const comp = Math.max(0, row.separated_inventory);
-        const lib = Math.max(0, row.available_inventory);
-        const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
-        const deficit = available_active < 0 ? Math.abs(available_active) : 0;
+        const total = Number(Math.max(0, row.total_inventory).toFixed(2));
+        const comp = Number(Math.max(0, row.separated_inventory).toFixed(2));
+        const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
+        const deficit = Math.ceil(calculateDeficit(row, selectedProject));
         const compRatio = total > 0 ? (comp / total) * 100 : 0;
-        const isBuy = available_active < 0;
+        const isBuy = deficit > 0;
         const isNone = row.available_inventory === 0;
         const lowThreshold = row.low_stock || 0;
         const isLow = !isNone && !isBuy && lib <= lowThreshold;
@@ -398,7 +426,7 @@ export default function AnalisisInventario() {
                   </Box>
                   <Box display="flex" gap={1} alignItems="center">
                     {deficit > 0 && (
-                      <Chip size="small" label={`Comprar: ${deficit}`}
+                      <Chip size="small" label={`Comprar: ${Math.round(deficit)}`}
                         sx={{ bgcolor: '#fef2f2', color: '#e11d48', fontWeight: 700, border: '1px solid #fca5a5' }} />
                     )}
                     <Chip size="small" label={`● ${lib}`}
@@ -570,7 +598,7 @@ export default function AnalisisInventario() {
                   <Box sx={{ bgcolor: '#fef2f2', p: 1.2, borderRadius: 2, mr: 1.5, display: 'flex' }}><ShoppingCartIcon className="w-5 h-5 text-red-600" /></Box>
                   <Box>
                     <Typography variant="caption" fontWeight={600} color="#e11d48" letterSpacing={1}>A COMPRAR ({summary.toBuyItems})</Typography>
-                    <Typography variant="h5" fontWeight={800} color="#e11d48" lineHeight={1}>{summary.toBuyUnits} unds.</Typography>
+                    <Typography variant="h5" fontWeight={800} color="#e11d48" lineHeight={1}>{Math.round(summary.toBuyUnits)} unds.</Typography>
                   </Box>
                 </Box>
                 <Box mt={0.5} pl={1}>
