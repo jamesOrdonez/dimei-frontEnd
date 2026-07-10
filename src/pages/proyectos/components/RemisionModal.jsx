@@ -253,9 +253,9 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       const remisionData = {
         remisionId,
         fecha: new Date().toLocaleDateString(),
-        cliente: project?.customer || ' ',
+        cliente: project?.customerName || project?.customer || ' ',
         description: description,
-        projectId: projectId,
+        projectId: String(project?.id ?? projectId ?? ''),
         products: selectedProducts
           .filter((p) => !p.stored)
           .reduce((acc, p) => {

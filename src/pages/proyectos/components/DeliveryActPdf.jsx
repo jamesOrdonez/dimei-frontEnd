@@ -109,20 +109,24 @@ export default function DeliveryActPdf({ project, user }) {
           <Text style={styles.sectionTitle}>Información General del Proyecto</Text>
           <View style={styles.projectInfo}>
             <View style={styles.infoItem}>
+              <Text style={styles.label}>N° de Proyecto:</Text>
+              <Text>{project.id || 'N/A'}</Text>
+            </View>
+            <View style={styles.infoItem}>
               <Text style={styles.label}>Cliente:</Text>
-              <Text>{project.customer || 'N/A'}</Text>
+              <Text>{project.customerName || project.customer || 'N/A'}</Text>
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.label}>Fecha de Cierre:</Text>
               <Text>{fecha}</Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.label}>Tipo de Ascensor:</Text>
-              <Text>{project.elevatorType || 'N/A'}</Text>
+              <Text style={styles.label}>Sistema Motriz:</Text>
+              <Text>{project.elevatorTypeName || project.elevatorType || 'N/A'}</Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.label}>Sistema Motriz:</Text>
-              <Text>{project.typeDriveSystem || 'N/A'}</Text>
+              <Text style={styles.label}>Tipo de ascensor:</Text>
+              <Text>{project.typeDriveSystemName || project.typeDriveSystem || 'N/A'}</Text>
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.label}>N° de Paradas:</Text>

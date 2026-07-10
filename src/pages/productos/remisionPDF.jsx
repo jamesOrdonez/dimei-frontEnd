@@ -94,16 +94,25 @@ export default function RemisionPDF({ remision }) {
           <Image style={styles.logo} src={{ uri: '/img/logo.png' }} />
           <View>
             <Text style={styles.headerText}>REMISIÓN DE INVENTARIO</Text>
-            <Text style={{ textAlign: 'right', fontSize: 10, color: '#64748b' }}>Remisión #: {remision.remisionId}</Text>
+            <Text style={{ textAlign: 'right', fontSize: 10, color: '#64748b' }}>Remisión #: {String(remision.remisionId)}</Text>
+            <Text style={{ textAlign: 'right', fontSize: 10, color: '#64748b' }}>Proyecto #: {remision.projectId != null ? String(remision.projectId) : 'S/N'}</Text>
           </View>
         </View>
 
         {/* DATOS GENERALES */}
         <View style={styles.section}>
-          <Text style={{ fontWeight: 'bold' }}>Fecha: <Text style={{ fontWeight: 'normal' }}>{remision.fecha}</Text></Text>
-          <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Cliente: <Text style={{ fontWeight: 'normal' }}>{remision.cliente || 'S/N'}</Text></Text>
-          <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Descripción: <Text style={{ fontWeight: 'normal' }}>{remision.description}</Text></Text>
-          <Text style={{ fontWeight: 'bold', marginTop: 4 }}>Proyecto: <Text style={{ fontWeight: 'normal' }}>#{remision.projectId}</Text></Text>
+          <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 3 }}>
+            {'Fecha: '}<Text style={{ fontFamily: 'Helvetica' }}>{remision.fecha || 'S/N'}</Text>
+          </Text>
+          <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 3 }}>
+            {'Proyecto #: '}<Text style={{ fontFamily: 'Helvetica' }}>{remision.projectId !== undefined && remision.projectId !== null && remision.projectId !== '' ? String(remision.projectId) : 'S/N'}</Text>
+          </Text>
+          <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 3 }}>
+            {'Cliente: '}<Text style={{ fontFamily: 'Helvetica' }}>{remision.cliente || 'S/N'}</Text>
+          </Text>
+          <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 3 }}>
+            {'Descripción: '}<Text style={{ fontFamily: 'Helvetica' }}>{remision.description || 'S/N'}</Text>
+          </Text>
         </View>
 
         {/* SECCIÓN DE PRODUCTOS */}

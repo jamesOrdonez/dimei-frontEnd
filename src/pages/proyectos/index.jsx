@@ -58,7 +58,7 @@ export default function Proyectos() {
   const fields = [
     {
       name: 'elevatorType',
-      label: 'Tipo de ascensor',
+      label: 'Sistema Motriz',
       input: 'select',
       optionLabel: 'elevatorType',
       endpoint: `/getElevatorTypes/${sessionStorage.getItem('company')}`,
@@ -67,7 +67,7 @@ export default function Proyectos() {
     },
     {
       name: 'typeDriveSystem',
-      label: 'Tipo de sistema',
+      label: 'Tipo de ascensor',
       input: 'select',
       optionLabel: 'typeDriveSystem',
       endpoint: `/getTypeDriveSystems/${sessionStorage.getItem('company')}`,
@@ -109,8 +109,8 @@ export default function Proyectos() {
   const mapData = (data) => {
     return data.map((item) => ({
       ...item,
-      'Tipo de ascensor': item.elevatorTypeName,
-      'Tipo de sistema': item.typeDriveSystemName,
+      'Tipo de ascensor': item.typeDriveSystemName,
+      'Tipo de sistema': item.elevatorTypeName,
       'Cliente': item.customerName,
     }));
   };

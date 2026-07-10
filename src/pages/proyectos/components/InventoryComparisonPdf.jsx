@@ -69,10 +69,10 @@ export default function InventoryComparisonPdf({
                   <Text style={{ fontFamily: 'Helvetica-Bold' }}>Cliente: </Text>{sectProjectObj.customerName || sectProjectObj.customer || 'S/N'}
                 </Text>
                 <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
-                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Tipo de Ascensor: </Text>{sectProjectObj.elevatorTypeName || 'S/N'}
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Sistema Motriz: </Text>{sectProjectObj.elevatorTypeName || 'S/N'}
                 </Text>
                 <Text style={[styles.subtitle, { color: '#334155', fontSize: 10, marginBottom: 2 }]}>
-                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Sistema Motriz: </Text>{sectProjectObj.typeDriveSystemName || 'S/N'}
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Tipo de Ascensor: </Text>{sectProjectObj.typeDriveSystemName || 'S/N'}
                 </Text>
               </View>
             ) : sectionTitle ? (
@@ -102,7 +102,7 @@ export default function InventoryComparisonPdf({
             </View>
             <View style={styles.summaryBox}>
               <Text style={styles.summaryLabel}>TOTAL A COMPRAR</Text>
-              <Text style={styles.summaryValueRed}>{sectSummary.toBuyUnits} unds.</Text>
+              <Text style={styles.summaryValueRed}>{Math.round(sectSummary.toBuyUnits)} unds.</Text>
               <Text style={styles.summaryValueRed}>{fCurrency(sectSummary.toBuyCost)}</Text>
             </View>
           </View>
@@ -126,13 +126,12 @@ export default function InventoryComparisonPdf({
             const catObj = categories.find(c => String(c.id) === String(row.category));
             const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
             
-            const total = Math.max(0, row.total_inventory);
-            const comp = isFreeSection ? 0 : Math.max(0, row.separated_inventory);
-            const lib = Math.max(0, row.available_inventory);
+            const total = Number(Math.max(0, row.total_inventory).toFixed(2));
+            const comp = isFreeSection ? 0 : Number(Math.max(0, row.separated_inventory).toFixed(2));
+            const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
             
-            const available_active = row.available_inventory_active !== undefined ? row.available_inventory_active : row.available_inventory;
-            const deficit = !isFreeSection && available_active < 0 ? Math.abs(available_active) : 0;
-            const isBuy = !isFreeSection && available_active < 0;
+            const deficit = row.deficit || 0;
+            const isBuy = deficit > 0;
 
             return (
               <View key={index} style={styles.tableRow} wrap={false}>

@@ -189,11 +189,11 @@ export default function ProjectReportPdf({ project }) {
             <Text style={styles.colValue}>{project.customerName || project.customer || 'N/A'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.colLabel}>Tipo de Ascensor:</Text>
+            <Text style={styles.colLabel}>Sistema Motriz:</Text>
             <Text style={styles.colValue}>{project.elevatorTypeName || 'N/A'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.colLabel}>Sistema Motriz:</Text>
+            <Text style={styles.colLabel}>Tipo de Ascensor:</Text>
             <Text style={styles.colValue}>{project.typeDriveSystemName || 'N/A'}</Text>
           </View>
           <View style={styles.row}>
