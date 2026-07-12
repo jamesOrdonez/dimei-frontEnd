@@ -10,6 +10,7 @@ import ClientContacts from './inputs/input-contacts/client.contacts.tsx';
 import FormItemTransfer from './inputs/item-transfer/form.item.transfer.tsx';
 import FormToolTransfer from './inputs/tool-transfer/form.tool.transfer.tsx';
 import BaseCurrency from './inputs/input-currency/base.currency.tsx';
+import BaseSwitch from './inputs/input-switch/base.switch.tsx';
 
 // Mapping of input types to their respective components
 const INPUT_COMPONENTS: Record<string, any> = {
@@ -23,6 +24,7 @@ const INPUT_COMPONENTS: Record<string, any> = {
   itemTransfer: FormItemTransfer,
   toolTransfer: FormToolTransfer,
   currency: BaseCurrency,
+  switch: BaseSwitch,
 };
 
 export interface BaseField {

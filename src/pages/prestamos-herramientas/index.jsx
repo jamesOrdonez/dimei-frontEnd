@@ -199,13 +199,38 @@ export default function PrestamosHerramientas() {
         ]}
         renderExtraCell={({ item, headerLabel }) => {
           if (headerLabel === 'Estado') {
+            const statuses = new Set();
+
+            if (item.status === 'Prestado') statuses.add('Prestado');
+
+            (item.loanItems || []).forEach(li => {
+              if (li.status && li.status !== 'Prestado' && li.returned_quantity > 0) {
+                statuses.add(li.status);
+              }
+            });
+
+            (item.statusHistory || []).forEach(h => {
+              if (h.tool_id != null && h.status) {
+                statuses.add(h.status);
+              }
+            });
+
+            if (statuses.size === 0) {
+               statuses.add(item.status);
+            }
+
             return (
-              <Chip
-                label={item.status}
-                color={STATUS_COLORS[item.status] || 'default'}
-                size="small"
-                sx={{ fontWeight: 'bold' }}
-              />
+              <Box display="flex" gap={0.5} flexWrap="wrap">
+                {Array.from(statuses).map(st => (
+                  <Chip
+                    key={st}
+                    label={st}
+                    color={STATUS_COLORS[st] || 'default'}
+                    size="small"
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                ))}
+              </Box>
             );
           }
           return null;
