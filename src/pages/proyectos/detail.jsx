@@ -330,6 +330,17 @@ export default function DetalleProyecto() {
               <Typography variant="body1" fontWeight="500">{project.capacity || 0} kg</Typography>
             </Grid>
 
+            <Grid item xs={12} sm={6} md={4}>
+              <Typography variant="caption" color="text.secondary" display="block">¿Necesita Encerramiento?</Typography>
+              <Typography variant="body1" fontWeight="500">
+                {(project.necesita_encerramiento === 1 || project.necesita_encerramiento === true) ? (
+                  <span style={{ color: '#0d6efd', fontWeight: 600 }}>
+                    Sí — {project.metros_cuadrados || 0} m²
+                  </span>
+                ) : 'No'}
+              </Typography>
+            </Grid>
+
             {project.state === 'Finalizado' && (
               <Grid item xs={12}>
                 <Divider sx={{ my: 1, borderStyle: 'dashed' }} />

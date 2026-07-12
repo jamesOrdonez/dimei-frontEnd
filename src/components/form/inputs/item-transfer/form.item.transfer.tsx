@@ -38,6 +38,7 @@ interface ProjectItem {
 interface FormItemTransferProps {
   name: string;
   value: ProjectItem[];
+  disableVariable?: boolean;
   onChange: (e: { target: { name: string; value: ProjectItem[] } }) => void;
 }
 
@@ -54,13 +55,14 @@ interface LeftRowProps {
   quantity: number | string;
   value1: number | string;
   value2: number | string;
+  disableVariable?: boolean;
   onToggle: (item: any) => void;
   onFieldChange: (id: any, field: string, val: any) => void;
 }
 
 const LeftItemRow = memo(
-  ({ item, groupName, isSelected, variable, quantity, value1, value2, onToggle, onFieldChange }: LeftRowProps) => {
-    const isVariable = String(variable) === '1';
+  ({ item, groupName, isSelected, variable, quantity, value1, value2, disableVariable, onToggle, onFieldChange }: LeftRowProps) => {
+    const isVariable = !disableVariable && String(variable) === '1';
     return (
       <React.Fragment>
         <ListItem
@@ -101,18 +103,20 @@ const LeftItemRow = memo(
               pt={1}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Row 1: ¿Es variable? — full width */}
-              <FormControl fullWidth size="small" sx={{ mb: 1 }}>
-                <InputLabel>¿Es variable?</InputLabel>
-                <Select
-                  value={String(variable || '0')}
-                  label="¿Es variable?"
-                  onChange={(e) => onFieldChange(item.id, 'variable', e.target.value)}
-                >
-                  <MenuItem value="0">No</MenuItem>
-                  <MenuItem value="1">Sí</MenuItem>
-                </Select>
-              </FormControl>
+              {/* Row 1: ¿Es variable? — full width (hidden when disableVariable) */}
+              {!disableVariable && (
+                <FormControl fullWidth size="small" sx={{ mb: 1 }}>
+                  <InputLabel>¿Es variable?</InputLabel>
+                  <Select
+                    value={String(variable || '0')}
+                    label="¿Es variable?"
+                    onChange={(e) => onFieldChange(item.id, 'variable', e.target.value)}
+                  >
+                    <MenuItem value="0">No</MenuItem>
+                    <MenuItem value="1">Sí</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
 
               {/* Row 2: Cantidad (full width) OR Valor1+Valor2 (50/50) */}
               {!isVariable ? (
@@ -268,7 +272,7 @@ const RightItemRow = memo(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function FormItemTransfer({ name, value, onChange }: FormItemTransferProps) {
+function FormItemTransfer({ name, value, onChange, disableVariable = false }: FormItemTransferProps) {
   const company = useRef(sessionStorage.getItem('company')).current;
   const onChangeRef = useRef(onChange);
   const nameRef = useRef(name);
@@ -502,6 +506,7 @@ function FormItemTransfer({ name, value, onChange }: FormItemTransferProps) {
                     quantity={sel?.quantity ?? 1}
                     value1={sel?.value1 ?? ''}
                     value2={sel?.value2 ?? ''}
+                    disableVariable={disableVariable}
                     onToggle={handleToggleLeft}
                     onFieldChange={handleLeftFieldChange}
                   />
@@ -621,4 +626,4 @@ function FormItemTransfer({ name, value, onChange }: FormItemTransferProps) {
  * Prevents re-renders when the parent (BaseForm) re-renders due to
  * other field changes (e.g. typing in description).
  */
-export default memo(FormItemTransfer, (prev, next) => prev.value === next.value);
+export default memo(FormItemTransfer, (prev, next) => prev.value === next.value && prev.disableVariable === next.disableVariable);

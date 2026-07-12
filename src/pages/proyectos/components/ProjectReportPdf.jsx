@@ -128,9 +128,18 @@ export default function ProjectReportPdf({ project }) {
   if (!project) return null;
 
   const travelVal = parseFloat(project.travel) || 0;
+  const necesitaEncerramiento = project.necesita_encerramiento === 1 || project.necesita_encerramiento === true;
+  const metrosCuadrados = parseFloat(project.metros_cuadrados) || 0;
 
   const processedProducts = (project.products || []).map((prod) => {
     let productTotalUnit = 0;
+
+    // If this product is "por_metros_cuadrados" and project has encerramiento, scale the qty
+    const esPorMetros = prod.por_metros_cuadrados === 1 || prod.por_metros_cuadrados === true;
+    const productQty = (necesitaEncerramiento && esPorMetros && metrosCuadrados > 0)
+      ? (Number(prod.quantity) || 1) * metrosCuadrados
+      : (Number(prod.quantity) || 1);
+
     const processedItems = (prod.items || []).map((item) => {
       let finalQuantity = Number(item.quantity) || 1;
       
@@ -154,8 +163,10 @@ export default function ProjectReportPdf({ project }) {
 
     return {
       ...prod,
+      quantity: productQty,
       items: processedItems,
-      total_price: productTotalUnit
+      total_price: productTotalUnit,
+      esPorMetros,
     };
   });
 
@@ -208,6 +219,12 @@ export default function ProjectReportPdf({ project }) {
             <Text style={styles.colLabel}>Capacidad:</Text>
             <Text style={styles.colValue}>{project.capacity || 0} kg</Text>
           </View>
+          {necesitaEncerramiento && (
+            <View style={styles.row}>
+              <Text style={styles.colLabel}>Encerramiento:</Text>
+              <Text style={styles.colValue}>Sí — {metrosCuadrados} m²</Text>
+            </View>
+          )}
         </View>
 
         {processedProducts && processedProducts.length > 0 && (

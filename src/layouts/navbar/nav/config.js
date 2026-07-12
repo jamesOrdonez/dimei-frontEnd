@@ -34,6 +34,12 @@ const navConfig = [
     showForRoles: ['Técnicos']
   },
   {
+    title: 'Proyectos Cerrados',
+    path: '/mantenimiento/proyectos-cerrados',
+    icon: <ArchiveBoxIcon className="h-6 w-6" />,
+    showForRoles: ['Técnicos']
+  },
+  {
     title: 'Historial Mantenimientos',
     path: '/mantenimiento/historial',
     icon: <ClipboardDocumentListIcon className="h-6 w-6" />,

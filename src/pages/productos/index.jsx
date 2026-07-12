@@ -1,10 +1,15 @@
 import { useMemo, useState, useEffect } from 'react';
 import axios from 'axios';
+import { Tooltip, Button } from '@mui/material';
+import InventoryLogModal from '../../components/dialog/InventoryLogModal.jsx';
+import { ClockIcon } from '@heroicons/react/24/outline';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 export default function Productos() {
   const { hasPermission, isAdmin } = usePermissions();
   const [productGroups, setProductGroups] = useState([]);
+  const [openLogModal, setOpenLogModal] = useState(false);
+  const [selectedLogProduct, setSelectedLogProduct] = useState(null);
   const company = sessionStorage.getItem('company');
 
   useEffect(() => {
@@ -42,9 +47,18 @@ export default function Productos() {
       grid: { xs: 12 },
     },
     {
+      name: 'por_metros_cuadrados',
+      label: 'Por metros cuadrados',
+      input: 'switch',
+      grid: { xs: 12 },
+    },
+    {
       name: 'net_items',
       input: 'itemTransfer',
       grid: { xs: 12 },
+      dynamicProps: ({ values }) => ({
+        disableVariable: values?.por_metros_cuadrados === 1 || values?.por_metros_cuadrados === true || values?.por_metros_cuadrados === '1',
+      }),
     }
   ], []);
 
@@ -77,18 +91,40 @@ export default function Productos() {
         hideDelete={!isAdmin}
         formMaxWidth="md"
         formAdditionalValues={{ mathOperation: '+' }}
-        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items', 'Grupo']}
+        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items', 'Grupo', 'por_metros_cuadrados']}
         extraHeaders={[
           { label: 'Grupo', after: 'name' },
+          { label: 'Acciones' }
         ]}
         renderExtraCell={({ item, headerLabel }) => {
           switch (headerLabel) {
             case 'Grupo':
               return item.group_product?.name || '-';
+            case 'Acciones':
+              return (
+                <Tooltip title="Historial de movimientos" placement="top">
+                  <span>
+                    <Button onClick={() => {
+                      setSelectedLogProduct(item);
+                      setOpenLogModal(true);
+                    }}>
+                      <ClockIcon className="h-6 w-6 text-blue-600" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              );
             default:
               return null;
           }
         }}
+      />
+      
+      <InventoryLogModal 
+        open={openLogModal} 
+        onClose={() => setOpenLogModal(false)} 
+        targetId={selectedLogProduct?.id} 
+        targetType="product" 
+        targetName={selectedLogProduct?.name} 
       />
     </>
     );

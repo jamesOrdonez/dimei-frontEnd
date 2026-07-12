@@ -44,19 +44,23 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
   const [rightSelected, setRightSelected] = useState([]);  // items marcados en panel der.
 
   // ── helpers ──────────────────────────────────────────────────────────────────
-  // Solo excluir del panel izquierdo los ítems que el usuario está moviendo
-  // (no los alreadyReturned, que son solo informativos en el panel derecho)
-  const newReturnIds = new Set(
-    selected.filter(r => !r.alreadyReturned).map(r => r.loanItemId)
-  );
-  // Panel izquierdo: ítems con cantidad pendiente y que no estén en proceso de devolución nueva
-  const available = loanItems.filter(li =>
-    !newReturnIds.has(li.id) && (li.quantity - (li.returned_quantity || 0)) > 0
-  );
+  const getPendingReturnQty = (loanItemId) => {
+    return selected
+      .filter(r => !r.alreadyReturned && r.loanItemId === loanItemId)
+      .reduce((sum, r) => sum + Number(r.returnQty || 0), 0);
+  };
+
+  // Panel izquierdo: ítems con cantidad pendiente, descontando lo que ya se movió al panel derecho
+  const available = loanItems.filter(li => {
+    const returningQty = getPendingReturnQty(li.id);
+    return (li.quantity - (li.returned_quantity || 0) - returningQty) > 0;
+  });
 
   const buildRow = (li) => {
-    const remainingQty = li.quantity - (li.returned_quantity || 0);
+    const returningQty = getPendingReturnQty(li.id);
+    const remainingQty = li.quantity - (li.returned_quantity || 0) - returningQty;
     return {
+      tempId: Math.random().toString(36).substring(2, 9),
       loanItemId: li.id,
       tool_id: li.tool_id,
       description: li.tool?.description || `Herramienta #${li.tool_id}`,
@@ -81,9 +85,9 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
 
   const toggleRight = (row) => {
     setRightSelected(prev => {
-      const exists = prev.some(i => i.loanItemId === row.loanItemId);
+      const exists = prev.some(i => i.tempId === row.tempId);
       return exists
-        ? prev.filter(i => i.loanItemId !== row.loanItemId)
+        ? prev.filter(i => i.tempId !== row.tempId)
         : [...prev, row];
     });
   };
@@ -96,8 +100,8 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
   };
 
   // ── cantidad y estado en panel derecho ────────────────────────────────────────
-  const updateRight = (loanItemId, patch) => {
-    onChange(selected.map(r => r.loanItemId === loanItemId ? { ...r, ...patch } : r));
+  const updateRight = (tempId, patch) => {
+    onChange(selected.map(r => r.tempId === tempId ? { ...r, ...patch } : r));
   };
 
   // ── mover derecha (añadir a selección) ───────────────────────────────────────
@@ -108,8 +112,8 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
 
   // ── mover izquierda (quitar de selección) — solo los NO ya devueltos ────────
   const moveLeft = () => {
-    const removingIds = new Set(rightSelected.map(r => r.loanItemId));
-    onChange(selected.filter(r => r.alreadyReturned || !removingIds.has(r.loanItemId)));
+    const removingIds = new Set(rightSelected.map(r => r.tempId));
+    onChange(selected.filter(r => r.alreadyReturned || !removingIds.has(r.tempId)));
     setRightSelected([]);
   };
 
@@ -217,8 +221,12 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                           label="Cant."
                           value={row.returnQty}
                           onChange={e => {
-                            const val = Math.max(1, Math.min(Number(e.target.value), row.remainingQty));
-                            updateLeft(li.id, { returnQty: val });
+                            const val = e.target.value;
+                            if (val === '') {
+                              updateLeft(li.id, { returnQty: '' });
+                            } else {
+                              updateLeft(li.id, { returnQty: Math.min(Number(val), row.remainingQty) });
+                            }
                           }}
                           inputProps={{ min: 1, max: row.remainingQty, style: { textAlign: 'center' } }}
                           sx={{ width: 80 }}
@@ -324,7 +332,7 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                 /* ── Fila NUEVA: editable con checkbox para quitar ── */
                 return (
                   <ListItem
-                    key={row.loanItemId}
+                    key={row.tempId}
                     button
                     onClick={() => toggleRight(row)}
                     alignItems="flex-start"
@@ -332,7 +340,7 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                   >
                     <Box display="flex" alignItems="center" width="100%">
                       <ListItemIcon sx={{ minWidth: 36 }}>
-                        <Checkbox edge="start" checked={rightSelected.some(r => r.loanItemId === row.loanItemId)} tabIndex={-1} disableRipple />
+                        <Checkbox edge="start" checked={rightSelected.some(r => r.tempId === row.tempId)} tabIndex={-1} disableRipple />
                       </ListItemIcon>
                       <ListItemText
                         primary={row.description}
@@ -353,8 +361,12 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                         label="Cant."
                         value={row.returnQty}
                         onChange={e => {
-                          const val = Math.max(1, Math.min(Number(e.target.value), row.remainingQty));
-                          updateRight(row.loanItemId, { returnQty: val });
+                          const val = e.target.value;
+                          if (val === '') {
+                            updateRight(row.tempId, { returnQty: '' });
+                          } else {
+                            updateRight(row.tempId, { returnQty: Math.min(Number(val), row.remainingQty) });
+                          }
                         }}
                         inputProps={{ min: 1, max: row.remainingQty, style: { textAlign: 'center' } }}
                         sx={{ width: 80 }}
@@ -362,7 +374,7 @@ export default function ToolReturnTransfer({ loanItems = [], selected = [], onCh
                       <FormControl size="small" sx={{ flex: 1 }}>
                         <Select
                           value={row.status}
-                          onChange={e => updateRight(row.loanItemId, { status: e.target.value })}
+                          onChange={e => updateRight(row.tempId, { status: e.target.value })}
                         >
                           {RETURN_STATUS_OPTIONS.map(s => (
                             <MenuItem key={s} value={s}>

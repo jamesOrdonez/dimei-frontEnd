@@ -16,6 +16,8 @@ import BaseButton from '../../components/ui/BaseButton.tsx';
 import RemisionPDF from '../productos/remisionPDF.jsx';
 import InventoryReportPDF from './InventoryReportPDF.jsx';
 import SummaryCard from '../../components/ui/SummaryCard.jsx';
+import InventoryLogModal from '../../components/dialog/InventoryLogModal.jsx';
+import { ClockIcon } from '@heroicons/react/24/outline';
 import { decrypt } from '../../utils/crypto.js';
 import { pdf } from '@react-pdf/renderer';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -27,6 +29,8 @@ export default function Items() {
 
   const [openModal, setOpenModal] = useState(false);
   const [openModalRemission, setOpenModalRemission] = useState(false);
+  const [openLogModal, setOpenLogModal] = useState(false);
+  const [selectedLogItem, setSelectedLogItem] = useState(null);
   const [movementType, setMovementType] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -49,6 +53,10 @@ export default function Items() {
     setSelectedItem(item);
     setMovementType(type);
     setOpenModal(true);
+  };
+  const handleOpenLog = (item) => {
+    setSelectedLogItem(item);
+    setOpenLogModal(true);
   };
   const handleQRClick = (event, item) => {
     setQrMenuAnchor(event.currentTarget);
@@ -389,6 +397,14 @@ export default function Items() {
                   </span>
                 </Tooltip>
               )}
+              
+              <Tooltip title="Historial" placement="top">
+                <span>
+                  <Button onClick={() => handleOpenLog(item)}>
+                    <ClockIcon className="h-6 w-6 text-blue-600" />
+                  </Button>
+                </span>
+              </Tooltip>
             </div>
           );
         }}
@@ -416,6 +432,14 @@ export default function Items() {
         initialValues={movementInitialValues}
         title={`${movementType === 'entrance' ? 'Entrada' : 'Salida'} de inventario`}
         saveEndpoint={movementType === 'entrance' ? `/entrance` : `/exit`}
+      />
+
+      <InventoryLogModal 
+        open={openLogModal} 
+        onClose={() => setOpenLogModal(false)} 
+        targetId={selectedLogItem?.id} 
+        targetType="item" 
+        targetName={selectedLogItem?.description} 
       />
 
       <Menu

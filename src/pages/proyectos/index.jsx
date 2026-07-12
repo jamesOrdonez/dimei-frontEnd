@@ -104,14 +104,31 @@ export default function Proyectos() {
       grid: { xs: 12, sm: 4 },
       required: true,
     },
+    {
+      name: 'necesita_encerramiento',
+      label: '¿Necesita encerramiento?',
+      input: 'switch',
+      grid: { xs: 12 },
+    },
+    {
+      name: 'metros_cuadrados',
+      label: 'Metros cuadrados de encerramiento',
+      input: 'number',
+      grid: { xs: 12 },
+      hasToHide: ({ values }) => !(values?.necesita_encerramiento === 1 || values?.necesita_encerramiento === true || values?.necesita_encerramiento === '1'),
+    },
   ];
 
   const mapData = (data) => {
     return data.map((item) => ({
-      ...item,
+      id: item.id,
+      Cliente: item.customerName,
       'Tipo de ascensor': item.typeDriveSystemName,
       'Tipo de sistema': item.elevatorTypeName,
-      'Cliente': item.customerName,
+      stopNumber: item.stopNumber,
+      travel: item.travel,
+      capacity: item.capacity,
+      ...item
     }));
   };
 
@@ -130,7 +147,7 @@ export default function Proyectos() {
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
-        extraHeaders={[{ label: 'Estado', after: 'Cliente' }]}
+        extraHeaders={[{ label: 'Estado', after: 'capacity' }]}
         renderExtraCell={({ item, headerLabel }) => {
           if (headerLabel === 'Estado') {
             const stateColors = {
@@ -166,7 +183,7 @@ export default function Proyectos() {
             </IconButton>
           )
         )}
-        excludeKeys={['proyectos', 'questionGroupId', 'user', 'lastMaintenance', 'company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre']}
+        excludeKeys={['proyectos', 'questionGroupId', 'user', 'lastMaintenance', 'company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel']}
         customFilters={customFilters}
       />
     </>
