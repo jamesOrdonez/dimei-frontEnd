@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button, CircularProgress, Box } from '@mui/material';
 import axios from 'axios';
 import BaseDialog from '../dialog/base.dialog.tsx';
@@ -72,7 +72,62 @@ export default function FormDialog({
 }: FormDialogProps) {
   const [currentData, setCurrentData] = useState<Record<string, any>>(initialValues || {});
   const [isFetching, setIsFetching] = useState(false);
+  const [isFetchingCopy, setIsFetchingCopy] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // Track previous copyFromProductId to detect changes
+  const prevCopyFromRef = useRef<any>(null);
+  // Module-level cache shared across all FormDialog instances
+  const productCacheRef = useRef<Record<string, any>>({});
+
+  // When copyFromProductId changes inside the form, fetch and prefill that product's data
+  useEffect(() => {
+    const copyId = currentData?.copyFromProductId;
+    if (!copyId || copyId === prevCopyFromRef.current) return;
+    prevCopyFromRef.current = copyId;
+
+    // Return immediately from cache — 0ms, no network call
+    if (productCacheRef.current[copyId]) {
+      const product = productCacheRef.current[copyId];
+      setCurrentData(prev => ({
+        ...prev,
+        name: product.name ?? prev.name,
+        description: product.description ?? prev.description,
+        fk_group_product: product.fk_group_product ?? prev.fk_group_product,
+        por_metros_cuadrados: product.por_metros_cuadrados ?? prev.por_metros_cuadrados,
+        net_items: product.net_items ?? prev.net_items,
+        copyFromProductId: copyId,
+      }));
+      return;
+    }
+
+    // Not cached yet — fetch with abort support
+    const controller = new AbortController();
+    setIsFetchingCopy(true);
+
+    axios.get(`/getOneproduct/${copyId}`, { signal: controller.signal })
+      .then(res => {
+        const product = res.data.data || res.data;
+        // Store in cache for future selections
+        productCacheRef.current[copyId] = product;
+        setCurrentData(prev => ({
+          ...prev,
+          name: product.name ?? prev.name,
+          description: product.description ?? prev.description,
+          fk_group_product: product.fk_group_product ?? prev.fk_group_product,
+          por_metros_cuadrados: product.por_metros_cuadrados ?? prev.por_metros_cuadrados,
+          net_items: product.net_items ?? prev.net_items,
+          copyFromProductId: copyId,
+        }));
+      })
+      .catch(e => {
+        if (axios.isCancel(e)) return; // Stale request — ignore silently
+        console.error('Error fetching product to copy:', e);
+      })
+      .finally(() => setIsFetchingCopy(false));
+
+    // Cleanup: abort if user changes selection before response arrives
+    return () => controller.abort();
+  }, [currentData?.copyFromProductId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,6 +162,8 @@ export default function FormDialog({
     };
 
     if (open) {
+      // Reset copy-from tracker so user can re-select on next open
+      prevCopyFromRef.current = null;
       fetchData();
     }
   }, [open, initialValues, mode, endpoint, updateEndpoint, fetchOneEndpoint]);
@@ -264,12 +321,24 @@ export default function FormDialog({
             <CircularProgress />
           </Box>
         ) : (
-          <BaseForm
-            mode={mode}
-            fields={fields}
-            initialValues={currentData}
-            onChange={(data) => setCurrentData(data)}
-          />
+          <>
+            {isFetchingCopy && (
+              <Box sx={{
+                position: 'absolute', inset: 0, zIndex: 10,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                bgcolor: 'rgba(255,255,255,0.7)',
+                borderRadius: 1,
+              }}>
+                <CircularProgress size={28} />
+              </Box>
+            )}
+            <BaseForm
+              mode={mode}
+              fields={fields}
+              initialValues={currentData}
+              onChange={(data) => setCurrentData(data)}
+            />
+          </>
         )}
       </Box>
     </BaseDialog>

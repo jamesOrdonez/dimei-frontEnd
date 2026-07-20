@@ -51,6 +51,8 @@ interface BaseGridProps {
   hideEdit?: boolean;
   hideDelete?: boolean;
   formMaxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
+  /** Values to pre‑fill when creating a new record (e.g., copy‑from‑product) */
+  prefillValues?: Record<string, any>;
 }
 
 export default function BaseGrid({ 
@@ -76,6 +78,7 @@ export default function BaseGrid({
   hideEdit = false,
   hideDelete = false,
   formMaxWidth,
+  prefillValues,
 }: BaseGridProps) {
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -187,7 +190,7 @@ export default function BaseGrid({
         onSearchChange={setSearch}
         onNewClick={hideCreate ? undefined : () => {
           setDialogMode('create');
-          setSelectedItem(null);
+          setSelectedItem(prefillValues || null);
           setOpenDialog(true);
         }}
         extraActions={extraHeaderActions}
