@@ -15,7 +15,7 @@ export default function Productos() {
   useEffect(() => {
     axios.get(`/getProductGroup/${company}`).then(res => {
       setProductGroups(res.data.data || res.data || []);
-    }).catch(err => console.error("Error fetching product groups", err));
+    }).catch(err => console.error('Error fetching product groups', err));
   }, [company]);
 
   const mapProductsData = (products) => {
@@ -26,6 +26,15 @@ export default function Productos() {
   };
 
   const fields = useMemo(() => [
+    {
+      name: 'copyFromProductId',
+      label: 'Copiar de producto (opcional)',
+      input: 'select',
+      endpoint: `/getProduct/${sessionStorage.getItem('company')}`,
+      grid: { xs: 12 },
+      // When a product is selected, its data can be used to pre-fill the form in the modal.
+      // The actual pre-filling logic should be handled within the BaseGrid component or its form handling.
+    },
     {
       name: 'name',
       label: 'Nombre',
@@ -91,7 +100,7 @@ export default function Productos() {
         hideDelete={!isAdmin}
         formMaxWidth="md"
         formAdditionalValues={{ mathOperation: '+' }}
-        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items', 'Grupo', 'por_metros_cuadrados']}
+        excludeKeys={['id', 'company', 'user', 'fk_group_product', 'group_product', 'mathOperation', 'group_item', 'net_items', 'Grupo', 'por_metros_cuadrados', 'copyFromProductId']}
         extraHeaders={[
           { label: 'Grupo', after: 'name' },
           { label: 'Acciones' }

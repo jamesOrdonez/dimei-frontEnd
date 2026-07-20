@@ -66,14 +66,34 @@ export default function AnalisisInventario() {
     return 0;
   }, []);
 
+  // Debounce searchText para no disparar una petición por cada tecla
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 350);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  // ── FETCH PRINCIPAL: se dispara cuando cualquier filtro cambia ────────────
+  useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
-    const params = selectedProject !== 'all' ? { projectId: selectedProject } : {};
-    axios.get(`/getInventoryComparison/${company}`, { params })
+
+    const params = {};
+    if (selectedProject !== 'all') params.projectId = selectedProject;
+    if (selectedCategory !== 'all') params.categoryId = selectedCategory;
+    if (selectedProveedor !== 'all') params.providerId = selectedProveedor;
+    if (debouncedSearch) params.searchText = debouncedSearch;
+
+    axios.get(`/getInventoryComparison/${company}`, { params, signal: controller.signal })
       .then(res => setData(res.data.data || []))
-      .catch(err => console.error('Error fetching inventory comparison', err))
+      .catch(err => { if (!axios.isCancel(err)) console.error('Error fetching inventory comparison', err); })
       .finally(() => setLoading(false));
 
+    return () => controller.abort(); // cancela petición anterior si el filtro cambia rápido
+  }, [company, selectedProject, selectedCategory, selectedProveedor, debouncedSearch]);
+
+  // Fetch de catálogos estáticos (solo al montar)
+  useEffect(() => {
     axios.get(`/getItemGroup/${company}`)
       .then(res => setCategories(res.data.data || res.data || []))
       .catch(err => console.error('Error fetching categories', err));
@@ -81,27 +101,42 @@ export default function AnalisisInventario() {
     axios.get(`/getProjects/${company}`)
       .then(res => setProjects(res.data.data || []))
       .catch(err => console.error('Error fetching projects', err));
-  }, [company, selectedProject]);
+  }, [company]);
 
+  // ── FILTRO CLIENTE: solo estado de disponibilidad (requiere valores computados) ──
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      if (searchText && !item.item_name.toLowerCase().includes(searchText.toLowerCase())) return false;
-      if (selectedCategory !== 'all' && String(item.category) !== String(selectedCategory)) return false;
-      if (selectedProveedor !== 'all' && item.proveedor !== selectedProveedor) return false;
-      const available = item.available_inventory;
-      const available_active = item.available_inventory_active !== undefined ? item.available_inventory_active : available;
+      // ── PROYECTO ──────────────────────────────────────────────────────────
+      // (texto, categoría y proveedor ya vienen filtrados desde el backend)
+      if (selectedProject !== 'all') {
+        const projectAlloc = item.allocations?.find(
+          a => String(a.projectId) === String(selectedProject) && a.quantity > 0
+        );
+        if (!projectAlloc) return false;
+      }
+
+      // ── ESTADO DE DISPONIBILIDAD ──────────────────────────────────────────
+      const activeAvailable = item.available_inventory_active !== undefined
+        ? item.available_inventory_active
+        : item.available_inventory;
       const lowThreshold = item.low_stock || 0;
-      if (selectedStatus === 'good' && available <= lowThreshold) return false;
-      if (selectedStatus === 'low' && (available > lowThreshold || available <= 0)) return false;
-      if (selectedStatus === 'buy' && Math.ceil(calculateDeficit(item, selectedProject)) <= 0) return false;
-      if (selectedProject !== 'all' && item.separated_inventory <= 0) return false;
+
+      if (selectedStatus === 'good' && activeAvailable <= lowThreshold) return false;
+      if (selectedStatus === 'low' && (activeAvailable > lowThreshold || activeAvailable <= 0)) return false;
+      if (selectedStatus === 'buy') {
+        const deficit = Math.ceil(calculateDeficit(item, selectedProject));
+        if (deficit <= 0) return false;
+      }
+
       return true;
     });
-  }, [data, searchText, selectedCategory, selectedStatus, selectedProject, selectedProveedor]);
+  }, [data, selectedStatus, selectedProject, calculateDeficit]);
 
   const proveedoresUnicos = useMemo(() => {
-    return Array.from(new Set(data.map(d => d.proveedor).filter(p => p && p !== '-'))).sort();
-  }, [data]);
+    return Array.from(new Set(
+      (projects.length > 0 ? data : []).map(d => d.proveedor).filter(p => p && p !== '-')
+    )).sort();
+  }, [data, projects]);
 
   useEffect(() => {
     setPage(0);
@@ -335,7 +370,7 @@ export default function AnalisisInventario() {
         <TableBody>
           {paginatedData.length > 0 ? paginatedData.map((row) => {
             const total = Number(Math.max(0, row.total_inventory).toFixed(2));
-            const comp = Number(Math.max(0, row.separated_inventory).toFixed(2));
+            const comp = Math.ceil(Math.max(0, row.separated_inventory));
             const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
             const deficit = Math.ceil(calculateDeficit(row, selectedProject));
             const ratio = total > 0 ? (lib / total) * 100 : 0;
@@ -404,7 +439,7 @@ export default function AnalisisInventario() {
     <Grid container spacing={2}>
       {paginatedData.length > 0 ? paginatedData.map((row) => {
         const total = Number(Math.max(0, row.total_inventory).toFixed(2));
-        const comp = Number(Math.max(0, row.separated_inventory).toFixed(2));
+        const comp = Math.ceil(Math.max(0, row.separated_inventory));
         const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
         const deficit = Math.ceil(calculateDeficit(row, selectedProject));
         const compRatio = total > 0 ? (comp / total) * 100 : 0;
@@ -579,7 +614,7 @@ export default function AnalisisInventario() {
                 <Box sx={{ bgcolor: '#fffbeb', p: 1.5, borderRadius: 2, mr: 2, display: 'flex' }}><SunIcon className="w-6 h-6 text-amber-500" /></Box>
                 <Box>
                   <Typography variant="caption" fontWeight={600} color="#94a3b8" letterSpacing={1}>COMPROMETIDO</Typography>
-                  <Typography variant="h4" fontWeight={800} color="#f59e0b" lineHeight={1}>{summary.committed.toFixed(2)}</Typography>
+                  <Typography variant="h4" fontWeight={800} color="#f59e0b" lineHeight={1}>{Math.ceil(summary.committed)}</Typography>
                 </Box>
               </Card>
             </Grid>
