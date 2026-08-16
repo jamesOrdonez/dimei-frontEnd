@@ -4,124 +4,172 @@ import { fCurrency } from '../../../utils/formatNumber';
 
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    paddingTop: 28,
+    paddingBottom: 40,
+    paddingHorizontal: 32,
     fontFamily: 'Helvetica',
     fontSize: 10,
-    color: '#333',
+    color: '#1A1A2E',
+    backgroundColor: '#FFFFFF',
   },
-  headerContainer: {
+
+  // Header
+  headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingBottom: 10,
+    backgroundColor: '#1565C0',
+    borderRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
-  headerTextContainer: {
-    flex: 1,
-  },
-  logo: {
-    width: 120,
-    maxHeight: 60,
-    objectFit: 'contain',
-    marginLeft: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
-    color: '#1a1a1a',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#666',
-  },
-  section: {
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: 8,
-    color: '#2b2b2b',
-    backgroundColor: '#f4f6f8',
-    padding: 4,
-  },
-  row: {
+  headerTitle: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#FFFFFF' },
+  headerSubtitle: { fontSize: 9, color: '#BBDEFB', marginTop: 3 },
+  logo: { width: 100, maxHeight: 50, objectFit: 'contain' },
+
+  // Info card
+  infoCard: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 4,
+    padding: 12,
+    marginBottom: 18,
     flexDirection: 'row',
-    marginBottom: 4,
+    flexWrap: 'wrap',
   },
-  colLabel: {
-    width: '30%',
+  infoItem: { width: '33%', marginBottom: 8 },
+  infoLabel: {
+    fontSize: 8,
+    color: '#1565C0',
     fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 2,
   },
-  colValue: {
-    width: '70%',
+  infoValue: { fontSize: 10, color: '#1A1A2E', fontFamily: 'Helvetica-Bold' },
+
+  // Section
+  section: { marginBottom: 18 },
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1565C0',
+    borderBottomWidth: 2,
+    borderBottomColor: '#1565C0',
+    paddingBottom: 4,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
+  // Table
   table: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: 'auto',
-    marginTop: 10,
-    borderStyle: 'solid',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#CFD8DC',
+    borderRadius: 3,
+    overflow: 'hidden',
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f4f6f8',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    backgroundColor: '#1565C0',
+    paddingVertical: 7,
+    paddingHorizontal: 8,
   },
-  tableRow: {
+  thText: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 9,
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+
+  // Product rows
+  productRow: {
     flexDirection: 'row',
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#CFD8DC',
+  },
+  productRowAlt: { backgroundColor: '#F8FBFF' },
+  productName: { fontFamily: 'Helvetica-Bold', fontSize: 10, color: '#1A1A2E' },
+  productQty: { fontFamily: 'Helvetica-Bold', fontSize: 10, color: '#1565C0', textAlign: 'center' },
+  productPrice: { fontFamily: 'Helvetica-Bold', fontSize: 10, textAlign: 'right', color: '#455A64' },
+  productSubtotal: { fontFamily: 'Helvetica-Bold', fontSize: 10, textAlign: 'right', color: '#2E7D32' },
+
+  // Component breakdown
+  componentBlock: {
+    backgroundColor: '#F1F5F9',
+    paddingLeft: 24,
+    paddingRight: 8,
     paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  tableColDesc: { width: '50%' },
-  tableColQty: { width: '15%', textAlign: 'center' },
-  tableColPrice: { width: '15%', textAlign: 'right' },
-  tableColTotal: { width: '20%', textAlign: 'right' },
-  colHeader: { fontFamily: 'Helvetica-Bold' },
-  productItemsContainer: {
-    paddingLeft: 20,
-    paddingRight: 4,
-    paddingTop: 4,
-    paddingBottom: 4,
-    backgroundColor: '#fcfcfc',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#CFD8DC',
   },
-  itemRow: {
+  componentHeader: {
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#CFD8DC',
+    paddingBottom: 3,
   },
-  itemTextDesc: { width: '50%', color: '#666', fontSize: 9 },
-  itemTextQty: { width: '15%', textAlign: 'center', color: '#666', fontSize: 9 },
-  itemTextPrice: { width: '15%', textAlign: 'right', color: '#666', fontSize: 9 },
-  itemTextTotal: { width: '20%', textAlign: 'right', color: '#666', fontSize: 9 },
-  totalSection: {
+  componentHeaderText: { fontSize: 8, color: '#78909C', fontFamily: 'Helvetica-Oblique' },
+  componentRow: { flexDirection: 'row', marginBottom: 3 },
+  compDesc:  { width: '50%', fontSize: 9, color: '#455A64' },
+  compQty:   { width: '15%', textAlign: 'center', fontSize: 9, color: '#455A64' },
+  compPrice: { width: '17%', textAlign: 'right', fontSize: 9, color: '#455A64' },
+  compTotal: { width: '18%', textAlign: 'right', fontSize: 9, color: '#455A64' },
+
+  // Summary row
+  summaryRow: {
+    flexDirection: 'row',
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    backgroundColor: '#E8F0FE',
+    borderTopWidth: 2,
+    borderTopColor: '#1565C0',
+  },
+  summaryLabel:    { fontFamily: 'Helvetica-Bold', fontSize: 10, color: '#1565C0' },
+  summaryPrice:    { fontFamily: 'Helvetica-Bold', fontSize: 10, textAlign: 'right', color: '#1565C0' },
+  summarySubtotal: { fontFamily: 'Helvetica-Bold', fontSize: 10, textAlign: 'right', color: '#1565C0' },
+
+  // Grand total
+  grandTotalBlock: {
     marginTop: 20,
+    backgroundColor: '#1565C0',
+    borderRadius: 4,
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingTop: 10,
-    borderTopWidth: 2,
-    borderTopColor: '#333',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
-  totalLabel: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 14,
-    marginRight: 15,
+  grandTotalLabel:  { fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#BBDEFB', marginRight: 20, textTransform: 'uppercase' },
+  grandTotalAmount: { fontFamily: 'Helvetica-Bold', fontSize: 16, color: '#FFFFFF' },
+
+  // Columns — products table (2 cols: desc+qty merged, subtotal)
+  colDescWide: { width: '70%' },
+  colSubtotalWide: { width: '30%', textAlign: 'right' },
+  // Columns — items table (4 cols)
+  colDesc:  { width: '50%' },
+  colQty:   { width: '15%', textAlign: 'center' },
+  colPrice: { width: '17%', textAlign: 'right' },
+  colTotal: { width: '18%', textAlign: 'right' },
+
+  // Footer
+  footer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 32,
+    right: 32,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#CFD8DC',
+    paddingTop: 5,
   },
-  totalAmount: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 14,
-  },
+  footerText: { fontSize: 8, color: '#78909C' },
 });
 
 export default function ProjectReportPdf({ project }) {
@@ -134,7 +182,6 @@ export default function ProjectReportPdf({ project }) {
   const processedProducts = (project.products || []).map((prod) => {
     let productTotalUnit = 0;
 
-    // If this product is "por_metros_cuadrados" and project has encerramiento, scale the qty
     const esPorMetros = prod.por_metros_cuadrados === 1 || prod.por_metros_cuadrados === true;
     const productQty = (necesitaEncerramiento && esPorMetros && metrosCuadrados > 0)
       ? (Number(prod.quantity) || 1) * metrosCuadrados
@@ -142,7 +189,7 @@ export default function ProjectReportPdf({ project }) {
 
     const processedItems = (prod.items || []).map((item) => {
       let finalQuantity = Number(item.quantity) || 1;
-      
+
       if (item.variable === 1 || item.variable === '1') {
         const val1 = Number(item.value1) || 0;
         const val2 = Number(item.value2) || 0;
@@ -151,14 +198,9 @@ export default function ProjectReportPdf({ project }) {
 
       const itemPrice = Number(item.price) || 0;
       const itemTotal = finalQuantity * itemPrice;
-      
       productTotalUnit += itemTotal;
-      
-      return {
-        ...item,
-        quantity: finalQuantity,
-        total: itemTotal
-      };
+
+      return { ...item, quantity: finalQuantity, total: itemTotal };
     });
 
     return {
@@ -166,142 +208,171 @@ export default function ProjectReportPdf({ project }) {
       quantity: productQty,
       items: processedItems,
       total_price: productTotalUnit,
+      subtotal: productTotalUnit * productQty,
       esPorMetros,
     };
   });
 
-  const productsTotal = processedProducts.reduce(
-    (acc, prod) => acc + (prod.total_price || 0) * (prod.quantity || 0),
-    0
-  );
-  
+  const totalPrecioUnit = processedProducts.reduce((acc, p) => acc + (p.total_price || 0), 0);
+  const totalSubtotal   = processedProducts.reduce((acc, p) => acc + (p.subtotal    || 0), 0);
+
   const additionalItemsTotal = (project.items || []).reduce(
-    (acc, item) => acc + (item.total || 0),
+    (acc, item) => acc + (Number(item.price) * Number(item.quantity) || Number(item.total) || 0),
     0
   );
 
-  const grandTotal = productsTotal + additionalItemsTotal;
+  const grandTotal = totalSubtotal + additionalItemsTotal;
+  const today = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.headerContainer}>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.title}>Presupuesto de Proyecto #{project.id}</Text>
-            <Text style={styles.subtitle}>Detalle completo de productos, items y costos</Text>
+
+        {/* HEADER */}
+        <View style={styles.headerBar}>
+          <View>
+            <Text style={styles.headerTitle}>Presupuesto de Proyecto #{project.id}</Text>
+            <Text style={styles.headerSubtitle}>
+              {project.customerName || project.customer || ''}  {'\u00b7'}  {today}
+            </Text>
           </View>
           <Image style={styles.logo} src="/img/logo.png" />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información del Proyecto</Text>
-          <View style={styles.row}>
-            <Text style={styles.colLabel}>Cliente:</Text>
-            <Text style={styles.colValue}>{project.customerName || project.customer || 'N/A'}</Text>
+        {/* INFO CARD */}
+        <View style={styles.infoCard}>
+          {(project.customerName || project.customer) ? (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Cliente</Text>
+              <Text style={styles.infoValue}>{project.customerName || project.customer}</Text>
+            </View>
+          ) : null}
+          {project.elevatorTypeName ? (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Sistema Motriz</Text>
+              <Text style={styles.infoValue}>{project.elevatorTypeName}</Text>
+            </View>
+          ) : null}
+          {project.typeDriveSystemName ? (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Tipo de Ascensor</Text>
+              <Text style={styles.infoValue}>{project.typeDriveSystemName}</Text>
+            </View>
+          ) : null}
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>N{'\u00b0'} Paradas</Text>
+            <Text style={styles.infoValue}>{project.stopNumber || 0}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.colLabel}>Sistema Motriz:</Text>
-            <Text style={styles.colValue}>{project.elevatorTypeName || 'N/A'}</Text>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Recorrido</Text>
+            <Text style={styles.infoValue}>{project.travel || 0} m</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.colLabel}>Tipo de Ascensor:</Text>
-            <Text style={styles.colValue}>{project.typeDriveSystemName || 'N/A'}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.colLabel}>Número de Paradas:</Text>
-            <Text style={styles.colValue}>{project.stopNumber || 0}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.colLabel}>Recorrido:</Text>
-            <Text style={styles.colValue}>{project.travel || 0} m</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.colLabel}>Capacidad:</Text>
-            <Text style={styles.colValue}>{project.capacity || 0} kg</Text>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Capacidad</Text>
+            <Text style={styles.infoValue}>{project.capacity || 0} kg</Text>
           </View>
           {necesitaEncerramiento && (
-            <View style={styles.row}>
-              <Text style={styles.colLabel}>Encerramiento:</Text>
-              <Text style={styles.colValue}>Sí — {metrosCuadrados} m²</Text>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Encerramiento</Text>
+              <Text style={styles.infoValue}>{'S\u00ed \u2014 '}{metrosCuadrados} m{'\u00b2'}</Text>
             </View>
           )}
         </View>
 
-        {processedProducts && processedProducts.length > 0 && (
+        {/* PRODUCTS TABLE */}
+        {processedProducts.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Productos del Proyecto</Text>
             <View style={styles.table}>
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableColDesc, styles.colHeader]}>Descripción</Text>
-                <Text style={[styles.tableColQty, styles.colHeader]}>Cantidad</Text>
-                <Text style={[styles.tableColPrice, styles.colHeader]}>Precio Unit.</Text>
-                <Text style={[styles.tableColTotal, styles.colHeader]}>Total</Text>
+                <Text style={[styles.colDescWide,    styles.thText]}>{'Descripci\u00f3n'}</Text>
+                <Text style={[styles.colSubtotalWide,styles.thText]}>Subtotal</Text>
               </View>
 
               {processedProducts.map((prod, index) => (
                 <View key={`prod-${index}`}>
-                  {/* Desglose de Items del Producto (primero) */}
                   {prod.items && prod.items.length > 0 && (
-                    <View style={styles.productItemsContainer}>
-                      <View style={styles.itemRow}>
-                        <Text style={[styles.itemTextDesc, { fontFamily: 'Helvetica-Oblique' }]}>Detalle de componentes:</Text>
-                        <Text style={[styles.itemTextQty, { fontFamily: 'Helvetica-Oblique' }]}>Cant.</Text>
-                        <Text style={[styles.itemTextPrice, { fontFamily: 'Helvetica-Oblique' }]}>P. Unit</Text>
-                        <Text style={[styles.itemTextTotal, { fontFamily: 'Helvetica-Oblique' }]}>Subtotal</Text>
+                    <View style={styles.componentBlock}>
+                      <View style={styles.componentHeader}>
+                        <Text style={[styles.compDesc,  styles.componentHeaderText]}>Componentes de: {prod.product_name}</Text>
+                        <Text style={[styles.compQty,   styles.componentHeaderText]}>Cant.</Text>
+                        <Text style={[styles.compPrice, styles.componentHeaderText]}>P. Unit</Text>
+                        <Text style={[styles.compTotal, styles.componentHeaderText]}>Subtotal</Text>
                       </View>
                       {prod.items.map((item, idx) => (
-                        <View style={styles.itemRow} key={`pitem-${idx}`}>
-                          <Text style={styles.itemTextDesc}>- {item.item_name || 'Item'}</Text>
-                          <Text style={styles.itemTextQty}>{item.quantity}</Text>
-                          <Text style={styles.itemTextPrice}>{fCurrency(item.price)}</Text>
-                          <Text style={styles.itemTextTotal}>{fCurrency(item.total)}</Text>
+                        <View style={styles.componentRow} key={`pitem-${idx}`}>
+                          <Text style={styles.compDesc}>{' \u203a '}{item.item_name || 'Item'}</Text>
+                          <Text style={styles.compQty}>{item.quantity}</Text>
+                          <Text style={styles.compPrice}>{fCurrency(item.price)}</Text>
+                          <Text style={styles.compTotal}>{fCurrency(item.total)}</Text>
                         </View>
                       ))}
                     </View>
                   )}
-                  
-                  {/* Resumen del Producto (debajo) */}
-                  <View style={styles.tableRow}>
-                    <Text style={[styles.tableColDesc, { fontFamily: 'Helvetica-Bold' }]}>
+
+                  <View style={[styles.productRow, index % 2 !== 0 && styles.productRowAlt]}>
+                    <Text style={[styles.colDescWide, styles.productName]}>
                       {prod.product_name || 'Producto sin nombre'}
+                      <Text style={{ fontFamily: 'Helvetica-Bold' }}>{'  X'}{prod.quantity}{prod.quantity === 1 ? ' unidad' : ' unidades'}</Text>
                     </Text>
-                    <Text style={styles.tableColQty}>{prod.quantity}</Text>
-                    <Text style={styles.tableColPrice}>{fCurrency(prod.total_price)}</Text>
-                    <Text style={styles.tableColTotal}>{fCurrency(prod.total_price * prod.quantity)}</Text>
+                    <Text style={[styles.colSubtotalWide, styles.productSubtotal]}>{fCurrency(prod.subtotal)}</Text>
                   </View>
                 </View>
               ))}
+
+              <View style={styles.summaryRow}>
+                <Text style={[styles.colDescWide,     styles.summaryLabel]}>TOTAL PRODUCTOS</Text>
+                <Text style={[styles.colSubtotalWide, styles.summarySubtotal]}>{fCurrency(totalSubtotal)}</Text>
+              </View>
             </View>
           </View>
         )}
 
+        {/* ADDITIONAL ITEMS TABLE */}
         {project.items && project.items.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Items Adicionales</Text>
             <View style={styles.table}>
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableColDesc, styles.colHeader]}>Descripción</Text>
-                <Text style={[styles.tableColQty, styles.colHeader]}>Cantidad</Text>
-                <Text style={[styles.tableColPrice, styles.colHeader]}>Precio Unit.</Text>
-                <Text style={[styles.tableColTotal, styles.colHeader]}>Total</Text>
+                <Text style={[styles.colDesc,  styles.thText]}>{'Descripci\u00f3n'}</Text>
+                <Text style={[styles.colQty,   styles.thText]}>Cantidad</Text>
+                <Text style={[styles.colPrice, styles.thText]}>Precio Unit.</Text>
+                <Text style={[styles.colTotal, styles.thText]}>Subtotal</Text>
               </View>
 
               {project.items.map((item, idx) => (
-                <View style={styles.tableRow} key={`additem-${idx}`}>
-                  <Text style={styles.tableColDesc}>{item.item_name || 'Item'}</Text>
-                  <Text style={styles.tableColQty}>{item.quantity}</Text>
-                  <Text style={styles.tableColPrice}>{fCurrency(item.price)}</Text>
-                  <Text style={styles.tableColTotal}>{fCurrency(item.total)}</Text>
+                <View style={[styles.productRow, idx % 2 !== 0 && styles.productRowAlt]} key={`additem-${idx}`}>
+                  <Text style={[styles.colDesc,  styles.productName]}>{item.item_name || 'Item'}</Text>
+                  <Text style={[styles.colQty,   styles.productQty]}>{item.quantity}</Text>
+                  <Text style={[styles.colPrice, styles.productPrice]}>{fCurrency(item.price)}</Text>
+                  <Text style={[styles.colTotal, styles.productSubtotal]}>
+                    {fCurrency(Number(item.price) * Number(item.quantity) || Number(item.total))}
+                  </Text>
                 </View>
               ))}
+
+              <View style={styles.summaryRow}>
+                <Text style={[styles.colDesc,  styles.summaryLabel]}>TOTAL ITEMS ADICIONALES</Text>
+                <Text style={styles.colQty}>{''}</Text>
+                <Text style={styles.colPrice}>{''}</Text>
+                <Text style={[styles.colTotal, styles.summarySubtotal]}>{fCurrency(additionalItemsTotal)}</Text>
+              </View>
             </View>
           </View>
         )}
 
-        <View style={styles.totalSection}>
-          <Text style={styles.totalLabel}>PRESUPUESTO TOTAL:</Text>
-          <Text style={styles.totalAmount}>{fCurrency(grandTotal)}</Text>
+        {/* GRAND TOTAL */}
+        <View style={styles.grandTotalBlock}>
+          <Text style={styles.grandTotalLabel}>Presupuesto Total:</Text>
+          <Text style={styles.grandTotalAmount}>{fCurrency(grandTotal)}</Text>
         </View>
+
+        {/* FOOTER */}
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>{'Dimei \u2014 Documento generado el '}{today}</Text>
+          <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `P\u00e1g. ${pageNumber} / ${totalPages}`} />
+        </View>
+
       </Page>
     </Document>
   );

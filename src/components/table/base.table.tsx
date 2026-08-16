@@ -44,6 +44,16 @@ export default function BaseTable({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
   const [goToPage, setGoToPage] = useState('');
+  const [expandedRows, setExpandedRows] = useState<Record<string | number, boolean>>({});
+
+  const handleRowClick = (item: any) => {
+    if (item.observaciones) {
+      setExpandedRows((prev) => ({
+        ...prev,
+        [item.id]: !prev[item.id],
+      }));
+    }
+  };
 
   if (!data || data.length === 0) {
     return <div>No hay datos disponibles</div>;
@@ -130,64 +140,81 @@ export default function BaseTable({
           </TableHead>
           <TableBody>
             {paginatedData.map((item, rowIndex) => (
-              <TableRow 
-                key={rowIndex}
-                sx={{ 
-                  backgroundColor: rowIndex % 2 === 0 ? '#f0f7ff' : '#ffffff', // Interleaved light blue
-                  '&:hover': {
-                    backgroundColor: '#e3efff' // Subtle hover effect
-                  }
-                }}
-              >
-                {combinedHeaders.map((header) => {
-                  if (!header.isExtra) {
-                    const value = item[header.label];
-                    // Render image if header is named img or Imagen
-                    if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase())) {
-                      // Auto-detect the image endpoint from the stored filename prefix.
-                      // Filenames are saved as 'tool-{ts}.ext' or 'item-{ts}.ext' by each controller.
-                      const getImageEndpoint = (filename: string) => {
-                        if (filename.startsWith('tool-')) return 'getTool/image';
-                        if (filename.startsWith('item-')) return 'getItem/image';
-                        return 'getItem/image'; // fallback
-                      };
-                      const src = value && typeof value === 'string' && value.startsWith('http') 
-                        ? value 
-                        : value ? `${axios.defaults.baseURL}/${getImageEndpoint(value)}/${item.id}?v=${value}` : null;
-                      return (
-                        <TableCell key={header.label}>
-                          {src ? (
-                            <Box 
-                              component="img" 
-                              src={src} 
-                              sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover' }} 
-                              alt={header.label}
-                            />
-                          ) : (
-                            <Box sx={{ 
-                              width: 50, 
-                              height: 50, 
-                              borderRadius: 1, 
-                              bgcolor: 'rgba(59, 130, 246, 0.05)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              <PhotoIcon className="h-6 w-6 text-blue-200" />
-                            </Box>
-                          )}
-                        </TableCell>
-                      );
+              <React.Fragment key={item.id || rowIndex}>
+                <TableRow 
+                  onClick={() => handleRowClick(item)}
+                  sx={{ 
+                    backgroundColor: rowIndex % 2 === 0 ? '#f0f7ff' : '#ffffff', // Interleaved light blue
+                    cursor: item.observaciones ? 'pointer' : 'default',
+                    '&:hover': {
+                      backgroundColor: '#e3efff' // Subtle hover effect
                     }
-                    return <TableCell key={header.label}>{value?.toString() || '-'}</TableCell>;
-                  }
-                  return (
-                    <TableCell key={header.label}>
-                      {renderExtraCell ? renderExtraCell({ item, rowIndex, headerLabel: header.label }) : '-'}
+                  }}
+                >
+                  {combinedHeaders.map((header) => {
+                    if (!header.isExtra) {
+                      const value = item[header.label];
+                      // Render image if header is named img or Imagen
+                      if (['img', 'Imagen', 'image', 'imagen'].includes(header.label.toLowerCase())) {
+                        // Auto-detect the image endpoint from the stored filename prefix.
+                        // Filenames are saved as 'tool-{ts}.ext' or 'item-{ts}.ext' by each controller.
+                        const getImageEndpoint = (filename: string) => {
+                          if (filename.startsWith('tool-')) return 'getTool/image';
+                          if (filename.startsWith('item-')) return 'getItem/image';
+                          return 'getItem/image'; // fallback
+                        };
+                        const src = value && typeof value === 'string' && value.startsWith('http') 
+                          ? value 
+                          : value ? `${axios.defaults.baseURL}/${getImageEndpoint(value)}/${item.id}?v=${value}` : null;
+                        return (
+                          <TableCell key={header.label}>
+                            {src ? (
+                              <Box 
+                                component="img" 
+                                src={src} 
+                                sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover' }} 
+                                alt={header.label}
+                              />
+                            ) : (
+                              <Box sx={{ 
+                                width: 50, 
+                                height: 50, 
+                                borderRadius: 1, 
+                                bgcolor: 'rgba(59, 130, 246, 0.05)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <PhotoIcon className="h-6 w-6 text-blue-200" />
+                              </Box>
+                            )}
+                          </TableCell>
+                        );
+                      }
+                      return <TableCell key={header.label}>{value?.toString() || '-'}</TableCell>;
+                    }
+                    return (
+                      <TableCell key={header.label}>
+                        {renderExtraCell ? renderExtraCell({ item, rowIndex, headerLabel: header.label }) : '-'}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+                {expandedRows[item.id] && item.observaciones && (
+                  <TableRow sx={{ backgroundColor: '#fcfdfe' }}>
+                    <TableCell colSpan={combinedHeaders.length} sx={{ px: 4, py: 2, borderBottom: '1px solid #e2e8f0' }}>
+                      <Box sx={{ borderLeft: '3px solid #3b82f6', pl: 2, py: 0.5 }}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                          Observaciones:
+                        </Typography>
+                        <Typography variant="body2" color="text.primary" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {item.observaciones}
+                        </Typography>
+                      </Box>
                     </TableCell>
-                  );
-                })}
-              </TableRow>
+                  </TableRow>
+                )}
+              </React.Fragment>
             ))}
           </TableBody>
         </Table>

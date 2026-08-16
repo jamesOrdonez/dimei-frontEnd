@@ -22,15 +22,16 @@ const styles = StyleSheet.create({
   tableHeader: { flexDirection: 'row', backgroundColor: '#f8fafc', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingVertical: 6, paddingHorizontal: 4 },
   colId: { width: '5%', textAlign: 'center' },
-  colItem: { width: '18%' },
-  colLoc: { width: '10%' },
-  colProv: { width: '10%' },
-  colTotalInv: { width: '7%', textAlign: 'center' },
-  colComp: { width: '7%', textAlign: 'center' },
-  colLibre: { width: '7%', textAlign: 'center' },
-  colBuy: { width: '8%', textAlign: 'center' },
+  colItem: { width: '16%' },
+  colLoc: { width: '9%' },
+  colProv: { width: '9%' },
+  colTotalInv: { width: '6%', textAlign: 'center' },
+  colLowStock: { width: '6%', textAlign: 'center' },
+  colComp: { width: '6%', textAlign: 'center' },
+  colLibre: { width: '6%', textAlign: 'center' },
+  colBuy: { width: '7%', textAlign: 'center' },
   colPrice: { width: '13%', textAlign: 'right' },
-  colTotalBuy: { width: '15%', textAlign: 'right' },
+  colTotalBuy: { width: '17%', textAlign: 'right' },
   colHeader: { fontFamily: 'Helvetica-Bold', fontSize: 9, color: '#475569' },
   rowText: { fontSize: 9, color: '#334155' },
   rowTextBold: { fontSize: 9, color: '#334155', fontFamily: 'Helvetica-Bold' },
@@ -115,6 +116,7 @@ export default function InventoryComparisonPdf({
             <Text style={[styles.colLoc, styles.colHeader]}>UBIC.</Text>
             <Text style={[styles.colProv, styles.colHeader]}>PROV.</Text>
             <Text style={[styles.colTotalInv, styles.colHeader]}>TOTAL INV.</Text>
+            <Text style={[styles.colLowStock, styles.colHeader]}>STK BAJO</Text>
             <Text style={[styles.colComp, styles.colHeader]}>COMPROMETIDO</Text>
             <Text style={[styles.colLibre, styles.colHeader]}>DISP. LIBRE</Text>
             <Text style={[styles.colBuy, styles.colHeader]}>A COMPRAR</Text>
@@ -143,6 +145,7 @@ export default function InventoryComparisonPdf({
                 <Text style={[styles.colLoc, styles.rowText]}>{[row.position1, row.position2, row.position3].filter(Boolean).join('-') || '-'}</Text>
                 <Text style={[styles.colProv, styles.rowText]}>{row.proveedor || '-'}</Text>
                 <Text style={[styles.colTotalInv, styles.rowText]}>{total}</Text>
+                <Text style={[styles.colLowStock, styles.rowText]}>{row.low_stock || 0}</Text>
                 <Text style={[styles.colComp, styles.rowText]}>{comp > 0 ? comp : '—'}</Text>
                 <Text style={[styles.colLibre, styles.rowText]}>{lib}</Text>
                 <Text style={[styles.colBuy, isBuy ? styles.rowTextRed : styles.rowText]}>{deficit > 0 ? deficit : '—'}</Text>
