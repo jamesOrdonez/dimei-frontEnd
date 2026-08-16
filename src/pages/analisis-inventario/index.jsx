@@ -4,22 +4,25 @@ import {
   Paper, Typography, Box, TextField, MenuItem, Select,
   ToggleButton, ToggleButtonGroup, Grid, Card, CardContent,
   LinearProgress, Chip, InputAdornment, IconButton, Tooltip,
-  Menu, MenuItem as MuiMenuItem, TablePagination
+  Menu, MenuItem as MuiMenuItem, TablePagination, Button
 } from '@mui/material';
 import {
   MagnifyingGlassIcon, ListBulletIcon, Squares2X2Icon,
   CalendarDaysIcon, SunIcon, CheckCircleIcon, ShoppingCartIcon,
-  ArrowDownTrayIcon, ChartBarIcon
+  ArrowDownTrayIcon, ChartBarIcon, ArrowRightCircleIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { Loader } from '../../components/loaders';
 import * as XLSX from 'xlsx';
 import { pdf } from '@react-pdf/renderer';
 import InventoryComparisonPdf from '../proyectos/components/InventoryComparisonPdf';
+import FormDialog from '../../components/form/form.dialog.tsx';
+import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
 
 import { fCurrency } from '../../utils/formatNumber';
 
 export default function AnalisisInventario() {
+  const { hasPermission, isAdmin } = usePermissions();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -27,11 +30,23 @@ export default function AnalisisInventario() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedProveedor, setSelectedProveedor] = useState('all');
+  const [allProveedores, setAllProveedores] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('all');
   const [viewMode, setViewMode] = useState('list');
   const [anchorEl, setAnchorEl] = useState(null);
   const openExportMenu = Boolean(anchorEl);
+
+  // ── ESTADO PARA MODAL DE ENTRADA ─────────────────────────────────────────
+  const [openEntranceModal, setOpenEntranceModal] = useState(false);
+  const [entranceItem, setEntranceItem] = useState(null);
+  const movementFields = [{ name: 'entranceAmount', label: 'Cantidad a ingresar', input: 'number', grid: { xs: 12 } }];
+  const movementInitialValues = useMemo(() => (entranceItem ? { id: entranceItem.id } : {}), [entranceItem]);
+
+  const openEntrance = (item) => {
+    setEntranceItem(item);
+    setOpenEntranceModal(true);
+  };
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -85,7 +100,16 @@ export default function AnalisisInventario() {
     if (debouncedSearch) params.searchText = debouncedSearch;
 
     axios.get(`/getInventoryComparison/${company}`, { params, signal: controller.signal })
-      .then(res => setData(res.data.data || []))
+      .then(res => {
+        const fetchedData = res.data.data || [];
+        setData(fetchedData);
+        if (selectedProject === 'all' && selectedCategory === 'all' && selectedProveedor === 'all' && !debouncedSearch) {
+          const uniqueProvs = Array.from(new Set(
+            fetchedData.map(d => d.proveedor).filter(p => p && p !== '-')
+          )).sort();
+          setAllProveedores(uniqueProvs);
+        }
+      })
       .catch(err => { if (!axios.isCancel(err)) console.error('Error fetching inventory comparison', err); })
       .finally(() => setLoading(false));
 
@@ -99,9 +123,15 @@ export default function AnalisisInventario() {
       .catch(err => console.error('Error fetching categories', err));
 
     axios.get(`/getProjects/${company}`)
-      .then(res => setProjects(res.data.data || []))
+      .then(res => {
+        const allProjects = res.data.data || [];
+        setProjects(allProjects.filter(p => p.state === 'Iniciado'));
+      })
       .catch(err => console.error('Error fetching projects', err));
   }, [company]);
+
+  // Set of IDs for projects that are in the 'Iniciado' state
+  const initiatedProjectIds = useMemo(() => new Set(projects.map(p => String(p.id))), [projects]);
 
   // ── FILTRO CLIENTE: solo estado de disponibilidad (requiere valores computados) ──
   const filteredData = useMemo(() => {
@@ -123,14 +153,17 @@ export default function AnalisisInventario() {
 
       if (selectedStatus === 'good' && activeAvailable <= lowThreshold) return false;
       if (selectedStatus === 'low' && (activeAvailable > lowThreshold || activeAvailable <= 0)) return false;
-      if (selectedStatus === 'buy') {
-        const deficit = Math.ceil(calculateDeficit(item, selectedProject));
-        if (deficit <= 0) return false;
-      }
+        if (selectedStatus === 'buy') {
+          // Excluir ítems asignados a proyectos que no estén iniciados (aplica siempre)
+          const hasNonInitiatedAlloc = item.allocations?.some(a => !initiatedProjectIds.has(String(a.projectId)));
+          if (hasNonInitiatedAlloc) return false;
+          // Mostrar ítems que requieran compra: disponibilidad libre <= 0
+          if (activeAvailable > 0) return false;
+        }
 
       return true;
     });
-  }, [data, selectedStatus, selectedProject, calculateDeficit]);
+  }, [data, selectedStatus, selectedProject, calculateDeficit, initiatedProjectIds]);
 
   const proveedoresUnicos = useMemo(() => {
     return Array.from(new Set(
@@ -182,6 +215,7 @@ export default function AnalisisInventario() {
         "Ubicación": [row.position1, row.position2, row.position3].filter(Boolean).join(' - ') || '-',
         "Proveedor": row.proveedor || '-',
         "Total Inv.": Number(Math.max(0, row.total_inventory).toFixed(2)),
+        "Stock Bajo": row.low_stock || 0,
         "Comprometido": Number(Math.max(0, row.separated_inventory).toFixed(2)),
         "Disponible Libre": Number(Math.max(0, row.available_inventory).toFixed(2)),
         "A Comprar": Math.round(deficit), "Precio Unitario": row.price || 0,
@@ -192,7 +226,7 @@ export default function AnalisisInventario() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
     const fileName = selectedProjectObj
-      ? `reporte_inventario_${selectedProjectObj.id}_${selectedProjectObj.customer}.xlsx`
+      ? `reporte_inventario_${selectedProjectObj.id}_${selectedProjectObj.customerName || selectedProjectObj.customer || 'SN'}.xlsx`
       : 'reporte_inventario.xlsx';
     XLSX.writeFile(wb, fileName);
   };
@@ -213,6 +247,7 @@ export default function AnalisisInventario() {
         });
       });
 
+      const groupedItemIds = new Set();
       const projectsData = [];
       projects.forEach(p => {
         if (projectIdsWithAllocations.has(String(p.id))) {
@@ -220,11 +255,17 @@ export default function AnalisisInventario() {
           filteredData.forEach(item => {
             const alloc = item.allocations?.find(a => String(a.projectId) === String(p.id));
             if (alloc && alloc.quantity > 0) {
+              const itemDeficit = Math.ceil(calculateDeficit(item, String(p.id)));
+              // If status filter is "buy", only include if this project has a deficit for this item
+              if (selectedStatus === 'buy' && itemDeficit <= 0) {
+                return;
+              }
               projectItems.push({
                 ...item,
                 separated_inventory: alloc.quantity,
-                deficit: Math.ceil(calculateDeficit(item, String(p.id)))
+                deficit: itemDeficit
               });
+              groupedItemIds.add(item.id);
             }
           });
 
@@ -234,7 +275,7 @@ export default function AnalisisInventario() {
               acc.committed += item.separated_inventory;
               if (item.available_inventory > 0) acc.available += item.available_inventory;
 
-              const deficit = Math.ceil(calculateDeficit(item, String(p.id)));
+              const deficit = item.deficit || 0;
               if (deficit > 0) {
                 acc.toBuyItems += 1;
                 acc.toBuyUnits += deficit;
@@ -252,57 +293,15 @@ export default function AnalisisInventario() {
         }
       });
 
-      const processedProjectIds = new Set(projectsData.map(pd => String(pd.projectObj.id)));
-      projectIdsWithAllocations.forEach(projIdStr => {
-        if (!processedProjectIds.has(projIdStr)) {
-          const projectItems = [];
-          filteredData.forEach(item => {
-            const alloc = item.allocations?.find(a => String(a.projectId) === projIdStr);
-            if (alloc && alloc.quantity > 0) {
-              projectItems.push({
-                ...item,
-                separated_inventory: alloc.quantity,
-                deficit: Math.ceil(calculateDeficit(item, String(projIdStr)))
-              });
-            }
-          });
-
-          if (projectItems.length > 0) {
-            const projectSummary = projectItems.reduce((acc, item) => {
-              acc.totalItems += 1;
-              acc.committed += item.separated_inventory;
-              if (item.available_inventory > 0) acc.available += item.available_inventory;
-
-              const deficit = Math.ceil(calculateDeficit(item, String(projIdStr)));
-              if (deficit > 0) {
-                acc.toBuyItems += 1;
-                acc.toBuyUnits += deficit;
-                acc.toBuyCost += deficit * (item.price || 0);
-              }
-              return acc;
-            }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
-
-            projectsData.push({
-              projectObj: {
-                id: projIdStr,
-                customerName: 'S/N',
-                elevatorTypeName: 'S/N',
-                typeDriveSystemName: 'S/N'
-              },
-              items: projectItems,
-              summary: projectSummary
-            });
-          }
-        }
-      });
-
-      // 2. Free items
+      // 2. Free / Unmapped items (items in filteredData that were not grouped under any Iniciado project)
       const freeItems = [];
       filteredData.forEach(item => {
-        if (item.available_inventory > 0) {
+        if (!groupedItemIds.has(item.id)) {
+          const itemDeficit = Math.ceil(calculateDeficit(item, selectedProject));
           freeItems.push({
             ...item,
-            separated_inventory: 0
+            separated_inventory: 0,
+            deficit: itemDeficit
           });
         }
       });
@@ -310,7 +309,14 @@ export default function AnalisisInventario() {
       const freeSummary = freeItems.reduce((acc, item) => {
         acc.totalItems += 1;
         acc.committed = 0;
-        acc.available += item.available_inventory;
+        if (item.available_inventory > 0) acc.available += item.available_inventory;
+        
+        const deficit = item.deficit || 0;
+        if (deficit > 0) {
+          acc.toBuyItems += 1;
+          acc.toBuyUnits += deficit;
+          acc.toBuyCost += deficit * (item.price || 0);
+        }
         return acc;
       }, { totalItems: 0, committed: 0, available: 0, toBuyItems: 0, toBuyUnits: 0, toBuyCost: 0 });
 
@@ -357,10 +363,12 @@ export default function AnalisisInventario() {
       <Table size="small">
         <TableHead sx={{ bgcolor: '#f8fafc' }}>
           <TableRow>
-            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '20%' }}>ÍTEM</TableCell>
-            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '12%' }}>UBICACIÓN</TableCell>
-            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '12%' }}>PROVEEDOR</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '4%' }}>ID</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '18%' }}>ÍTEM</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '11%' }}>UBICACIÓN</TableCell>
+            <TableCell sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '11%' }}>PROVEEDOR</TableCell>
             <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>TOTAL INV.</TableCell>
+            <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>STOCK BAJO</TableCell>
             <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>COMPROM.</TableCell>
             <TableCell align="center" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem', width: '18%' }}>DISP. LIBRE</TableCell>
             <TableCell align="right" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>P. UNIT</TableCell>
@@ -383,6 +391,9 @@ export default function AnalisisInventario() {
             return (
               <TableRow key={row.id}>
                 <TableCell>
+                  <Typography variant="caption" color="#94a3b8" fontWeight={600}>#{row.id}</Typography>
+                </TableCell>
+                <TableCell>
                   <Typography variant="body2" fontWeight={600} color="#1e293b" sx={{ lineHeight: 1.1, mb: 0.5 }}>{row.item_name}</Typography>
                   <Typography variant="caption" color="#94a3b8" sx={{ textTransform: 'uppercase' }}>{catName}</Typography>
                 </TableCell>
@@ -394,6 +405,9 @@ export default function AnalisisInventario() {
                 </TableCell>
                 <TableCell align="center">
                   <Typography variant="body2" fontWeight={700} color="primary.main">{total}</Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="body2" color="#64748b">{row.low_stock || 0}</Typography>
                 </TableCell>
                 <TableCell align="center">
                   <Typography variant="body2" color={comp > 0 ? '#64748b' : '#cbd5e1'}>{comp > 0 ? comp : '—'}</Typography>
@@ -411,6 +425,17 @@ export default function AnalisisInventario() {
                       <LinearProgress variant="determinate" value={Math.min(100, Math.max(0, ratio))}
                         sx={{ width: '100%', height: 4, borderRadius: 2, bgcolor: '#e2e8f0', '& .MuiLinearProgress-bar': { bgcolor: isBuy || isNone ? '#e11d48' : isLow ? '#f59e0b' : '#10b981' } }} />
                     </Box>
+                    {isBuy && (hasPermission(PERMISOS.INGRESAR_MATERIAL) || isAdmin) && (
+                      <Tooltip title="Entrada de inventario" placement="top">
+                        <Button
+                          size="small"
+                          onClick={() => openEntrance(row)}
+                          sx={{ minWidth: 0, p: 0.3, color: '#16a34a', '&:hover': { bgcolor: '#dcfce7' }, borderRadius: 1 }}
+                        >
+                          <ArrowRightCircleIcon style={{ width: 22, height: 22 }} />
+                        </Button>
+                      </Tooltip>
+                    )}
                   </Box>
                 </TableCell>
                 <TableCell align="right">
@@ -425,7 +450,7 @@ export default function AnalisisInventario() {
             );
           }) : (
             <TableRow>
-              <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+              <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                 <Typography color="text.secondary">No se encontraron ítems</Typography>
               </TableCell>
             </TableRow>
@@ -470,22 +495,28 @@ export default function AnalisisInventario() {
                 </Box>
                 <Box sx={{ flexGrow: 1 }} />
                 <Grid container spacing={1} mb={2} mt={1}>
-                  <Grid item xs={4}>
+                  <Grid item xs={3}>
                     <Box bgcolor="#f1f5f9" borderRadius={2} p={1} textAlign="center">
                       <Typography variant="h6" fontWeight={700} color="primary.main">{total}</Typography>
-                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.65rem">TOTAL</Typography>
+                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.64rem">TOTAL</Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid item xs={3}>
+                    <Box bgcolor="#fffbeb" borderRadius={2} p={1} textAlign="center">
+                      <Typography variant="h6" fontWeight={700} color="#d97706">{row.low_stock || 0}</Typography>
+                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.64rem">STK BAJO</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={3}>
                     <Box bgcolor="#f8fafc" borderRadius={2} p={1} textAlign="center">
                       <Typography variant="h6" fontWeight={700} color="#f59e0b">{comp}</Typography>
-                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.65rem">COMP.</Typography>
+                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.64rem">COMP.</Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid item xs={3}>
                     <Box bgcolor="#f0fdf4" borderRadius={2} p={1} textAlign="center">
                       <Typography variant="h6" fontWeight={700} color="#10b981">{lib}</Typography>
-                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.65rem">LIBRE</Typography>
+                      <Typography variant="caption" color="#64748b" fontWeight={600} fontSize="0.64rem">LIBRE</Typography>
                     </Box>
                   </Grid>
                 </Grid>
@@ -514,6 +545,7 @@ export default function AnalisisInventario() {
   );
 
   return (
+    <>
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8fafc', flexGrow: 1 }}>
       {/* Header */}
       <Box mb={4}>
@@ -574,7 +606,7 @@ export default function AnalisisInventario() {
           <Grid item xs={12} md={2.5}>
             <Select fullWidth size="small" value={selectedProveedor} onChange={(e) => setSelectedProveedor(e.target.value)} sx={{ bgcolor: '#fff', borderRadius: 2 }} displayEmpty>
               <MenuItem value="all">Proveedor: Todos</MenuItem>
-              {proveedoresUnicos.map((p, i) => <MenuItem key={i} value={p}>{p}</MenuItem>)}
+              {(allProveedores.length > 0 ? allProveedores : proveedoresUnicos).map((p, i) => <MenuItem key={i} value={p}>{p}</MenuItem>)}
             </Select>
           </Grid>
           <Grid item xs={12} md={2.5}>
@@ -663,5 +695,30 @@ export default function AnalisisInventario() {
         </>
       )}
     </Box>
+
+    <FormDialog
+      open={openEntranceModal}
+      onClose={() => setOpenEntranceModal(false)}
+      onSuccess={() => {
+        setOpenEntranceModal(false);
+        // Re-fetch data after entrance
+        const params = {};
+        if (selectedProject !== 'all') params.projectId = selectedProject;
+        if (selectedCategory !== 'all') params.categoryId = selectedCategory;
+        if (selectedProveedor !== 'all') params.providerId = selectedProveedor;
+        if (debouncedSearch) params.searchText = debouncedSearch;
+        setLoading(true);
+        axios.get(`/getInventoryComparison/${company}`, { params })
+          .then(res => setData(res.data.data || []))
+          .catch(err => console.error(err))
+          .finally(() => setLoading(false));
+      }}
+      fields={movementFields}
+      mode="update"
+      initialValues={movementInitialValues}
+      title={`Entrada de inventario${entranceItem ? ` — #${entranceItem.id} ${entranceItem.item_name}` : ''}`}
+      saveEndpoint="/entrance"
+    />
+  </>
   );
 }

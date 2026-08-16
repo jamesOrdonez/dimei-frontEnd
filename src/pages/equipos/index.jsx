@@ -117,6 +117,14 @@ export default function Equipos() {
     }));
   };
 
+  const mapPayload = (payload) => {
+    const newPayload = { ...payload };
+    delete newPayload.necesita_encerramiento;
+    delete newPayload.metros_cuadrados;
+    delete newPayload.displayLabel;
+    return newPayload;
+  };
+
   return (
     <>
       <BaseGrid
@@ -128,12 +136,13 @@ export default function Equipos() {
         fetchOneEndpoint="/getOneProject"
         fields={fields}
         mapData={mapData}
+        mapPayload={mapPayload}
         formAdditionalValues={{ tipo: 'equipo' }}
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
 
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'questionGroupId', 'lastMaintenance', 'user']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'questionGroupId', 'lastMaintenance', 'user', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel']}
 
         customFilters={customFilters}
       />

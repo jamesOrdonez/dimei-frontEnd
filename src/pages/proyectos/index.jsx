@@ -117,6 +117,14 @@ export default function Proyectos() {
       grid: { xs: 12 },
       hasToHide: ({ values }) => !(values?.necesita_encerramiento === 1 || values?.necesita_encerramiento === true || values?.necesita_encerramiento === '1'),
     },
+    {
+      name: 'observaciones',
+      label: 'Observaciones',
+      input: 'text',
+      grid: { xs: 12 },
+      rows: 3,
+      required: false,
+    },
   ];
 
   const mapData = (data) => {
@@ -128,6 +136,7 @@ export default function Proyectos() {
       stopNumber: item.stopNumber,
       travel: item.travel,
       capacity: item.capacity,
+      'Observaciones': item.observaciones || '',
       ...item
     }));
   };
@@ -183,7 +192,7 @@ export default function Proyectos() {
             </IconButton>
           )
         )}
-        excludeKeys={['proyectos', 'questionGroupId', 'user', 'lastMaintenance', 'company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel']}
+        excludeKeys={['proyectos', 'questionGroupId', 'user', 'lastMaintenance', 'company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel', 'observaciones', 'Observaciones']}
         customFilters={customFilters}
       />
     </>
