@@ -150,16 +150,13 @@ export default function AnalisisInventario() {
         ? item.available_inventory_active
         : item.available_inventory;
       const lowThreshold = item.low_stock || 0;
+      const deficit = Math.ceil(calculateDeficit(item, selectedProject));
+      const hasNonInitiatedAlloc = item.allocations?.some(a => !initiatedProjectIds.has(String(a.projectId)));
+      const isBuy = deficit > 0 && !hasNonInitiatedAlloc;
 
-      if (selectedStatus === 'good' && activeAvailable <= lowThreshold) return false;
-      if (selectedStatus === 'low' && (activeAvailable > lowThreshold || activeAvailable <= 0)) return false;
-        if (selectedStatus === 'buy') {
-          // Excluir ítems asignados a proyectos que no estén iniciados (aplica siempre)
-          const hasNonInitiatedAlloc = item.allocations?.some(a => !initiatedProjectIds.has(String(a.projectId)));
-          if (hasNonInitiatedAlloc) return false;
-          // Mostrar ítems que requieran compra: disponibilidad libre <= 0
-          if (activeAvailable > 0) return false;
-        }
+      if (selectedStatus === 'good' && (isBuy || activeAvailable <= lowThreshold)) return false;
+      if (selectedStatus === 'low' && (isBuy || activeAvailable > lowThreshold)) return false;
+      if (selectedStatus === 'buy' && !isBuy) return false;
 
       return true;
     });
@@ -191,7 +188,7 @@ export default function AnalisisInventario() {
       acc.committed += Math.max(0, item.separated_inventory);
       if (item.available_inventory > 0) acc.available += item.available_inventory;
       
-      const deficit = Math.ceil(calculateDeficit(item, selectedProject));
+      const deficit = Number(calculateDeficit(item, selectedProject).toFixed(2));
       if (deficit > 0) {
         acc.toBuyItems += 1;
         acc.toBuyUnits += deficit; 
@@ -209,7 +206,7 @@ export default function AnalisisInventario() {
     const exportData = filteredData.map(row => {
       const catObj = categories.find(c => String(c.id) === String(row.category));
       const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
-      const deficit = Math.ceil(calculateDeficit(row, selectedProject));
+      const deficit = Number(calculateDeficit(row, selectedProject).toFixed(2));
       return {
         "ID": row.id, "Ítem": row.item_name, "Categoría": catName, 
         "Ubicación": [row.position1, row.position2, row.position3].filter(Boolean).join(' - ') || '-',
@@ -218,8 +215,8 @@ export default function AnalisisInventario() {
         "Stock Bajo": row.low_stock || 0,
         "Comprometido": Number(Math.max(0, row.separated_inventory).toFixed(2)),
         "Disponible Libre": Number(Math.max(0, row.available_inventory).toFixed(2)),
-        "A Comprar": Math.round(deficit), "Precio Unitario": row.price || 0,
-        "Sumatoria a Comprar": Math.round(deficit) * (row.price || 0)
+        "A Comprar": Number(deficit.toFixed(2)), "Precio Unitario": row.price || 0,
+        "Sumatoria a Comprar": Number((deficit * (row.price || 0)).toFixed(2))
       };
     });
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -378,14 +375,14 @@ export default function AnalisisInventario() {
         <TableBody>
           {paginatedData.length > 0 ? paginatedData.map((row) => {
             const total = Number(Math.max(0, row.total_inventory).toFixed(2));
-            const comp = Math.ceil(Math.max(0, row.separated_inventory));
+            const comp = Number(Math.max(0, row.separated_inventory).toFixed(2));
             const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
-            const deficit = Math.ceil(calculateDeficit(row, selectedProject));
+            const deficit = Number(calculateDeficit(row, selectedProject).toFixed(2));
             const ratio = total > 0 ? (lib / total) * 100 : 0;
-            const isBuy = deficit > 0;
-            const isNone = row.available_inventory === 0;
+            const hasNonInitiatedAlloc = row.allocations?.some(a => !initiatedProjectIds.has(String(a.projectId)));
+            const isBuy = deficit > 0 && !hasNonInitiatedAlloc;
             const lowThreshold = row.low_stock || 0;
-            const isLow = !isNone && !isBuy && lib <= lowThreshold;
+            const isLow = !isBuy && lib <= lowThreshold;
             const catObj = categories.find(c => String(c.id) === String(row.category));
             const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
             return (
@@ -415,15 +412,15 @@ export default function AnalisisInventario() {
                 <TableCell align="center">
                   <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
                     {deficit > 0 && (
-                      <Chip size="small" label={`Comprar: ${Math.round(deficit)}`}
+                      <Chip size="small" label={`Comprar: ${Number(deficit.toFixed(2))}`}
                         sx={{ bgcolor: '#fef2f2', color: '#e11d48', fontWeight: 700, px: 0.5, borderColor: '#fca5a5', border: '1px solid' }} />
                     )}
                     <Chip size="small" label={`● ${lib}`}
-                      sx={{ bgcolor: isBuy || isNone ? '#ffe4e6' : isLow ? '#fef3c7' : '#dcfce7', color: isBuy || isNone ? '#e11d48' : isLow ? '#d97706' : '#16a34a', fontWeight: 700, px: 1 }} />
+                      sx={{ bgcolor: isBuy ? '#ffe4e6' : isLow ? '#fef3c7' : '#dcfce7', color: isBuy ? '#e11d48' : isLow ? '#d97706' : '#16a34a', fontWeight: 700, px: 1 }} />
                     <Box sx={{ width: '50px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Typography variant="caption" color="#64748b" sx={{ fontSize: '0.65rem' }}>{Math.round(ratio)}%</Typography>
                       <LinearProgress variant="determinate" value={Math.min(100, Math.max(0, ratio))}
-                        sx={{ width: '100%', height: 4, borderRadius: 2, bgcolor: '#e2e8f0', '& .MuiLinearProgress-bar': { bgcolor: isBuy || isNone ? '#e11d48' : isLow ? '#f59e0b' : '#10b981' } }} />
+                        sx={{ width: '100%', height: 4, borderRadius: 2, bgcolor: '#e2e8f0', '& .MuiLinearProgress-bar': { bgcolor: isBuy ? '#e11d48' : isLow ? '#f59e0b' : '#10b981' } }} />
                     </Box>
                     {isBuy && (hasPermission(PERMISOS.INGRESAR_MATERIAL) || isAdmin) && (
                       <Tooltip title="Entrada de inventario" placement="top">
@@ -464,14 +461,14 @@ export default function AnalisisInventario() {
     <Grid container spacing={2}>
       {paginatedData.length > 0 ? paginatedData.map((row) => {
         const total = Number(Math.max(0, row.total_inventory).toFixed(2));
-        const comp = Math.ceil(Math.max(0, row.separated_inventory));
+        const comp = Number(Math.max(0, row.separated_inventory).toFixed(2));
         const lib = Number(Math.max(0, row.available_inventory).toFixed(2));
-        const deficit = Math.ceil(calculateDeficit(row, selectedProject));
+        const deficit = Number(calculateDeficit(row, selectedProject).toFixed(2));
         const compRatio = total > 0 ? (comp / total) * 100 : 0;
-        const isBuy = deficit > 0;
-        const isNone = row.available_inventory === 0;
+        const hasNonInitiatedAlloc = row.allocations?.some(a => !initiatedProjectIds.has(String(a.projectId)));
+        const isBuy = deficit > 0 && !hasNonInitiatedAlloc;
         const lowThreshold = row.low_stock || 0;
-        const isLow = !isNone && !isBuy && lib <= lowThreshold;
+        const isLow = !isBuy && lib <= lowThreshold;
         const catObj = categories.find(c => String(c.id) === String(row.category));
         const catName = catObj ? catObj.description || catObj.name : 'SIN CATEGORÍA';
         return (
@@ -486,11 +483,11 @@ export default function AnalisisInventario() {
                   </Box>
                   <Box display="flex" gap={1} alignItems="center">
                     {deficit > 0 && (
-                      <Chip size="small" label={`Comprar: ${Math.round(deficit)}`}
+                      <Chip size="small" label={`Comprar: ${Number(deficit.toFixed(2))}`}
                         sx={{ bgcolor: '#fef2f2', color: '#e11d48', fontWeight: 700, border: '1px solid #fca5a5' }} />
                     )}
                     <Chip size="small" label={`● ${lib}`}
-                      sx={{ bgcolor: isBuy || isNone ? '#ffe4e6' : isLow ? '#fef3c7' : '#dcfce7', color: isBuy || isNone ? '#e11d48' : isLow ? '#d97706' : '#16a34a', fontWeight: 700 }} />
+                      sx={{ bgcolor: isBuy ? '#ffe4e6' : isLow ? '#fef3c7' : '#dcfce7', color: isBuy ? '#e11d48' : isLow ? '#d97706' : '#16a34a', fontWeight: 700 }} />
                   </Box>
                 </Box>
                 <Box sx={{ flexGrow: 1 }} />
@@ -525,7 +522,7 @@ export default function AnalisisInventario() {
                   <Typography variant="caption" color="#64748b" fontWeight={500}>Disponible</Typography>
                 </Box>
                 <LinearProgress variant="determinate" value={Math.min(100, Math.max(0, compRatio))}
-                  sx={{ height: 6, borderRadius: 3, bgcolor: isBuy || isNone ? '#e11d48' : isLow ? '#f59e0b' : '#10b981', '& .MuiLinearProgress-bar': { bgcolor: '#f59e0b' } }} />
+                  sx={{ height: 6, borderRadius: 3, bgcolor: isBuy ? '#fee2e2' : isLow ? '#fef3c7' : '#e2e8f0', '& .MuiLinearProgress-bar': { bgcolor: isBuy ? '#e11d48' : isLow ? '#f59e0b' : '#10b981' } }} />
                 {deficit > 0 && (
                   <Box display="flex" justifyContent="space-between" mt={2} pt={1} borderTop="1px dashed #e2e8f0">
                     <Typography variant="caption" color="#64748b">Precio Unit: <strong>{fCurrency(row.price || 0)}</strong></Typography>
@@ -563,12 +560,15 @@ export default function AnalisisInventario() {
               Stock total · comprometido en proyectos · disponible libre
             </Typography>
           </Box>
-          <Tooltip title="Exportar Reporte">
-            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small"
-              sx={{ bgcolor: '#dcfce7', color: '#16a34a', '&:hover': { bgcolor: '#bbf7d0' } }}>
-              <ArrowDownTrayIcon className="w-5 h-5" />
-            </IconButton>
-          </Tooltip>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<ArrowDownTrayIcon className="w-5 h-5" />}
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, height: 40 }}
+          >
+            Descargar Reporte
+          </Button>
           <Menu anchorEl={anchorEl} open={openExportMenu} onClose={() => setAnchorEl(null)}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
             <MuiMenuItem onClick={handleExportExcel} sx={{ fontSize: '0.875rem' }}>Exportar a Excel (.xlsx)</MuiMenuItem>
@@ -581,7 +581,7 @@ export default function AnalisisInventario() {
           <Typography variant="caption" fontWeight={700} color="#94a3b8" letterSpacing={1}>DISPONIBILIDAD:</Typography>
           <Chip size="small" variant="outlined" label="● Buena disponibilidad (> Umbral)" sx={{ borderColor: '#86efac', color: '#16a34a', bgcolor: '#fff' }} />
           <Chip size="small" variant="outlined" label="● Stock bajo (≤ Umbral)" sx={{ borderColor: '#fde047', color: '#d97706', bgcolor: '#fff' }} />
-          <Chip size="small" variant="outlined" label="● Requiere Compra (≤ 0)" sx={{ borderColor: '#ef4444', color: '#b91c1c', bgcolor: '#fef2f2' }} />
+          <Chip size="small" variant="outlined" label="● Requiere Compra" sx={{ borderColor: '#ef4444', color: '#b91c1c', bgcolor: '#fef2f2' }} />
         </Box>
 
         {/* Filters */}
@@ -614,7 +614,7 @@ export default function AnalisisInventario() {
               <MenuItem value="all">Estados: Todos</MenuItem>
               <MenuItem value="good">Buena disponibilidad</MenuItem>
               <MenuItem value="low">Stock bajo</MenuItem>
-              <MenuItem value="buy">A comprar (Stock ≤ 0)</MenuItem>
+              <MenuItem value="buy">A comprar</MenuItem>
             </Select>
           </Grid>
           <Grid item xs={12} md={2} display="flex" justifyContent="flex-end">
@@ -646,7 +646,7 @@ export default function AnalisisInventario() {
                 <Box sx={{ bgcolor: '#fffbeb', p: 1.5, borderRadius: 2, mr: 2, display: 'flex' }}><SunIcon className="w-6 h-6 text-amber-500" /></Box>
                 <Box>
                   <Typography variant="caption" fontWeight={600} color="#94a3b8" letterSpacing={1}>COMPROMETIDO</Typography>
-                  <Typography variant="h4" fontWeight={800} color="#f59e0b" lineHeight={1}>{Math.ceil(summary.committed)}</Typography>
+                  <Typography variant="h4" fontWeight={800} color="#f59e0b" lineHeight={1}>{Number(Number(summary.committed).toFixed(2))}</Typography>
                 </Box>
               </Card>
             </Grid>
@@ -655,7 +655,7 @@ export default function AnalisisInventario() {
                 <Box sx={{ bgcolor: '#f0fdf4', p: 1.5, borderRadius: 2, mr: 2, display: 'flex' }}><CheckCircleIcon className="w-6 h-6 text-emerald-600" /></Box>
                 <Box>
                   <Typography variant="caption" fontWeight={600} color="#94a3b8" letterSpacing={1}>DISP. LIBRE</Typography>
-                  <Typography variant="h4" fontWeight={800} color="#10b981" lineHeight={1}>{summary.available}</Typography>
+                  <Typography variant="h4" fontWeight={800} color="#10b981" lineHeight={1}>{Number(Number(summary.available).toFixed(2))}</Typography>
                 </Box>
               </Card>
             </Grid>
@@ -665,7 +665,7 @@ export default function AnalisisInventario() {
                   <Box sx={{ bgcolor: '#fef2f2', p: 1.2, borderRadius: 2, mr: 1.5, display: 'flex' }}><ShoppingCartIcon className="w-5 h-5 text-red-600" /></Box>
                   <Box>
                     <Typography variant="caption" fontWeight={600} color="#e11d48" letterSpacing={1}>A COMPRAR ({summary.toBuyItems})</Typography>
-                    <Typography variant="h5" fontWeight={800} color="#e11d48" lineHeight={1}>{Math.round(summary.toBuyUnits)} unds.</Typography>
+                    <Typography variant="h5" fontWeight={800} color="#e11d48" lineHeight={1}>{Number(Number(summary.toBuyUnits).toFixed(2))} unds.</Typography>
                   </Box>
                 </Box>
                 <Box mt={0.5} pl={1}>
