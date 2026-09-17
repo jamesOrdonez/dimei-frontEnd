@@ -266,7 +266,84 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
     }
   };
 
-  // handleRemisionQtyChange removed because right-side editing is disabled
+  const handleRemisionQtyChange = (rowId, val, type) => {
+    if (type === 'product') {
+      setSelectedProducts((prev) =>
+        prev.map((p) => (p.rowId === rowId ? { ...p, remisionQty: val } : p))
+      );
+    } else {
+      setSelectedItems((prev) =>
+        prev.map((i) => (i.rowId === rowId ? { ...i, remisionQty: val } : i))
+      );
+    }
+  };
+
+  const handleRemisionQtyBlur = (rowId, type) => {
+    if (type === 'product') {
+      setSelectedProducts((prev) =>
+        prev.map((p) => {
+          if (p.rowId !== rowId) return p;
+          const effectiveTotal = getEffectiveProductQty(p);
+          const remitted = Number(p.remitted_quantity || 0);
+          const otherSum = prev
+            .filter((s) => !s.stored && s.product_id === p.product_id && s.rowId !== rowId)
+            .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+          const max = Math.max(1, effectiveTotal - remitted - otherSum);
+          let num = parseFloat(p.remisionQty);
+          if (isNaN(num) || num <= 0) num = 1;
+          if (num > max) num = max;
+          return { ...p, remisionQty: num };
+        })
+      );
+    } else {
+      setSelectedItems((prev) =>
+        prev.map((i) => {
+          if (i.rowId !== rowId) return i;
+          const total = Number(i.quantity || 0);
+          const remitted = Number(i.remitted_quantity || 0);
+          const otherSum = prev
+            .filter((s) => !s.stored && s.item_id === i.item_id && s.rowId !== rowId)
+            .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+          const max = Math.max(1, total - remitted - otherSum);
+          let num = parseFloat(i.remisionQty);
+          if (isNaN(num) || num <= 0) num = 1;
+          if (num > max) num = max;
+          return { ...i, remisionQty: num };
+        })
+      );
+    }
+  };
+
+  const handleQuickStageRemaining = (item, type) => {
+    const generateRowId = (id) => `${id}_${Date.now()}_${Math.random()}`;
+    if (type === 'product') {
+      const effectiveTotal = getEffectiveProductQty(item);
+      const remitted = Number(item.remitted_quantity || 0);
+      const currentOnRightSum = selectedProducts
+        .filter((s) => !s.stored && s.product_id === item.product_id)
+        .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+      const remaining = effectiveTotal - remitted - currentOnRightSum;
+      if (remaining > 0) {
+        setSelectedProducts((prev) => [
+          ...prev,
+          { ...item, remisionQty: remaining, stored: false, rowId: generateRowId(item.product_id) },
+        ]);
+      }
+    } else {
+      const total = Number(item.quantity || 0);
+      const remitted = Number(item.remitted_quantity || 0);
+      const currentOnRightSum = selectedItems
+        .filter((s) => !s.stored && s.item_id === item.item_id)
+        .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
+      const remaining = total - remitted - currentOnRightSum;
+      if (remaining > 0) {
+        setSelectedItems((prev) => [
+          ...prev,
+          { ...item, remisionQty: remaining, stored: false, rowId: generateRowId(item.item_id) },
+        ]);
+      }
+    }
+  };
 
   const makeAndDownloadPDF = async (remisionId) => {
     try {
@@ -363,8 +440,11 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
   };
 
   const handleSave = async () => {
-    if (selectedProducts.length === 0 && selectedItems.length === 0) {
-      Swal.fire('Atención', 'Selecciona al menos un producto o ítem para remisionar.', 'warning');
+    const hasStagedProducts = selectedProducts.some((p) => !p.stored && Number(p.remisionQty) > 0);
+    const hasStagedItems = selectedItems.some((i) => !i.stored && Number(i.remisionQty) > 0);
+
+    if (!hasStagedProducts && !hasStagedItems) {
+      Swal.fire('Atención', 'Selecciona al menos un producto o ítem con cantidad mayor a 0 para remisionar.', 'warning');
       return;
     }
 
@@ -373,7 +453,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       // Aggregate quantities by ID before saving
       const aggregate = (list, idField) =>
         list
-          .filter((x) => !x.stored)
+          .filter((x) => !x.stored && Number(x.remisionQty) > 0)
           .reduce((acc, x) => {
             const id = x[idField];
             if (!acc[id]) acc[id] = 0;
@@ -600,8 +680,14 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                   const maxAvailable = effectiveTotal - Number(item.remitted_quantity || 0) - currentOnRightSum;
 
                   return (
-                    <ListItem key={`${id}-${availIdx}`} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <ListItemIcon sx={{ minWidth: 40 }} onClick={() => handleToggle(item, 'left', type)}>
+                    <ListItem
+                      key={`${id}-${availIdx}`}
+                      dense
+                      button
+                      onClick={() => handleToggle(item, 'left', type)}
+                      sx={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', '&:hover': { bgcolor: '#f8fafc' } }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
                         <Checkbox
                           checked={leftSel.some((i) => (type === 'product' ? i.product_id : i.item_id) === id)}
                           size="small"
@@ -609,7 +695,21 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                       </ListItemIcon>
                       <ListItemText
                         primary={name}
-                        secondary={`Queda: ${maxAvailable}`}
+                        secondaryTypographyProps={{ component: 'div' }}
+                        secondary={
+                          <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                            <Chip
+                              label={`Queda: ${maxAvailable}`}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                              sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              Disponible para remisionar
+                            </Typography>
+                          </Box>
+                        }
                         primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                       />
                       <TextField
@@ -699,13 +799,19 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                 const name = type === 'product' ? item.product_name : item.item_name;
                 const canSelectOnRight = !item.stored || item.status === 'Pendiente';
 
+                const totalReq = type === 'product' ? getEffectiveProductQty(item) : Number(item.quantity || 0);
+                const remTotal = Number(item.remitted_quantity || 0);
+                const remaining = Math.max(0, totalReq - remTotal);
+                const isPartial = item.stored && remaining > 0;
+
                 return (
                   <ListItem
                     key={item.rowId}
                     dense
                     sx={{
                       borderBottom: '1px solid #f1f5f9',
-                      opacity: item.stored && item.status !== 'Pendiente' ? 0.7 : 1,
+                      opacity: item.stored && item.status !== 'Pendiente' ? 0.85 : 1,
+                      backgroundColor: !item.stored ? '#f0fdf4' : 'transparent',
                     }}
                   >
                     <ListItemIcon
@@ -715,7 +821,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                       <Checkbox
                         checked={rightSel.some((i) => i.rowId === item.rowId)}
                         size="small"
-                        disabled={item.stored && item.status !== 'Pendiente'}
+                        disabled={!canSelectOnRight}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -723,23 +829,74 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                       secondaryTypographyProps={{ component: 'div' }}
                       secondary={
                         item.stored ? (
-                          <Chip
-                            label={item.status}
-                            size="small"
-                            sx={{
-                              mt: 0.5,
-                              height: 20,
-                              fontSize: '0.65rem',
-                              fontWeight: 700,
-                              backgroundColor: item.status === 'Completo' ? '#dbeafe' : '#fef3c7',
-                              color: item.status === 'Completo' ? '#1e40af' : '#92400e',
-                              border: `1px solid ${item.status === 'Completo' ? '#bfdbfe' : '#fde68a'}`,
-                            }}
-                          />
+                          <Box display="flex" flexDirection="column" gap={0.5} mt={0.5}>
+                            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                              <Chip
+                                label={
+                                  item.status === 'Pendiente'
+                                    ? 'Pendiente (Sin stock)'
+                                    : isPartial
+                                    ? `Entregado: ${item.remisionQty}`
+                                    : `Completo (${item.remisionQty})`
+                                }
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  backgroundColor:
+                                    item.status === 'Pendiente'
+                                      ? '#fef3c7'
+                                      : isPartial
+                                      ? '#e0f2fe'
+                                      : '#dcfce7',
+                                  color:
+                                    item.status === 'Pendiente'
+                                      ? '#92400e'
+                                      : isPartial
+                                      ? '#0369a1'
+                                      : '#15803d',
+                                  border: `1px solid ${
+                                    item.status === 'Pendiente'
+                                      ? '#fde68a'
+                                      : isPartial
+                                      ? '#7dd3fc'
+                                      : '#86efac'
+                                  }`,
+                                }}
+                              />
+                              {isPartial && (
+                                <Typography variant="caption" sx={{ color: '#d97706', fontWeight: 600, fontSize: '0.7rem' }}>
+                                  Faltan {remaining} de {totalReq}
+                                </Typography>
+                              )}
+                            </Box>
+                            {isPartial && (
+                              <Box mt={0.5}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  onClick={() => handleQuickStageRemaining(item, type)}
+                                  sx={{ fontSize: '0.65rem', py: 0.2, px: 1, textTransform: 'none', borderRadius: 1, fontWeight: 700 }}
+                                >
+                                  + Remisionar restante ({remaining})
+                                </Button>
+                              </Box>
+                            )}
+                          </Box>
                         ) : (
-                          <Typography variant="caption" color="primary" fontWeight={700}>
-                            Pendiente por guardar
-                          </Typography>
+                          <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+                            <Chip
+                              label="Nueva remisión"
+                              size="small"
+                              color="primary"
+                              sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                              (Ajusta la cantidad)
+                            </Typography>
+                          </Box>
                         )
                       }
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
@@ -748,18 +905,27 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                       size="small"
                       type="number"
                       value={item.remisionQty}
-                      disabled={true}
+                      disabled={item.stored}
+                      onChange={(e) => !item.stored && handleRemisionQtyChange(item.rowId, e.target.value, type)}
+                      onBlur={() => !item.stored && handleRemisionQtyBlur(item.rowId, type)}
+                      inputProps={{
+                        min: 1,
+                        step: 'any',
+                      }}
                       sx={{
-                        width: 65,
+                        width: 75,
                         ml: 1,
                         '& .MuiInputBase-root': {
-                          backgroundColor: '#f1f5f9',
-                          fontSize: '0.75rem',
+                          backgroundColor: item.stored ? '#f1f5f9' : '#ffffff',
+                          fontSize: '0.8rem',
+                          fontWeight: item.stored ? 500 : 700,
+                          border: item.stored ? 'none' : '1.5px solid #3b82f6',
+                          borderRadius: 1,
                         },
                         '& .MuiInputBase-input': {
                           p: '6px 8px',
                           textAlign: 'center',
-                          color: '#475569',
+                          color: item.stored ? '#475569' : '#0f172a',
                         },
                       }}
                     />
