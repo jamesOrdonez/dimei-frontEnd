@@ -1,16 +1,19 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 // @mui
 import { useTheme } from '@mui/material/styles';
 import { Grid, Container, Typography, CircularProgress, Box } from '@mui/material';
 // sections
 import { AppCurrentVisits, AppWebsiteVisits, AppWidgetSummary, AppConversionRates } from '../sections/@dashboard/app';
+import { usePermissions } from '../context/PermissionsContext';
 
 // ----------------------------------------------------------------------
 
 export default function Dashboard() {
   const theme = useTheme();
+  const { isAdmin, loading: permLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     projectsByStatus: [],
@@ -39,12 +42,17 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
+  if (permLoading || loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
       </Box>
     );
+  }
+
+  // Solo el Administrador accede al dashboard; los demás van a bienvenida
+  if (!isAdmin) {
+    return <Navigate to="/bienvenida" replace />;
   }
 
   return (

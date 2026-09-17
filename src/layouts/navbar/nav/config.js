@@ -28,6 +28,13 @@ const navConfig = [
     adminOnly: true,
   },
   {
+    title: 'Inicio',
+    path: '/bienvenida',
+    icon: icon('ic_analytics'),
+    hideForAdmin: true,       // visible para todos EXCEPTO el Administrador
+    hideForRoles: ['Técnicos'], // tampoco para Técnicos (ellos tienen su propio flujo)
+  },
+  {
     title: 'Mantenimientos',
     path: '/mantenimiento/clientes',
     icon: <WrenchScrewdriverIcon className="h-6 w-6" />,

@@ -14,6 +14,7 @@ export const PERMISOS = {
     INGRESAR_MATERIAL: 'Acceso a ingresar material',
     HACER_REMISIONES: 'Hacer remisiones de proyectos',
     CREAR_ITEMS: 'Crear ítems',
+    EDITAR_ITEMS: 'Editar ítems',
     CREAR_PRODUCTOS: 'Crear productos',
     CREAR_PROYECTOS: 'Crear proyectos',
     CONSULTAR_LISTAS: 'Consultar listas de compras',

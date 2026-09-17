@@ -28,6 +28,7 @@ const ALLOWED_PERMISSIONS = [
   'Acceso a ingresar material',
   'Hacer remisiones de proyectos',
   'Crear ítems',
+  'Editar ítems',
   'Crear productos',
   'Crear proyectos',
   'Consultar listas de compras',
@@ -42,6 +43,7 @@ const ALLOWED_PERMISSIONS = [
 
 const ROL_COLORS = {
   Almacenista: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  'Jefe de Almacen': { bg: '#e0f2fe', color: '#0369a1', border: '#7dd3fc' },
   Diseñador: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
   Administrador: { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' },
   Técnicos: { bg: '#fffbeb', color: '#d97706', border: '#fde68a' },

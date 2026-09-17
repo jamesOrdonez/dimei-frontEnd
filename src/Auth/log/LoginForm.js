@@ -39,9 +39,11 @@ export default function Login() {
       // Redirigir según el rol
       if (respon.data.rolName === 'Técnicos') {
         window.location.href = '/mantenimiento/clientes';
-      } else {
-        // Redirigir al dashboard
+      } else if (respon.data.rolName === 'Administrador') {
         window.location.href = '/dashboard';
+      } else {
+        // Todos los demás roles van a la pantalla de bienvenida
+        window.location.href = '/bienvenida';
       }
     } catch (e) {
       if (e.message === 'Network Error') {

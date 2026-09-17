@@ -23,6 +23,7 @@ import ClientesMantenimiento from '../pages/mantenimiento/ClientesMantenimiento'
 import FormularioMantenimiento from '../pages/mantenimiento/FormularioMantenimiento';
 import AdminMantenimiento from '../pages/mantenimiento/AdminMantenimiento';
 import ProyectosCerrados from '../pages/mantenimiento/ProyectosCerrados';
+import Bienvenida from '../pages/Bienvenida';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -81,6 +82,7 @@ export default function Router() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/bienvenida" element={<Bienvenida />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/items" element={<Items />} />
         <Route path="/herramientas" element={<Herramientas />} />

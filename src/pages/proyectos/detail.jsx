@@ -92,17 +92,41 @@ export default function DetalleProyecto() {
     
     if (projectProducts.length === 0 && projectItems.length === 0) return false;
 
+    const necesitaEncerramiento = Boolean(
+      project?.necesita_encerramiento == 1 || project?.necesita_encerramiento === true
+    );
+    const metrosCuadrados = parseFloat(project?.metros_cuadrados) || 0;
+
     // Check products: quantity matched and no 'Pendiente' status
     const allProducts = projectProducts.every(p => {
-      const quantityMatched = Number(p.remitted_quantity) >= Number(p.quantity);
-      const nonePending = (p.remitted_details || []).every(d => d.status !== 'Pendiente');
+      const esPorMetros = Boolean(p.por_metros_cuadrados == 1 || p.por_metros_cuadrados === true);
+      const rawQty = Number(p.quantity || 0);
+      const targetQty = (necesitaEncerramiento && esPorMetros && metrosCuadrados > 0)
+        ? (rawQty === metrosCuadrados ? metrosCuadrados : (rawQty || 1) * metrosCuadrados)
+        : rawQty;
+
+      const remitted = Number(p.remitted_quantity || 0);
+      const quantityMatched = remitted >= targetQty || remitted >= rawQty;
+      
+      const completedQty = (p.remitted_details || [])
+        .filter(d => d.status === 'Completo')
+        .reduce((sum, d) => sum + Number(d.quantity || 0), 0);
+      const nonePending = (p.remitted_details || []).every(d => d.status !== 'Pendiente') || completedQty >= targetQty || completedQty >= rawQty;
+
       return quantityMatched && nonePending;
     });
 
     // Check items: quantity matched and no 'Pendiente' status
     const allItems = projectItems.every(i => {
-      const quantityMatched = Number(i.remitted_quantity) >= Number(i.quantity);
-      const nonePending = (i.remitted_details || []).every(d => d.status !== 'Pendiente');
+      const rawQty = Number(i.quantity || 0);
+      const remitted = Number(i.remitted_quantity || 0);
+      const quantityMatched = remitted >= rawQty;
+
+      const completedQty = (i.remitted_details || [])
+        .filter(d => d.status === 'Completo')
+        .reduce((sum, d) => sum + Number(d.quantity || 0), 0);
+      const nonePending = (i.remitted_details || []).every(d => d.status !== 'Pendiente') || completedQty >= rawQty;
+
       return quantityMatched && nonePending;
     });
     
@@ -333,7 +357,7 @@ export default function DetalleProyecto() {
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="caption" color="text.secondary" display="block">¿Necesita Encerramiento?</Typography>
               <Typography variant="body1" fontWeight="500">
-                {(project.necesita_encerramiento === 1 || project.necesita_encerramiento === true) ? (
+                {(project.necesita_encerramiento == 1 || project.necesita_encerramiento === true) ? (
                   <span style={{ color: '#0d6efd', fontWeight: 600 }}>
                     Sí — {project.metros_cuadrados || 0} m²
                   </span>
@@ -438,7 +462,13 @@ export default function DetalleProyecto() {
                       <Fragment key={p.id}>
                         <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.01)' }}>
                           <TableCell sx={{ fontWeight: '600' }}>{p.product_name}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: '600' }}>{p.quantity}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: '600' }}>
+                            {Boolean(project?.necesita_encerramiento == 1 || project?.necesita_encerramiento === true) &&
+                             Boolean(p.por_metros_cuadrados == 1 || p.por_metros_cuadrados === true) &&
+                             parseFloat(project?.metros_cuadrados) > 0
+                              ? `${Number(p.quantity) === parseFloat(project.metros_cuadrados) ? parseFloat(project.metros_cuadrados) : (Number(p.quantity) || 1) * parseFloat(project.metros_cuadrados)} m²`
+                              : p.quantity}
+                          </TableCell>
                         </TableRow>
                         {p.items && p.items.length > 0 && (
                           p.items.map((item, idx) => (

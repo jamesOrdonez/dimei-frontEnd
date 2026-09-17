@@ -113,42 +113,51 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
   const handleTabChange = (event, newValue) => setTabIndex(newValue);
 
+  const isEnclosureProject = Boolean(
+    project?.necesita_encerramiento == 1 || project?.necesita_encerramiento === true
+  );
+  const metrosCuadrados = parseFloat(project?.metros_cuadrados) || 0;
+
+  const getEffectiveProductQty = (p) => {
+    const esPorMetros = Boolean(p.por_metros_cuadrados == 1 || p.por_metros_cuadrados === true);
+    const rawQty = Number(p.quantity || 0);
+    if (isEnclosureProject && esPorMetros && metrosCuadrados > 0) {
+      return rawQty === metrosCuadrados ? metrosCuadrados : (rawQty || 1) * metrosCuadrados;
+    }
+    return rawQty;
+  };
+
   // Available Products (those in project but not yet moved to right side)
   const availableProducts = useMemo(() => {
-    const necesitaEncerramiento = project?.necesita_encerramiento === 1 || project?.necesita_encerramiento === true;
-    const metrosCuadrados = parseFloat(project?.metros_cuadrados) || 0;
-
     return (project?.products || [])
       .filter((p) => {
-        const esPorMetros = p.por_metros_cuadrados === 1 || p.por_metros_cuadrados === true;
-        const effectiveQty = (necesitaEncerramiento && esPorMetros && metrosCuadrados > 0)
-          ? (Number(p.quantity) || 0) * metrosCuadrados
-          : (Number(p.quantity) || 0);
+        const effectiveQty = getEffectiveProductQty(p);
 
-        // Sum all quantities on the right for this product
+        // Sum only newly added (non-stored) quantities on the right for this product
         const rightQty = selectedProducts
-          .filter((sp) => sp.product_id === p.product_id)
+          .filter((sp) => !sp.stored && sp.product_id === p.product_id)
           .reduce((sum, item) => sum + Number(item.remisionQty || 0), 0);
 
         const remitted = Number(p.remitted_quantity || 0);
         return effectiveQty - remitted - rightQty > 0;
       })
-      .filter((p) => p.product_name.toLowerCase().includes(filterText.toLowerCase()));
-  }, [project, selectedProducts, filterText]);
+      .filter((p) => (p.product_name || '').toLowerCase().includes(filterText.toLowerCase()));
+  }, [project, selectedProducts, filterText, isEnclosureProject, metrosCuadrados]);
 
   // Available Items
   const availableItems = useMemo(() => {
     return (project?.items || [])
       .filter((i) => {
+        // Sum only newly added (non-stored) quantities on the right for this item
         const rightQty = selectedItems
-          .filter((si) => si.item_id === i.item_id)
+          .filter((si) => !si.stored && si.item_id === i.item_id)
           .reduce((sum, item) => sum + Number(item.remisionQty || 0), 0);
 
         const remitted = Number(i.remitted_quantity || 0);
         const total = Number(i.quantity || 0);
         return total - remitted - rightQty > 0;
       })
-      .filter((i) => i.item_name.toLowerCase().includes(filterText.toLowerCase()));
+      .filter((i) => (i.item_name || '').toLowerCase().includes(filterText.toLowerCase()));
   }, [project, selectedItems, filterText]);
 
   const handleToggle = (item, side, type) => {
@@ -192,18 +201,13 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
     const generateRowId = (id) => `${id}_${Date.now()}_${Math.random()}`;
 
     if (tabIndex === 0) {
-      const necesitaEncerramiento = project?.necesita_encerramiento === 1 || project?.necesita_encerramiento === true;
-      const metrosCuadrados = parseFloat(project?.metros_cuadrados) || 0;
-
       const newSelected = [...selectedProducts];
       leftProductSelected.forEach((p) => {
-        const esPorMetros = p.por_metros_cuadrados === 1 || p.por_metros_cuadrados === true;
-        const effectiveQty = (necesitaEncerramiento && esPorMetros && metrosCuadrados > 0)
-          ? (Number(p.quantity) || 0) * metrosCuadrados
-          : (Number(p.quantity) || 0);
+        const effectiveQty = getEffectiveProductQty(p);
 
+        // Only sum non-stored rows currently staged on the right
         const currentOnRightSum = newSelected
-          .filter((s) => s.product_id === p.product_id)
+          .filter((s) => !s.stored && s.product_id === p.product_id)
           .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
         const qtyToMove = effectiveQty - Number(p.remitted_quantity || 0) - currentOnRightSum;
 
@@ -225,10 +229,11 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
     } else {
       const newSelected = [...selectedItems];
       leftItemSelected.forEach((i) => {
+        // Only sum non-stored rows currently staged on the right
         const currentOnRightSum = newSelected
-          .filter((s) => s.item_id === i.item_id)
+          .filter((s) => !s.stored && s.item_id === i.item_id)
           .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
-        const qtyToMove = Number(i.quantity) - Number(i.remitted_quantity || 0) - currentOnRightSum;
+        const qtyToMove = Number(i.quantity || 0) - Number(i.remitted_quantity || 0) - currentOnRightSum;
 
         const existingIdx = newSelected.findIndex((si) => si.item_id === i.item_id && !si.stored);
 
@@ -298,17 +303,12 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             return acc;
           }, [])
           .map((p) => {
-            const necesitaEncerramiento = project?.necesita_encerramiento === 1 || project?.necesita_encerramiento === true;
-            const metrosCuadrados = parseFloat(project?.metros_cuadrados) || 0;
-            const esPorMetros = p.por_metros_cuadrados === 1 || p.por_metros_cuadrados === true;
-            const cantidadFinal = (necesitaEncerramiento && esPorMetros && metrosCuadrados > 0)
-              ? Number(p.cantidad) * metrosCuadrados
-              : Number(p.cantidad);
+            const cantidadFinal = Number(p.cantidad || 0);
 
             return {
               ...p,
               cantidad: cantidadFinal,
-              components: p.components.map((comp) => {
+              components: (p.components || []).map((comp) => {
                 const travel = Number(project?.travel || 0);
                 let itemQtyNeeded = 0;
                 if (String(comp.variable) === '1') {
@@ -590,10 +590,14 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
                   const name = type === 'product' ? item.product_name : item.item_name;
 
                   const currentOnRightSum = selected
-                    .filter((s) => (type === 'product' ? s.product_id : s.item_id) === id)
+                    .filter((s) => !s.stored && (type === 'product' ? s.product_id : s.item_id) === id)
                     .reduce((sum, s) => sum + Number(s.remisionQty || 0), 0);
 
-                  const maxAvailable = Number(item.quantity) - Number(item.remitted_quantity || 0) - currentOnRightSum;
+                  const effectiveTotal = type === 'product'
+                    ? getEffectiveProductQty(item)
+                    : Number(item.quantity || 0);
+
+                  const maxAvailable = effectiveTotal - Number(item.remitted_quantity || 0) - currentOnRightSum;
 
                   return (
                     <ListItem key={`${id}-${availIdx}`} dense sx={{ borderBottom: '1px solid #f1f5f9' }}>

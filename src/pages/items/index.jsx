@@ -313,7 +313,7 @@ export default function Items() {
         mapData={mapItemsData}
         excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'user', 'group_item', 'unitOfMeasure', 'price', 'proveedor_id']}
         hideCreate={!hasPermission(PERMISOS.CREAR_ITEMS)}
-        hideEdit={!hasPermission(PERMISOS.CREAR_ITEMS)}
+        hideEdit={!hasPermission(PERMISOS.EDITAR_ITEMS)}
         hideDelete={!isAdmin}
         customFilters={[
           {

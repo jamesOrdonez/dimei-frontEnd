@@ -59,7 +59,9 @@ export default function Nav({ openNav, onCloseNav }) {
         if (item.children) {
           const visibleChildren = item.children.filter((child) => {
             if (child.adminOnly) return isAdmin;
+            if (child.hideForAdmin && isAdmin) return false;
             if (child.showForRoles && !child.showForRoles.includes(rolName)) return false;
+            if (child.hideForRoles && child.hideForRoles.includes(rolName)) return false;
             if (child.requiredPermissions?.length > 0) {
               if (isAdmin) return true;
               return child.requiredPermissions.some((p) => hasPermission(p));
@@ -68,14 +70,16 @@ export default function Nav({ openNav, onCloseNav }) {
           });
 
           if (visibleChildren.length === 0) return null;
-          // Si el grupo es adminOnly, solo mostrarlo al admin
           if (item.adminOnly && !isAdmin) return null;
+          if (item.hideForAdmin && isAdmin) return null;
           return { ...item, children: visibleChildren };
         }
 
-        // Ítem hoja → mismo comportamiento anterior
+        // Ítem hoja
         if (item.adminOnly) return isAdmin ? item : null;
+        if (item.hideForAdmin && isAdmin) return null;
         if (item.showForRoles && !item.showForRoles.includes(rolName)) return null;
+        if (item.hideForRoles && item.hideForRoles.includes(rolName)) return null;
         if (item.requiredPermissions?.length > 0) {
           if (isAdmin) return item;
           return item.requiredPermissions.some((p) => hasPermission(p)) ? item : null;
