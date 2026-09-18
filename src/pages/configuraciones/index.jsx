@@ -169,6 +169,11 @@ export default function Configuraciones() {
     },
   ];
 
+  // Botones simples adicionales (sin submenú)
+  const simpleButtons = [
+    { label: 'Roles y Permisos', component: <RolesManagement /> },
+  ];
+
   return (
     <Box sx={{ width: '100%' }}>
       <Stack direction="row" spacing={1} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
@@ -182,29 +187,32 @@ export default function Configuraciones() {
           />
         ))}
         
-        <Button
-          onClick={() => setActiveItem({ label: 'Roles y Permisos', component: <RolesManagement /> })}
-          sx={{
-            px: 2,
-            py: 1,
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            bgcolor: activeItem.label === 'Roles y Permisos' ? 'rgba(59, 130, 246, 0.1)' : '#ffffff',
-            color: activeItem.label === 'Roles y Permisos' ? '#1e40af' : '#475569',
-            border: '1px solid',
-            borderColor: activeItem.label === 'Roles y Permisos' ? '#3b82f6' : '#e2e8f0',
-            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-            '&:hover': {
-              bgcolor: activeItem.label === 'Roles y Permisos' ? 'rgba(59, 130, 246, 0.15)' : '#f8fafc',
-              borderColor: activeItem.label === 'Roles y Permisos' ? '#2563eb' : '#cbd5e1',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            },
-          }}
-        >
-          Roles y Permisos
-        </Button>
+        {simpleButtons.map((btn) => (
+          <Button
+            key={btn.label}
+            onClick={() => setActiveItem({ label: btn.label, component: btn.component })}
+            sx={{
+              px: 2,
+              py: 1,
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              bgcolor: activeItem.label === btn.label ? 'rgba(59, 130, 246, 0.1)' : '#ffffff',
+              color: activeItem.label === btn.label ? '#1e40af' : '#475569',
+              border: '1px solid',
+              borderColor: activeItem.label === btn.label ? '#3b82f6' : '#e2e8f0',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              '&:hover': {
+                bgcolor: activeItem.label === btn.label ? 'rgba(59, 130, 246, 0.15)' : '#f8fafc',
+                borderColor: activeItem.label === btn.label ? '#2563eb' : '#cbd5e1',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            {btn.label}
+          </Button>
+        ))}
       </Stack>
 
       <Box sx={{ 

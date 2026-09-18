@@ -17,6 +17,15 @@ axios.defaults.baseURL = BASE_URL;
 axios.defaults.headers.common['Authorization'] = TOKEN;
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
+// Interceptor para asegurar que siempre use el token más reciente de sessionStorage
+axios.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('Token');
+  if (token) {
+    config.headers.Authorization = token;
+  }
+  return config;
+});
+
 // Ensure SweetAlert2 always appears above MUI Dialogs (z-index 1300)
 const swalStyle = document.createElement('style');
 swalStyle.textContent = '.swal2-container { z-index: 9999 !important; }';

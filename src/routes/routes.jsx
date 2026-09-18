@@ -24,6 +24,9 @@ import FormularioMantenimiento from '../pages/mantenimiento/FormularioMantenimie
 import AdminMantenimiento from '../pages/mantenimiento/AdminMantenimiento';
 import ProyectosCerrados from '../pages/mantenimiento/ProyectosCerrados';
 import Bienvenida from '../pages/Bienvenida';
+import Marcacion from '../pages/marcacion';
+import HorasExtra from '../pages/horas-extra';
+import ReporteUbicacionPage from '../pages/reporte-ubicacion';
 // layouts
 
 /* import SimpleLayout from '../layouts/simple'; */
@@ -101,6 +104,9 @@ export default function Router() {
         <Route path="/mantenimiento/formulario/:id" element={<FormularioMantenimiento />} />
         <Route path="/mantenimiento/historial" element={<AdminMantenimiento />} />
         <Route path="/mantenimiento/proyectos-cerrados" element={<ProyectosCerrados />} />
+        <Route path="/marcacion" element={<Marcacion />} />
+        <Route path="/horas-extra" element={<HorasExtra />} />
+        <Route path="/reporte-ubicacion" element={<ReporteUbicacionPage />} />
         {/*  */}
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/blog" element={<BlogPage />} />

@@ -2,7 +2,7 @@
 import {
   TagIcon, WrenchScrewdriverIcon, WrenchIcon, UserGroupIcon, ArchiveBoxIcon,
   ChartBarIcon, DocumentTextIcon, BuildingStorefrontIcon, ClipboardDocumentListIcon,
-  CubeIcon, Cog6ToothIcon,
+  CubeIcon, Cog6ToothIcon, ClockIcon, MapPinIcon,
 } from '@heroicons/react/24/outline';
 import SvgColor from '../../../components/svg-color';
 import { TruckIcon } from '@heroicons/react/24/outline';
@@ -51,6 +51,13 @@ const navConfig = [
     path: '/mantenimiento/historial',
     icon: <ClipboardDocumentListIcon className="h-6 w-6" />,
     showForRoles: ['Administrador']
+  },
+  // ── Marcación de tiempos ─────────────────────────────────────────────────────
+  {
+    title: 'Marcación',
+    path: '/marcacion',
+    icon: <ClockIcon className="h-6 w-6" />,
+    hideForAdmin: true,       // Visible para todos EXCEPTO el Administrador
   },
 
   // ── Inventario ───────────────────────────────────────────────────────────
@@ -163,6 +170,18 @@ const navConfig = [
           PERMISOS.CREAR_PRESTAMOS,
           PERMISOS.DEVOLVER_HERRAMIENTAS,
         ],
+      },
+      {
+        title: 'Horas Extra y Retardos',
+        path: '/horas-extra',
+        icon: <ClockIcon className="h-5 w-5" />,
+        adminOnly: true,
+      },
+      {
+        title: 'Ubicación y Fotos',
+        path: '/reporte-ubicacion',
+        icon: <MapPinIcon className="h-5 w-5" />,
+        adminOnly: true,
       },
       {
         title: 'Configuraciones',
