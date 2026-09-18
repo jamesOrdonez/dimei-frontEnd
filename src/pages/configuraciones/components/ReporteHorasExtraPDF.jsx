@@ -281,10 +281,11 @@ export default function ReporteHorasExtraPDF({ rows, startDate, endDate, company
               ? styles.tableRowAlt
               : {};
 
-            const lunchText =
-              row.lunchStart && row.lunchEnd
-                ? `${formatTimeOnly(row.lunchStart)}-${formatTimeOnly(row.lunchEnd)}`
-                : '—';
+            const lunchText = row.lunchOmitted
+              ? 'Omitido'
+              : row.lunchStart && row.lunchEnd
+              ? `${formatTimeOnly(row.lunchStart)}-${formatTimeOnly(row.lunchEnd)}`
+              : '—';
 
             const tipoDia = row.isHoliday
               ? (row.holidayName ? `Festivo: ${row.holidayName.substring(0, 10)}` : 'Festivo')
@@ -309,11 +310,21 @@ export default function ReporteHorasExtraPDF({ rows, startDate, endDate, company
                 </Text>
                 <Text style={[styles.tableCell, styles.colFecha]}>{row.date || '—'}</Text>
                 <Text style={[styles.tableCell, styles.colTipoDia]}>{tipoDia}</Text>
-                <Text style={[styles.tableCell, styles.colEntrada]}>{formatTimeOnly(row.entryTime)}</Text>
+                <View style={[styles.colEntrada, { alignItems: 'center' }]}>
+                  <Text style={styles.tableCell}>{formatTimeOnly(row.entryTime)}</Text>
+                  {row.extraEntrada > 0 && (
+                    <Text style={{ fontSize: 5.5, color: '#b45309', fontWeight: 'bold' }}>+{row.extraEntrada}h</Text>
+                  )}
+                </View>
                 <Text style={[styles.tableCell, styles.colAlmuerzo]}>{lunchText}</Text>
-                <Text style={[styles.tableCell, styles.colSalida]}>
-                  {row.isPendingExit ? 'En curso' : formatTimeOnly(row.exitTime)}
-                </Text>
+                <View style={[styles.colSalida, { alignItems: 'center' }]}>
+                  <Text style={styles.tableCell}>
+                    {row.isPendingExit ? 'En curso' : formatTimeOnly(row.exitTime)}
+                  </Text>
+                  {row.extraSalida > 0 && (
+                    <Text style={{ fontSize: 5.5, color: '#6d28d9', fontWeight: 'bold' }}>+{row.extraSalida}h</Text>
+                  )}
+                </View>
                 <Text style={[styles.tableCell, styles.colLaborado]}>{tiempoLab}</Text>
                 <Text style={[styles.tableCell, styles.colHEDiurna, row.diurna > 0 ? styles.overtimeNumber : {}]}>
                   {row.diurna > 0 ? `${row.diurna}h` : '—'}

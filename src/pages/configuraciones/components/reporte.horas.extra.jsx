@@ -68,6 +68,11 @@ function ResumenTotales({ rows }) {
     total: acc.total + (r.totalExtra || 0),
   }), { diurna: 0, nocturna: 0, diurnaDF: 0, nocturnaDF: 0, total: 0 });
 
+  const hasExceeded = rows.some(r => r.weeklyOvertimeExceeds);
+  const exceededCount = new Set(
+    rows.filter(r => r.weeklyOvertimeExceeds).map(r => `${r.userId}-${r.isoWeekKey}`)
+  ).size;
+
   return (
     <Stack direction="row" spacing={2} flexWrap="wrap" gap={1} mb={2}>
       {[
@@ -97,6 +102,25 @@ function ResumenTotales({ rows }) {
         <Typography variant="h5" fontWeight={800} sx={{ color: '#3730a3' }}>{totales.total}h</Typography>
         <Typography variant="caption" color="text.secondary">Total H.E.</Typography>
       </Paper>
+      {hasExceeded && (
+        <Paper
+          elevation={0}
+          sx={{
+            px: 2.5, py: 1.5,
+            border: '1.5px solid #fca5a5',
+            borderRadius: 2, textAlign: 'center', minWidth: 160,
+            bgcolor: '#fef2f2',
+          }}
+        >
+          <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+            <Icon icon="lucide:alert-triangle" width={16} style={{ color: '#dc2626' }} />
+            <Typography variant="h5" fontWeight={800} sx={{ color: '#dc2626' }}>
+              {exceededCount} semana{exceededCount !== 1 ? 's' : ''}
+            </Typography>
+          </Stack>
+          <Typography variant="caption" sx={{ color: '#b91c1c' }}>Superan 42 h/semana</Typography>
+        </Paper>
+      )}
     </Stack>
   );
 }
@@ -223,7 +247,7 @@ export default function ReporteHorasExtra() {
       Fecha: formatDate(row.date),
       'Tipo de Día': row.isHoliday ? (row.holidayName || 'Festivo') : row.esDominical ? 'Domingo' : row.esSabado ? 'Sábado' : 'Ordinario',
       Entrada: formatTime(row.entryTime),
-      Almuerzo: row.lunchStart && row.lunchEnd ? `${formatTime(row.lunchStart)} - ${formatTime(row.lunchEnd)}` : '—',
+      Almuerzo: row.lunchOmitted ? 'Omitido' : (row.lunchStart && row.lunchEnd ? `${formatTime(row.lunchStart)} - ${formatTime(row.lunchEnd)}` : '—'),
       Salida: row.isPendingExit ? 'En curso' : formatTime(row.exitTime),
       'T. Laborado': row.minutosNeto > 0 ? `${Math.floor(row.minutosNeto / 60)}h ${row.minutosNeto % 60}m` : '—',
       'H.E. Diurna': row.diurna || 0,
@@ -613,7 +637,16 @@ export default function ReporteHorasExtra() {
                           {formatTime(row.entryTime)}
                         </TableCell>
                         <TableCell sx={{ fontSize: '0.75rem' }}>
-                          {row.lunchStart && row.lunchEnd ? (
+                          {row.lunchOmitted ? (
+                            <Chip
+                              label="Omitido"
+                              size="small"
+                              sx={{
+                                fontSize: '0.65rem', height: 18,
+                                bgcolor: '#fef3c7', color: '#92400e', fontWeight: 600,
+                              }}
+                            />
+                          ) : row.lunchStart && row.lunchEnd ? (
                             <Chip
                               label={formatTime(row.lunchStart) + ' - ' + formatTime(row.lunchEnd)}
                               size="small"
@@ -647,11 +680,25 @@ export default function ReporteHorasExtra() {
                         <TableCell align="center"><OvertimeCell value={row.nocturnaDF} type="nocturnaDF" /></TableCell>
                         <TableCell align="center">
                           {row.totalExtra > 0 ? (
-                            <Chip
-                              label={`${row.totalExtra}h`}
-                              size="small"
-                              sx={{ bgcolor: '#eef2ff', color: '#3730a3', fontWeight: 800, fontSize: '0.8rem' }}
-                            />
+                            <Tooltip
+                              title={
+                                row.weeklyOvertimeExceeds
+                                  ? `⚠️ Esta semana suma ${row.weeklyTotalExtra}h de H.E. (límite: 42h)`
+                                  : `Total H.E. esta semana: ${row.weeklyTotalExtra}h`
+                              }
+                              arrow
+                              placement="top"
+                            >
+                              <Chip
+                                label={`${row.totalExtra}h`}
+                                size="small"
+                                sx={
+                                  row.weeklyOvertimeExceeds
+                                    ? { bgcolor: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '0.8rem', border: '1.5px solid #fca5a5' }
+                                    : { bgcolor: '#eef2ff', color: '#3730a3', fontWeight: 800, fontSize: '0.8rem' }
+                                }
+                              />
+                            </Tooltip>
                           ) : (
                             <Typography variant="caption" color="text.disabled">—</Typography>
                           )}

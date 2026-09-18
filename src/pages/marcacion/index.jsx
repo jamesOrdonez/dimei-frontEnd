@@ -77,9 +77,16 @@ const STEPS = [
   },
 ];
 
-function StepCard({ step, record, onMark, isNext, loading }) {
+function StepCard({ step, record, onMark, onSkipLunch, isNext, loading }) {
+  const isLunchStep = step.key === 'lunch_start' || step.key === 'lunch_end';
+  const isLunchSkipped =
+    isLunchStep &&
+    Boolean(
+      record?.lunch_omitted ||
+      (record?.lunch_start && record?.lunch_end && new Date(record.lunch_start).getTime() === new Date(record.lunch_end).getTime())
+    );
   const markedTime = record ? (record[step.field] || record[step.key]) : null;
-  const isDone = Boolean(markedTime);
+  const isDone = Boolean(markedTime) || isLunchSkipped;
 
   return (
     <Paper
@@ -125,32 +132,66 @@ function StepCard({ step, record, onMark, isNext, loading }) {
             {step.label}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {step.sublabel}
+            {isLunchSkipped ? 'Almuerzo omitido' : step.sublabel}
           </Typography>
         </Box>
       </Stack>
 
       {isDone ? (
-        <Typography variant="h6" fontWeight={800} sx={{ color: step.color, fontVariantNumeric: 'tabular-nums' }}>
-          {formatTime(markedTime)}
-        </Typography>
+        <>
+          <Typography variant="h6" fontWeight={800} sx={{ color: step.color, fontVariantNumeric: 'tabular-nums' }}>
+            {isLunchSkipped ? '—' : formatTime(markedTime)}
+          </Typography>
+          {isLunchSkipped && (
+            <Chip
+              icon={<Icon icon="lucide:ban" width={12} />}
+              label="Almuerzo omitido"
+              size="small"
+              sx={{ mt: 0.5, fontSize: '0.65rem', height: 20, bgcolor: '#fef3c7', color: '#92400e', fontWeight: 700 }}
+            />
+          )}
+        </>
       ) : isNext ? (
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={() => onMark(step.key)}
-          disabled={loading}
-          size="small"
-          sx={{
-            bgcolor: step.color,
-            '&:hover': { bgcolor: step.color, filter: 'brightness(0.9)' },
-            borderRadius: 2,
-            fontWeight: 700,
-            textTransform: 'none',
-          }}
-        >
-          {loading ? <CircularProgress size={16} color="inherit" /> : `Marcar ${step.label}`}
-        </Button>
+        <Stack spacing={1}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => onMark(step.key)}
+            disabled={loading}
+            size="small"
+            sx={{
+              bgcolor: step.color,
+              '&:hover': { bgcolor: step.color, filter: 'brightness(0.9)' },
+              borderRadius: 2,
+              fontWeight: 700,
+              textTransform: 'none',
+            }}
+          >
+            {loading ? <CircularProgress size={16} color="inherit" /> : `Marcar ${step.label}`}
+          </Button>
+          {step.key === 'lunch_start' && onSkipLunch && (
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={onSkipLunch}
+              disabled={loading}
+              size="small"
+              startIcon={<Icon icon="lucide:ban" width={14} />}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '0.78rem',
+                color: '#92400e',
+                borderColor: '#fde68a',
+                bgcolor: '#fffbeb',
+                '&:hover': { bgcolor: '#fef3c7', borderColor: '#f59e0b' },
+              }}
+            >
+              Omitir almuerzo
+            </Button>
+          )}
+        </Stack>
       ) : (
         <Typography variant="body2" color="text.disabled" fontStyle="italic">
           Pendiente
@@ -163,8 +204,11 @@ function StepCard({ step, record, onMark, isNext, loading }) {
 // ─── Historial de registros ──────────────────────────────────────────────────
 
 function HistorialRow({ record }) {
+  const isLunchSkipped = Boolean(
+    record.lunch_omitted ||
+    (record.lunch_start && record.lunch_end && new Date(record.lunch_start).getTime() === new Date(record.lunch_end).getTime())
+  );
   const laborado = duracionMinutos(record.entry_time, record.exit_time);
-  const almuerzo = duracionMinutos(record.lunch_start, record.lunch_end);
 
   return (
     <Box
@@ -190,11 +234,21 @@ function HistorialRow({ record }) {
           ) : null}
         </Box>
 
-        <Stack direction="row" spacing={2} flexWrap="wrap">
+        <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
           {[
             { label: 'Entrada', value: formatTime(record.entry_time), icon: 'lucide:log-in', color: '#10b981' },
-            { label: 'Al. Inicio', value: formatTime(record.lunch_start), icon: 'lucide:coffee', color: '#f59e0b' },
-            { label: 'Al. Fin', value: formatTime(record.lunch_end), icon: 'lucide:utensils', color: '#3b82f6' },
+            {
+              label: 'Al. Inicio',
+              value: isLunchSkipped ? '—' : formatTime(record.lunch_start),
+              icon: 'lucide:coffee',
+              color: isLunchSkipped ? '#94a3b8' : '#f59e0b',
+            },
+            {
+              label: 'Al. Fin',
+              value: isLunchSkipped ? '—' : formatTime(record.lunch_end),
+              icon: 'lucide:utensils',
+              color: isLunchSkipped ? '#94a3b8' : '#3b82f6',
+            },
             { label: 'Salida', value: formatTime(record.exit_time), icon: 'lucide:log-out', color: '#ef4444' },
           ].map((item) => (
             <Box key={item.label} textAlign="center" minWidth={60}>
@@ -206,6 +260,13 @@ function HistorialRow({ record }) {
               </Typography>
             </Box>
           ))}
+
+          {isLunchSkipped && (
+            <Box textAlign="center" minWidth={60}>
+              <Typography variant="caption" color="text.disabled" display="block">Almuerzo</Typography>
+              <Chip label="Omitido" size="small" sx={{ fontSize: '0.65rem', height: 20, bgcolor: '#fef3c7', color: '#92400e', fontWeight: 700 }} />
+            </Box>
+          )}
 
           {laborado && (
             <Box textAlign="center" minWidth={60}>
@@ -259,6 +320,14 @@ export default function Marcacion() {
   // Determina cuál es el siguiente paso a marcar
   const getNextStep = () => {
     if (!record || !record.entry_time) return 'entry';
+    const isLunchSkipped = Boolean(
+      record.lunch_omitted ||
+      (record.lunch_start && record.lunch_end && new Date(record.lunch_start).getTime() === new Date(record.lunch_end).getTime())
+    );
+    if (isLunchSkipped) {
+      if (!record.exit_time) return 'exit';
+      return null;
+    }
     if (!record.lunch_start) return 'lunch_start';
     if (!record.lunch_end) return 'lunch_end';
     if (!record.exit_time) return 'exit';
@@ -274,6 +343,51 @@ export default function Marcacion() {
   const handleOpenModal = (type) => {
     setSelectedStepKey(type);
     setModalOpen(true);
+  };
+
+  // Omitir almuerzo: pedir justificación con Swal y enviar skip_lunch
+  const handleSkipLunch = async () => {
+    const { value: justification, isConfirmed } = await Swal.fire({
+      title: 'Omitir almuerzo',
+      html: '<p style="font-size:0.9rem;color:#64748b;margin-bottom:8px">Debes ingresar el motivo por el que no tomarás hora de almuerzo hoy.</p>',
+      input: 'textarea',
+      inputLabel: 'Justificación (obligatoria)',
+      inputPlaceholder: 'Ej: Trabajo urgente, reunión de cliente, entrega de proyecto...',
+      inputAttributes: { rows: 3, style: 'resize:none;font-size:0.9rem' },
+      showCancelButton: true,
+      confirmButtonText: 'Omitir almuerzo',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f59e0b',
+      inputValidator: (val) => {
+        if (!val || !val.trim()) return 'La justificación es obligatoria para omitir el almuerzo.';
+        if (val.trim().length < 10) return 'Por favor ingresa una justificación más detallada (mínimo 10 caracteres).';
+        return null;
+      },
+    });
+    if (!isConfirmed || !justification?.trim()) return;
+
+    setMarking(true);
+    try {
+      const res = await axios.post('/markTime', {
+        type: 'skip_lunch',
+        justification: justification.trim(),
+      }, { headers: { 'Content-Type': 'application/json' } });
+      if (res.data?.data) setRecord(res.data.data);
+      fetchRecord();
+      Swal.fire({
+        title: 'Almuerzo omitido',
+        text: 'Se registró que no tomaste almuerzo hoy.',
+        icon: 'info',
+        timer: 2500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end',
+      });
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'No se pudo registrar.', 'error');
+    } finally {
+      setMarking(false);
+    }
   };
 
   const handleConfirmMark = async ({ photo, latitude, longitude, accuracy, justification }) => {
@@ -387,8 +501,7 @@ export default function Marcacion() {
           )}
 
           <Grid container spacing={2} mb={3}>
-            {STEPS.map((step, idx) => {
-              const stepOrder = ['entry', 'lunch_start', 'lunch_end', 'exit'];
+            {STEPS.map((step) => {
               const isNext = nextStep === step.key;
               return (
                 <Grid item xs={12} sm={6} key={step.key}>
@@ -396,6 +509,7 @@ export default function Marcacion() {
                     step={step}
                     record={record}
                     onMark={handleOpenModal}
+                    onSkipLunch={step.key === 'lunch_start' ? handleSkipLunch : undefined}
                     isNext={isNext}
                     loading={marking}
                   />
