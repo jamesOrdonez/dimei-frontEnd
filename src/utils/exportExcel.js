@@ -12,12 +12,48 @@ export function exportStyledExcel({
   isOvertimeRow = () => false,
   isOvertimeCell = () => false,
 }) {
-  const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+  // Preparamos los datos planos para que json_to_sheet inicialice la hoja correctamente
+  const flatData = data.map((row) => {
+    const flatRow = {};
+    headers.forEach((h) => {
+      const val = row[h];
+      if (val && typeof val === 'object' && val.text !== undefined) {
+        flatRow[h] = val.text;
+      } else {
+        flatRow[h] = val;
+      }
+    });
+    return flatRow;
+  });
+
+  const ws = XLSX.utils.json_to_sheet(flatData, { header: headers });
+
+  // Asignamos hipervínculos activos a las celdas que contienen enlace
+  data.forEach((row, rowIdx) => {
+    headers.forEach((colName, colIdx) => {
+      const cellVal = row[colName];
+      if (cellVal && typeof cellVal === 'object' && cellVal.link) {
+        const cellRef = XLSX.utils.encode_cell({ r: rowIdx + 1, c: colIdx });
+        const label = String(cellVal.text || cellVal.link);
+        ws[cellRef] = {
+          t: 's',
+          v: label,
+          f: `HYPERLINK("${cellVal.link}", "${label.replace(/"/g, '""')}")`,
+          l: { Target: cellVal.link, Tooltip: label },
+        };
+      }
+    });
+  });
 
   // Ajuste automático de ancho de columnas para visualización clara
   const colWidths = headers.map((h) => {
     const maxValLen = data.reduce((max, row) => {
-      const valStr = row[h] !== undefined && row[h] !== null ? String(row[h]) : '';
+      const rawVal = row[h];
+      const valStr = rawVal && typeof rawVal === 'object' && rawVal.text !== undefined
+        ? String(rawVal.text)
+        : rawVal !== undefined && rawVal !== null
+        ? String(rawVal)
+        : '';
       return Math.max(max, valStr.length);
     }, h.length);
     return { wch: Math.min(Math.max(maxValLen + 3, 12), 40) };

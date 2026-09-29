@@ -9,12 +9,15 @@ import Swal from 'sweetalert2';
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
 
-function calcDuracion(inicio, fin) {
+function calcDuracion(inicio, fin, descontarAlmuerzo = false) {
   if (!inicio || !fin) return null;
   const [ih, im] = inicio.split(':').map(Number);
   const [fh, fm] = fin.split(':').map(Number);
-  const totalMin = (fh * 60 + fm) - (ih * 60 + im);
+  let totalMin = (fh * 60 + fm) - (ih * 60 + im);
   if (totalMin <= 0) return null;
+  if (descontarAlmuerzo && totalMin >= 300) {
+    totalMin -= 60; // Descuenta la hora de almuerzo en jornada estándar
+  }
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
@@ -92,8 +95,8 @@ function RolSchedulePanel({ rol, company }) {
     }
   };
 
-  const duracionLV = calcDuracion(form.entry_time, form.exit_time);
-  const duracionSab = calcDuracion(form.saturday_entry_time || form.entry_time, form.saturday_exit_time);
+  const duracionLV = calcDuracion(form.entry_time, form.exit_time, true);
+  const duracionSab = calcDuracion(form.saturday_entry_time || form.entry_time, form.saturday_exit_time, false);
 
   return (
     <Paper

@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconButton, Chip } from '@mui/material';
+import { IconButton, Chip, Tooltip, Stack } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import BaseGrid from '../../components/grid/base.grid.tsx';
 import { usePermissions, PERMISOS } from '../../context/PermissionsContext.jsx';
+import { exportProjectBudgetExcel } from './components/exportProjectBudgetExcel.js';
 
 export default function Proyectos() {
   const navigate = useNavigate();
@@ -27,6 +29,38 @@ export default function Proyectos() {
 
   const handleView = (item) => {
     navigate(`/proyectos/${item.id}`);
+  };
+
+  const handleDownloadBudgetExcel = async (item) => {
+    try {
+      Swal.fire({
+        title: 'Generando Presupuesto...',
+        text: 'Cargando información del proyecto para exportar a Excel',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      const response = await axios.get(`/getOneProject/${item.id}`);
+      const raw = response.data?.data ?? response.data;
+      const projectData = Array.isArray(raw)
+        ? raw.find((i) => String(i.id) === String(item.id)) || raw[0]
+        : raw;
+
+      Swal.close();
+
+      if (!projectData) {
+        Swal.fire('Error', 'No se encontraron datos del proyecto.', 'error');
+        return;
+      }
+
+      exportProjectBudgetExcel(projectData);
+    } catch (err) {
+      console.error('Error exportando presupuesto a Excel:', err);
+      Swal.close();
+      Swal.fire('Error', 'No se pudo generar el archivo Excel del presupuesto.', 'error');
+    }
   };
 
   const statusOptions = useMemo(
@@ -179,17 +213,34 @@ export default function Proyectos() {
         }}
         renderExtraActions={(item) => (
           (hasPermission(PERMISOS.VER_PROYECTOS) || hasPermission(PERMISOS.CREAR_PROYECTOS)) && (
-            <IconButton
-              sx={{
-                color: 'info.main',
-                border: '1.5px solid',
-                borderColor: 'info.light',
-                borderRadius: 1.5,
-              }}
-              onClick={() => handleView(item)}
-            >
-              <Icon icon="lucide:eye" width={20} />
-            </IconButton>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Tooltip title="Ver detalles del proyecto">
+                <IconButton
+                  sx={{
+                    color: 'info.main',
+                    border: '1.5px solid',
+                    borderColor: 'info.light',
+                    borderRadius: 1.5,
+                  }}
+                  onClick={() => handleView(item)}
+                >
+                  <Icon icon="lucide:eye" width={20} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Descargar Presupuesto en Excel">
+                <IconButton
+                  sx={{
+                    color: 'success.main',
+                    border: '1.5px solid',
+                    borderColor: 'success.light',
+                    borderRadius: 1.5,
+                  }}
+                  onClick={() => handleDownloadBudgetExcel(item)}
+                >
+                  <Icon icon="vscode-icons:file-type-excel" width={20} />
+                </IconButton>
+              </Tooltip>
+            </Stack>
           )
         )}
         excludeKeys={['proyectos', 'questionGroupId', 'user', 'lastMaintenance', 'company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel', 'observaciones', 'Observaciones']}

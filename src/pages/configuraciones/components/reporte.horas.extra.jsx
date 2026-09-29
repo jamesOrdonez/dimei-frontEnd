@@ -246,9 +246,9 @@ export default function ReporteHorasExtra() {
       Rol: row.rolName,
       Fecha: formatDate(row.date),
       'Tipo de Día': row.isHoliday ? (row.holidayName || 'Festivo') : row.esDominical ? 'Domingo' : row.esSabado ? 'Sábado' : 'Ordinario',
-      Entrada: formatTime(row.entryTime),
+      Entrada: row.noAsistioSabado ? 'No asistió' : formatTime(row.entryTime),
       Almuerzo: row.lunchOmitted ? 'Omitido' : (row.lunchStart && row.lunchEnd ? `${formatTime(row.lunchStart)} - ${formatTime(row.lunchEnd)}` : '—'),
-      Salida: row.isPendingExit ? 'En curso' : formatTime(row.exitTime),
+      Salida: row.noAsistioSabado ? 'No asistió' : (row.isPendingExit ? 'En curso' : formatTime(row.exitTime)),
       'T. Laborado': row.minutosNeto > 0 ? `${Math.floor(row.minutosNeto / 60)}h ${row.minutosNeto % 60}m` : '—',
       'H.E. Diurna': row.diurna || 0,
       'H.E. Nocturna': row.nocturna || 0,
@@ -554,7 +554,15 @@ export default function ReporteHorasExtra() {
                         'Empleado', 'Rol', 'Fecha', 'Tipo de Día', 'Entrada', 'Almuerzo', 'Salida', 'T. Laborado',
                         'H.E. Diurna', 'H.E. Nocturna', 'H.E. Diurna D/F', 'H.E. Nocturna D/F', 'Total H.E.', 'Justificación',
                       ].map((h) => (
-                        <TableCell key={h} sx={CELL_HEADER}>{h}</TableCell>
+                        <TableCell
+                          key={h}
+                          sx={{
+                            ...CELL_HEADER,
+                            ...(h === 'Fecha' ? { minWidth: 165 } : {}),
+                          }}
+                        >
+                          {h}
+                        </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -591,8 +599,10 @@ export default function ReporteHorasExtra() {
                             )}
                           </Stack>
                         </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{formatDate(row.date)}</Typography>
+                        <TableCell sx={{ minWidth: 165, whiteSpace: 'nowrap', py: 1.5 }}>
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }}>
+                            {formatDate(row.date)}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           {row.isHoliday ? (
@@ -634,7 +644,18 @@ export default function ReporteHorasExtra() {
                           )}
                         </TableCell>
                         <TableCell sx={{ fontVariantNumeric: 'tabular-nums', fontSize: '0.8rem' }}>
-                          {formatTime(row.entryTime)}
+                          {row.noAsistioSabado ? (
+                            <Chip
+                              label="No asistió"
+                              size="small"
+                              sx={{
+                                fontSize: '0.65rem', height: 18,
+                                bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 700,
+                              }}
+                            />
+                          ) : (
+                            formatTime(row.entryTime)
+                          )}
                         </TableCell>
                         <TableCell sx={{ fontSize: '0.75rem' }}>
                           {row.lunchOmitted ? (
@@ -658,7 +679,16 @@ export default function ReporteHorasExtra() {
                           )}
                         </TableCell>
                         <TableCell sx={{ fontVariantNumeric: 'tabular-nums', fontSize: '0.8rem' }}>
-                          {row.isPendingExit ? (
+                          {row.noAsistioSabado ? (
+                            <Chip
+                              label="No asistió"
+                              size="small"
+                              sx={{
+                                fontSize: '0.65rem', height: 18,
+                                bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 700,
+                              }}
+                            />
+                          ) : row.isPendingExit ? (
                             <Chip
                               label="En curso"
                               size="small"
@@ -682,7 +712,9 @@ export default function ReporteHorasExtra() {
                           {row.totalExtra > 0 ? (
                             <Tooltip
                               title={
-                                row.weeklyOvertimeExceeds
+                                row.descuentoSabado > 0
+                                  ? `⚠️ Se descontaron ${row.descuentoSabado}h por no laborar sábado. Total H.E. esta semana: ${row.weeklyTotalExtra}h`
+                                  : row.weeklyOvertimeExceeds
                                   ? `⚠️ Esta semana suma ${row.weeklyTotalExtra}h de H.E. (límite: 42h)`
                                   : `Total H.E. esta semana: ${row.weeklyTotalExtra}h`
                               }
@@ -697,6 +729,14 @@ export default function ReporteHorasExtra() {
                                     ? { bgcolor: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '0.8rem', border: '1.5px solid #fca5a5' }
                                     : { bgcolor: '#eef2ff', color: '#3730a3', fontWeight: 800, fontSize: '0.8rem' }
                                 }
+                              />
+                            </Tooltip>
+                          ) : row.descuentoSabado > 0 ? (
+                            <Tooltip title={`0h (se descontaron ${row.descuentoSabado}h por no laborar sábado)`} arrow placement="top">
+                              <Chip
+                                label="0h"
+                                size="small"
+                                sx={{ bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 800, fontSize: '0.75rem', border: '1px solid #fca5a5' }}
                               />
                             </Tooltip>
                           ) : (

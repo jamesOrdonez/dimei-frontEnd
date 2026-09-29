@@ -71,6 +71,7 @@ export default function ReporteUbicacion() {
 
   // Estado para zoom de foto
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   // Cargar catálogos de usuarios y roles
   useEffect(() => {
@@ -118,49 +119,81 @@ export default function ReporteUbicacion() {
     return true;
   });
 
-  // Exportar a Excel
-  const handleExportExcel = () => {
+  // Exportar a Excel con fotos incrustadas directamente y vínculo a Google Maps
+  const handleExportExcel = async () => {
     if (filteredLogs.length === 0) return;
-    const rows = filteredLogs.map((l) => ({
-      ID: l.id,
-      Empleado: l.userName,
-      Rol: l.rolName,
-      'Tipo de Marcación': MARKING_CONFIG[l.markingType]?.label || l.markingType,
-      Jornada: l.hasOvertime ? 'Horas Extra' : 'Jornada Ordinaria',
-      Fecha: formatDate(l.timestamp),
-      Hora: formatTime(l.timestamp),
-      Latitud: l.latitude || 'Sin GPS',
-      Longitud: l.longitude || 'Sin GPS',
-      'Precisión (m)': l.accuracy ? Math.round(l.accuracy) : '',
-      'Link Google Maps': l.latitude && l.longitude ? `https://www.google.com/maps?q=${l.latitude},${l.longitude}` : 'N/A',
-      'URL Foto': l.photoUrl ? getFullImageUrl(l.photoUrl) : 'Sin foto',
-      Justificación: l.justification || 'N/A',
-    }));
+    setExporting(true);
+    try {
+      const params = {};
+      if (company) params.company = company;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      if (selectedUser !== 'all') params.userId = selectedUser;
+      if (selectedRol !== 'all') params.rolId = selectedRol;
+      if (selectedType !== 'all') params.markingType = selectedType;
+      if (selectedJornada !== 'all') params.jornada = selectedJornada;
 
-    const headers = [
-      'ID',
-      'Empleado',
-      'Rol',
-      'Tipo de Marcación',
-      'Jornada',
-      'Fecha',
-      'Hora',
-      'Latitud',
-      'Longitud',
-      'Precisión (m)',
-      'Link Google Maps',
-      'URL Foto',
-      'Justificación',
-    ];
+      const res = await axios.get('/locationReport/excel', {
+        params,
+        responseType: 'blob',
+      });
 
-    exportStyledExcel({
-      filename: `reporte_ubicacion_marcaciones_${startDate}_al_${endDate}.xlsx`,
-      sheetName: 'Auditoría Marcaciones',
-      headers,
-      data: rows,
-      isOvertimeRow: (row) => row.Jornada === 'Horas Extra',
-      isOvertimeCell: (colName, val) => colName === 'Jornada' && val === 'Horas Extra',
-    });
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte_ubicacion_marcaciones_${startDate}_al_${endDate}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exportando Excel con fotos incrustadas:', err);
+      // Fallback local en caso de contingencia
+      const rows = filteredLogs.map((l) => ({
+        ID: l.id,
+        Empleado: l.userName,
+        Rol: l.rolName,
+        'Tipo de Marcación': MARKING_CONFIG[l.markingType]?.label || l.markingType,
+        Jornada: l.hasOvertime ? 'Horas Extra' : 'Jornada Ordinaria',
+        Fecha: formatDate(l.timestamp),
+        Hora: formatTime(l.timestamp),
+        'Precisión (m)': l.accuracy ? `${Math.round(l.accuracy)} m` : '—',
+        'Link Google Maps': l.latitude && l.longitude
+          ? {
+              text: 'Ver en Google Maps',
+              link: `https://www.google.com/maps?q=${l.latitude},${l.longitude}`,
+            }
+          : 'Sin GPS',
+        Justificación: l.justification || '—',
+      }));
+
+      const headers = [
+        'ID',
+        'Empleado',
+        'Rol',
+        'Tipo de Marcación',
+        'Jornada',
+        'Fecha',
+        'Hora',
+        'Precisión (m)',
+        'Link Google Maps',
+        'Justificación',
+      ];
+
+      exportStyledExcel({
+        filename: `reporte_ubicacion_marcaciones_${startDate}_al_${endDate}.xlsx`,
+        sheetName: 'Auditoría Marcaciones',
+        headers,
+        data: rows,
+        isOvertimeRow: (row) => row.Jornada === 'Horas Extra',
+        isOvertimeCell: (colName, val) => colName === 'Jornada' && val === 'Horas Extra',
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -301,11 +334,11 @@ export default function ReporteUbicacion() {
               variant="contained"
               color="success"
               onClick={handleExportExcel}
-              disabled={filteredLogs.length === 0}
-              startIcon={<Icon icon="lucide:file-spreadsheet" />}
+              disabled={filteredLogs.length === 0 || exporting}
+              startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <Icon icon="lucide:file-spreadsheet" />}
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.85rem' }}
             >
-              Excel
+              {exporting ? 'Generando...' : 'Excel'}
             </Button>
           </Grid>
         </Grid>

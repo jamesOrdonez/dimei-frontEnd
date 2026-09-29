@@ -32,6 +32,36 @@ function duracionMinutos(desde, hasta) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
+function calcularTiempoLaborado(record) {
+  if (!record || !record.entry_time || !record.exit_time) return null;
+  const entryMs = new Date(record.entry_time).getTime();
+  const exitMs = new Date(record.exit_time).getTime();
+  const brutoMin = (exitMs - entryMs) / 60000;
+  if (brutoMin <= 0) return null;
+
+  const isLunchSkipped = Boolean(
+    record.lunch_omitted ||
+    (record.lunch_start && record.lunch_end && new Date(record.lunch_start).getTime() === new Date(record.lunch_end).getTime())
+  );
+
+  let almuerzoMin = 0;
+  if (!isLunchSkipped) {
+    if (record.lunch_start && record.lunch_end) {
+      const lsMs = new Date(record.lunch_start).getTime();
+      const leMs = new Date(record.lunch_end).getTime();
+      almuerzoMin = Math.max(0, (leMs - lsMs) / 60000);
+    } else if (brutoMin >= 300) {
+      // Siempre se debe restar la hora de almuerzo (60 min) si la jornada es de 5 horas o más
+      almuerzoMin = 60;
+    }
+  }
+
+  const netoMin = Math.max(0, Math.round(brutoMin - almuerzoMin));
+  const h = Math.floor(netoMin / 60);
+  const m = netoMin % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 // ─── Tarjeta de marcación ────────────────────────────────────────────────────
 
 const STEPS = [
@@ -208,7 +238,7 @@ function HistorialRow({ record }) {
     record.lunch_omitted ||
     (record.lunch_start && record.lunch_end && new Date(record.lunch_start).getTime() === new Date(record.lunch_end).getTime())
   );
-  const laborado = duracionMinutos(record.entry_time, record.exit_time);
+  const laborado = calcularTiempoLaborado(record);
 
   return (
     <Box
@@ -276,6 +306,24 @@ function HistorialRow({ record }) {
           )}
         </Stack>
       </Stack>
+
+      {record.overtime_justification && (
+        <Box
+          sx={{
+            mt: 1,
+            pt: 0.8,
+            borderTop: '1px dashed #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.8,
+          }}
+        >
+          <Icon icon="lucide:clock-alert" width={14} color="#d97706" />
+          <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 500, fontStyle: 'italic' }}>
+            {record.overtime_justification}
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -426,7 +474,7 @@ export default function Marcacion() {
     }
   };
 
-  const laboradoHoy = record ? duracionMinutos(record.entry_time, record.exit_time) : null;
+  const laboradoHoy = record ? calcularTiempoLaborado(record) : null;
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', px: { xs: 2, md: 0 } }}>

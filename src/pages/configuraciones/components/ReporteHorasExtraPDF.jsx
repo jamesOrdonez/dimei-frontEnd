@@ -148,20 +148,26 @@ const styles = StyleSheet.create({
   },
 
   // Anchos de Columna (Total 100%)
-  colEmpleado: { width: '15%' },
-  colRol: { width: '10%' },
-  colFecha: { width: '9%' },
-  colTipoDia: { width: '8%' },
+  colEmpleado: { width: '13%' },
+  colRol: { width: '8%' },
+  colFecha: { width: '8%' },
+  colTipoDia: { width: '7%' },
   colEntrada: { width: '6%' },
-  colAlmuerzo: { width: '8%' },
+  colAlmuerzo: { width: '7%' },
   colSalida: { width: '6%' },
-  colLaborado: { width: '7%' },
-  colHEDiurna: { width: '5%' },
-  colHENocturna: { width: '5%' },
-  colHEDiurnaDF: { width: '5%' },
-  colHENocturnaDF: { width: '5%' },
-  colTotalHE: { width: '6%' },
-  colJustificacion: { width: '10%' },
+  colLaborado: { width: '6%' },
+  colHEDiurna: { width: '4.5%' },
+  colHENocturna: { width: '4.5%' },
+  colHEDiurnaDF: { width: '4.5%' },
+  colHENocturnaDF: { width: '4.5%' },
+  colTotalHE: { width: '5%' },
+  colJustificacion: { width: '20%' },
+  cellJustificacion: {
+    textAlign: 'left',
+    paddingHorizontal: 3,
+    fontSize: 6.5,
+    lineHeight: 1.25,
+  },
 
   // Footer
   footer: {
@@ -301,7 +307,7 @@ export default function ReporteHorasExtraPDF({ rows, startDate, endDate, company
                 : '—';
 
             return (
-              <View key={row.id || index} style={[styles.tableRow, rowStyle]}>
+              <View key={row.id || index} style={[styles.tableRow, rowStyle]} wrap={false}>
                 <Text style={[styles.tableCell, styles.colEmpleado, styles.cellTextLeft, styles.cellBold]}>
                   {row.userName || '—'}
                 </Text>
@@ -311,7 +317,9 @@ export default function ReporteHorasExtraPDF({ rows, startDate, endDate, company
                 <Text style={[styles.tableCell, styles.colFecha]}>{row.date || '—'}</Text>
                 <Text style={[styles.tableCell, styles.colTipoDia]}>{tipoDia}</Text>
                 <View style={[styles.colEntrada, { alignItems: 'center' }]}>
-                  <Text style={styles.tableCell}>{formatTimeOnly(row.entryTime)}</Text>
+                  <Text style={styles.tableCell}>
+                    {row.noAsistioSabado ? 'No asistió' : formatTimeOnly(row.entryTime)}
+                  </Text>
                   {row.extraEntrada > 0 && (
                     <Text style={{ fontSize: 5.5, color: '#b45309', fontWeight: 'bold' }}>+{row.extraEntrada}h</Text>
                   )}
@@ -319,7 +327,7 @@ export default function ReporteHorasExtraPDF({ rows, startDate, endDate, company
                 <Text style={[styles.tableCell, styles.colAlmuerzo]}>{lunchText}</Text>
                 <View style={[styles.colSalida, { alignItems: 'center' }]}>
                   <Text style={styles.tableCell}>
-                    {row.isPendingExit ? 'En curso' : formatTimeOnly(row.exitTime)}
+                    {row.noAsistioSabado ? 'No asistió' : (row.isPendingExit ? 'En curso' : formatTimeOnly(row.exitTime))}
                   </Text>
                   {row.extraSalida > 0 && (
                     <Text style={{ fontSize: 5.5, color: '#6d28d9', fontWeight: 'bold' }}>+{row.extraSalida}h</Text>
@@ -341,8 +349,8 @@ export default function ReporteHorasExtraPDF({ rows, startDate, endDate, company
                 <Text style={[styles.tableCell, styles.colTotalHE, hasOvertime ? styles.overtimeNumber : {}]}>
                   {hasOvertime ? `${row.totalExtra}h` : '—'}
                 </Text>
-                <Text style={[styles.tableCell, styles.colJustificacion, styles.cellTextLeft]}>
-                  {row.overtimeJustification ? (row.overtimeJustification.length > 25 ? `${row.overtimeJustification.substring(0, 25)}...` : row.overtimeJustification) : '—'}
+                <Text style={[styles.tableCell, styles.colJustificacion, styles.cellJustificacion]}>
+                  {row.overtimeJustification && row.overtimeJustification.trim() ? row.overtimeJustification.trim() : '—'}
                 </Text>
               </View>
             );

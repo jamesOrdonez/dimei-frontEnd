@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
-import { Card, CardContent, Typography, Grid, Divider, Box, Button, Alert, AlertTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Card, CardContent, Typography, Grid, Divider, Box, Button, Alert, AlertTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { ArrowLeftIcon, CloudArrowUpIcon, DocumentCheckIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from '../../components/loaders';
@@ -10,6 +10,8 @@ import ProductTransfer from './components/product.transfer.jsx';
 import ItemTransfer from './components/item.transfer.jsx';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ProjectReportPdf from './components/ProjectReportPdf.jsx';
+import { exportProjectBudgetExcel } from './components/exportProjectBudgetExcel.js';
+import { Icon } from '@iconify/react';
 import Swal from 'sweetalert2';
 import RemisionModal from './components/RemisionModal.jsx';
 import DeliveryActPdf from './components/DeliveryActPdf.jsx';
@@ -28,9 +30,40 @@ export default function DetalleProyecto() {
   const [openRemision, setOpenRemision] = useState(false);
   const [closingProject, setClosingProject] = useState(false);
   const [uploadingSignedAct, setUploadingSignedAct] = useState(false);
+  const [budgetAnchorEl, setBudgetAnchorEl] = useState(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const company = sessionStorage.getItem('company');
   const user = decrypt(sessionStorage.getItem('name')) || ' ';
   const { hasPermission } = usePermissions();
+
+  const handleOpenBudgetMenu = (e) => setBudgetAnchorEl(e.currentTarget);
+  const handleCloseBudgetMenu = () => setBudgetAnchorEl(null);
+
+  const handleExportPDF = async () => {
+    if (!project) return;
+    setGeneratingPdf(true);
+    try {
+      const blob = await pdf(<ProjectReportPdf project={project} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `presupuesto_proyecto_${projectId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error generando PDF de Presupuesto:', err);
+      Swal.fire('Error', 'No se pudo generar el documento PDF.', 'error');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (!project) return;
+    exportProjectBudgetExcel(project);
+  };
 
 
   const fetchProject = useCallback(() => {
@@ -294,22 +327,67 @@ export default function DetalleProyecto() {
                </PDFDownloadLink>
             )}
 
-             <PDFDownloadLink
-                document={<ProjectReportPdf project={project} />}
-                fileName={`presupuesto_proyecto_${projectId}.pdf`}
-                style={{ textDecoration: 'none' }}
+             <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Icon icon="lucide:download" />}
+                endIcon={<Icon icon="lucide:chevron-down" />}
+                onClick={handleOpenBudgetMenu}
+                disabled={generatingPdf}
+                sx={{ borderRadius: 2, fontWeight: 700 }}
              >
-                {({ loading }) => (
-                   <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={loading}
-                      sx={{ borderRadius: 2 }}
-                   >
-                      {loading ? 'Generando PDF...' : 'Descargar Presupuesto PDF'}
-                   </Button>
-                )}
-             </PDFDownloadLink>
+                {generatingPdf ? 'Generando PDF...' : 'Descargar Presupuesto'}
+             </Button>
+
+             <Menu
+                anchorEl={budgetAnchorEl}
+                open={Boolean(budgetAnchorEl)}
+                onClose={handleCloseBudgetMenu}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                PaperProps={{
+                  sx: {
+                    mt: 1,
+                    borderRadius: 2.5,
+                    minWidth: 220,
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    border: '1px solid #e2e8f0',
+                    p: 0.5,
+                  },
+                }}
+             >
+                <MenuItem
+                  onClick={() => {
+                    handleCloseBudgetMenu();
+                    handleExportPDF();
+                  }}
+                  sx={{ py: 1.2, px: 2, borderRadius: 1.5, '&:hover': { bgcolor: '#fef2f2' } }}
+                >
+                  <ListItemIcon sx={{ color: '#dc2626', minWidth: 34 }}>
+                    <Icon icon="vscode-icons:file-type-pdf2" width={22} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography variant="body2" fontWeight={700} color="#b91c1c">PDF (.pdf)</Typography>}
+                    secondary={<Typography variant="caption" color="text.secondary">Documento PDF oficial</Typography>}
+                  />
+                </MenuItem>
+                <Divider sx={{ my: 0.5 }} />
+                <MenuItem
+                  onClick={() => {
+                    handleCloseBudgetMenu();
+                    handleExportExcel();
+                  }}
+                  sx={{ py: 1.2, px: 2, borderRadius: 1.5, '&:hover': { bgcolor: '#f0fdf4' } }}
+                >
+                  <ListItemIcon sx={{ color: '#16a34a', minWidth: 34 }}>
+                    <Icon icon="vscode-icons:file-type-excel" width={22} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography variant="body2" fontWeight={700} color="#15803d">Excel (.xlsx)</Typography>}
+                    secondary={<Typography variant="caption" color="text.secondary">Hoja de cálculo detallada</Typography>}
+                  />
+                </MenuItem>
+             </Menu>
           </Box>
         )}
       </Box>

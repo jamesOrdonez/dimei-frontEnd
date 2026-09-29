@@ -247,6 +247,12 @@ export default function ProjectReportPdf({ project }) {
               <Text style={styles.infoValue}>{project.customerName || project.customer}</Text>
             </View>
           ) : null}
+          {(project.observaciones || project.descripcion) ? (
+            <View style={[styles.infoItem, { width: '66%' }]}>
+              <Text style={styles.infoLabel}>Descripción</Text>
+              <Text style={styles.infoValue}>{project.observaciones || project.descripcion}</Text>
+            </View>
+          ) : null}
           {project.elevatorTypeName ? (
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Sistema Motriz</Text>
