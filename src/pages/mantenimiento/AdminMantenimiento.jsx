@@ -17,7 +17,7 @@ const mapData = (raw) =>
       id: r.id,
       fecha,
       cliente: r.projectData?.customerData?.nombre || '—',
-      equipo: `${r.projectData?.elevatorTypeData?.elevatorType || ''} #${r.projectData?.id || ''}`,
+      equipo: r.projectData?.nombre || `${r.projectData?.elevatorTypeData?.elevatorType || ''} #${r.projectData?.id || ''}`,
       tecnico: r.technicianData?.name || '—',
       estado: r.status || 'Finalizado',
     };
@@ -57,19 +57,19 @@ const handleDownloadPDF = async (report) => {
       const token = sessionStorage.getItem('Token') || '';
       const url = `${getFullUrl(fullReport.pdf_path)}?token=${encodeURIComponent(token)}`;
       const response = await axios.get(url, { responseType: 'blob' });
+      const equipName = report.projectData?.nombre || report.projectData?.elevatorTypeData?.elevatorType || 'Equipo';
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `Reporte_${report.projectData.elevatorTypeData?.elevatorType}_${report.projectData.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
+      link.download = `Reporte_${equipName}_${report.projectData?.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
       link.click();
       URL.revokeObjectURL(blobUrl);
       return;
     }
 
-    const resGroup = await axios.get(
-      `/getOneQuestionGroup/${report.projectData.elevatorTypeData.question_group_id}`
-    );
+    const projectId = report.project_id || report.projectData?.id;
+    const resGroup = await axios.get(`/getProjectQuestionGroups/${projectId}`);
     const group = resGroup.data.data;
 
     const technicianSignatureBase64 = await fetchImageAsBase64(getFullUrl(fullReport.technician_signature));
@@ -90,6 +90,8 @@ const handleDownloadPDF = async (report) => {
       };
     }
 
+    const equipName = report.projectData?.nombre || report.projectData?.elevatorTypeData?.elevatorType || 'Equipo';
+
     const blob = await pdf(
       <MaintenanceReportPdf
         data={{
@@ -100,6 +102,7 @@ const handleDownloadPDF = async (report) => {
         }}
         equipo={{
           id: report.projectData.id,
+          nombre: report.projectData.nombre,
           customerName: report.projectData.customerData?.nombre,
           elevatorTypeName: report.projectData.elevatorTypeData?.elevatorType,
           description: report.projectData.description,
@@ -117,7 +120,7 @@ const handleDownloadPDF = async (report) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Reporte_${report.projectData.elevatorTypeData?.elevatorType}_${report.projectData.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
+    link.download = `Reporte_${equipName}_${report.projectData?.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
     link.click();
   } catch (error) {
     console.error('Error generating PDF:', error);

@@ -60,7 +60,7 @@ export default function ClientesMantenimiento() {
         return;
       }
       
-      const resGroup = await axios.get(`/getOneQuestionGroup/${equipo.questionGroupId}`);
+      const resGroup = await axios.get(`/getProjectQuestionGroups/${equipo.id}`);
       const group = resGroup.data.data;
       
       const techName = equipo.lastMaintenance.technician;

@@ -213,12 +213,9 @@ export default function FormularioMantenimiento() {
       }
       setEquipo(equipoData);
 
-      if (equipoData.questionGroupId) {
-        const resGroup = await axios.get(`/getOneQuestionGroup/${equipoData.questionGroupId}`);
-        setQuestionGroup(resGroup.data.data);
-      } else {
-        setQuestionGroup({ questions: [] });
-      }
+      // Todos los grupos de preguntas asignados al equipo (lista plana de preguntas)
+      const resGroups = await axios.get(`/getProjectQuestionGroups/${id}`);
+      setQuestionGroup(resGroups.data.data || { groups: [], questions: [] });
     } catch (error) {
       console.error("Error fetching form data:", error);
     } finally {
@@ -499,15 +496,32 @@ export default function FormularioMantenimiento() {
 
       {/* Questions Section */}
       <Stack spacing={3}>
+        {questionGroup?.questions?.length === 0 && (
+          <Card sx={{ borderRadius: 4, border: '1px dashed #cbd5e1' }}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                Este equipo no tiene preguntas asignadas. Asígnalas desde el módulo de Equipos.
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
         {questionGroup?.questions?.map((question, index) => {
           const ans = answers[question.id];
           const selectedOptions = question.options?.filter(opt => ans?.optionIds?.includes(opt.id.toString())) || [];
           const requiresEvidenceByOption = selectedOptions.some(opt => opt.requires_photo);
           const showPhotoSection = question.type === 'fotos' || requiresEvidenceByOption;
           const requiresJustificationByOption = selectedOptions.some(opt => opt.requires_justification || opt.requires_justification === 1);
+          const prevQuestion = questionGroup.questions[index - 1];
+          const showGroupHeader = question.group_name && (!prevQuestion || prevQuestion.group_id !== question.group_id);
 
           return (
-            <Card key={question.id} sx={{ borderRadius: 4, border: '1px solid #f1f5f9' }}>
+            <Box key={question.id}>
+            {showGroupHeader && (
+              <Typography variant="overline" fontWeight="800" color="primary" sx={{ display: 'block', mb: 1, mt: index === 0 ? 0 : 1 }}>
+                {question.group_name}
+              </Typography>
+            )}
+            <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9' }}>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight="700" sx={{ mb: 2 }}>{index + 1}. {question.text}</Typography>
                 
@@ -585,6 +599,7 @@ export default function FormularioMantenimiento() {
                 )}
               </CardContent>
             </Card>
+            </Box>
           );
         })}
 

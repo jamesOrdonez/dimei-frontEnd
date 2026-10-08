@@ -6,7 +6,7 @@ import {
   FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel,
   Divider, Tooltip, CircularProgress, Paper, Collapse, Tab, Tabs,
 } from '@mui/material';
-import { PlusIcon, PencilIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon, SquaresPlusIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon, SquaresPlusIcon, Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -490,7 +490,7 @@ function SortableGroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplat
   );
 }
 
-function GroupsDndList({ groups, setGroups, onGroupEdited, onGroupDeleted, optionTemplates }) {
+function GroupsDndList({ groups, onReorder, onGroupEdited, onGroupDeleted, optionTemplates }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const handleDragEnd = async (event) => {
     const { active, over } = event;
@@ -498,7 +498,7 @@ function GroupsDndList({ groups, setGroups, onGroupEdited, onGroupDeleted, optio
     const oldIdx = groups.findIndex(g => g.id === active.id);
     const newIdx = groups.findIndex(g => g.id === over.id);
     const reordered = arrayMove(groups, oldIdx, newIdx);
-    setGroups(reordered);
+    onReorder(reordered);
     await axios.post('/reorderQuestionGroups', { order: reordered.map((g, i) => ({ id: g.id, sort_order: i })) });
   };
   return (
@@ -516,14 +516,22 @@ function GroupsDndList({ groups, setGroups, onGroupEdited, onGroupDeleted, optio
 }
 
 // ─── GroupNameDialog ──────────────────────────────────────────────────────────
-function GroupDialog({ open, onClose, onSave, initial }) {
+function GroupDialog({ open, onClose, onSave, initial, systemTypes, defaultTypeId }) {
   const [name, setName] = useState('');
+  const [typeId, setTypeId] = useState('');
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) { setName(initial?.name || ''); setSaving(false); } }, [open, initial]);
+  useEffect(() => {
+    if (open) {
+      setName(initial?.name || '');
+      const t = initial ? initial.elevator_type_id : defaultTypeId;
+      setTypeId(t && t !== 'none' ? t : '');
+      setSaving(false);
+    }
+  }, [open, initial, defaultTypeId]);
 
   const handleSave = async () => {
     setSaving(true);
-    try { await onSave(name); }
+    try { await onSave(name, typeId || null); }
     finally { setSaving(false); }
   };
 
@@ -532,17 +540,93 @@ function GroupDialog({ open, onClose, onSave, initial }) {
       <DialogTitle sx={{ fontWeight: 700 }}>{initial ? 'Editar grupo' : 'Nuevo grupo de preguntas'}</DialogTitle>
       <Divider />
       <DialogContent>
-        <TextField label="Nombre del grupo" fullWidth autoFocus value={name}
-          onChange={e => setName(e.target.value)} sx={{ mt: 1 }} />
+        <Stack spacing={2.5} sx={{ mt: 1 }}>
+          <TextField label="Nombre del grupo" fullWidth autoFocus value={name}
+            onChange={e => setName(e.target.value)} />
+          <FormControl fullWidth>
+            <InputLabel id="group-system-type-label">Tipo de sistema</InputLabel>
+            <Select labelId="group-system-type-label" id="group-system-type" value={typeId}
+              label="Tipo de sistema" onChange={e => setTypeId(e.target.value)}>
+              {systemTypes.map(t => (
+                <MenuItem key={t.id} value={t.id}>{t.elevatorType}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
       </DialogContent>
       <Divider />
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} disabled={saving}>Cancelar</Button>
-        <LoadingButton variant="contained" loading={saving} disabled={!name.trim()} onClick={handleSave} sx={{ borderRadius: 2 }}>
+        <LoadingButton variant="contained" loading={saving} disabled={!name.trim() || !typeId} onClick={handleSave} sx={{ borderRadius: 2 }}>
           Guardar
         </LoadingButton>
       </DialogActions>
     </Dialog>
+  );
+}
+
+// ─── SystemTypeSelector ───────────────────────────────────────────────────────
+function SystemTypeSelector({ systemTypes, selected, onChange, counts, unassignedCount }) {
+  const options = [
+    ...systemTypes.map(t => ({ id: t.id, label: t.elevatorType, count: counts[t.id] || 0 })),
+    ...(unassignedCount > 0 ? [{ id: 'none', label: 'Sin tipo asignado', count: unassignedCount, warn: true }] : []),
+  ];
+
+  return (
+    <Paper elevation={0} sx={{
+      p: 2, mb: 3, borderRadius: 3, border: '1px solid #e2e8f0',
+      background: 'linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%)',
+    }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+        <Box sx={{ width: 28, height: 28, borderRadius: 2, bgcolor: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Cog6ToothIcon style={{ width: 16, height: 16 }} />
+        </Box>
+        <Box>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.2 }}>Tipo de sistema</Typography>
+          <Typography variant="caption" color="text.secondary">
+            Selecciona el tipo de sistema al que pertenecen los grupos de preguntas.
+          </Typography>
+        </Box>
+      </Stack>
+
+      {options.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          No hay tipos de sistema creados. Créalos primero en la pestaña "Tipo de Sistema".
+        </Typography>
+      ) : (
+        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          {options.map(opt => {
+            const active = selected === opt.id;
+            return (
+              <Chip
+                key={opt.id}
+                id={`system-type-${opt.id}`}
+                clickable
+                onClick={() => onChange(opt.id)}
+                color={opt.warn ? 'warning' : 'primary'}
+                variant={active ? 'filled' : 'outlined'}
+                label={
+                  <Stack direction="row" alignItems="center" spacing={0.75}>
+                    <span>{opt.label}</span>
+                    <Box component="span" sx={{
+                      px: 0.75, borderRadius: 5, fontSize: '0.7rem', fontWeight: 700,
+                      bgcolor: active ? 'rgba(255,255,255,0.25)' : 'rgba(37,99,235,0.08)',
+                    }}>{opt.count}</Box>
+                  </Stack>
+                }
+                sx={{
+                  fontWeight: 600, borderRadius: 2, height: 34, px: 0.5,
+                  transition: 'all .2s ease',
+                  bgcolor: active ? undefined : '#fff',
+                  boxShadow: active ? '0 4px 12px rgba(37,99,235,0.25)' : 'none',
+                  '&:hover': { transform: 'translateY(-1px)' },
+                }}
+              />
+            );
+          })}
+        </Stack>
+      )}
+    </Paper>
   );
 }
 
@@ -551,6 +635,8 @@ export default function Preguntas() {
   const [tab, setTab] = useState(0);
   const [groups, setGroups] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [systemTypes, setSystemTypes] = useState([]);
+  const [selectedType, setSelectedType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingGroup, setSavingGroup] = useState(false);
   const [gDialog, setGDialog] = useState({ open: false, editing: null });
@@ -558,27 +644,55 @@ export default function Preguntas() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [gRes, tRes] = await Promise.all([
+      const [gRes, tRes, sRes] = await Promise.all([
         axios.get(`/getQuestionGroups/${company()}`),
         axios.get(`/getOptionTemplateGroups/${company()}`),
+        axios.get(`/getElevatorTypes/${company()}`),
       ]);
+      const types = sRes.data.data || [];
       setGroups(gRes.data.data || []);
       setTemplates(tRes.data.data || []);
+      setSystemTypes(types);
+      setSelectedType(prev => prev ?? (types[0]?.id ?? null));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const handleSaveGroup = async (name) => {
+  // Conteo de grupos por tipo de sistema
+  const counts = groups.reduce((acc, g) => {
+    if (g.elevator_type_id) acc[g.elevator_type_id] = (acc[g.elevator_type_id] || 0) + 1;
+    return acc;
+  }, {});
+  const unassignedCount = groups.filter(g => !g.elevator_type_id).length;
+  const visibleGroups = groups.filter(g =>
+    selectedType === 'none' ? !g.elevator_type_id : g.elevator_type_id === selectedType
+  );
+  const selectedTypeName = selectedType === 'none'
+    ? 'Sin tipo asignado'
+    : systemTypes.find(t => t.id === selectedType)?.elevatorType;
+
+  // Reordenar solo los grupos visibles, manteniendo el resto intacto
+  const handleReorder = (reordered) => {
+    const ids = new Set(reordered.map(g => g.id));
+    setGroups(prev => [...reordered, ...prev.filter(g => !ids.has(g.id))]);
+  };
+
+  const handleSaveGroup = async (name, elevatorTypeId) => {
     setSavingGroup(true);
     try {
+      const payload = { name, elevator_type_id: elevatorTypeId };
       if (gDialog.editing) {
-        const res = await axios.put(`/updateQuestionGroup/${gDialog.editing.id}`, { name });
-        setGroups(prev => prev.map(g => g.id === gDialog.editing.id ? { ...g, name: res.data.data.name } : g));
+        const res = await axios.put(`/updateQuestionGroup/${gDialog.editing.id}`, payload);
+        const upd = res.data.data;
+        setGroups(prev => prev.map(g => g.id === gDialog.editing.id
+          ? { ...g, name: upd.name, elevator_type_id: upd.elevator_type_id, systemType: upd.systemType }
+          : g));
       } else {
-        const res = await axios.post('/saveQuestionGroup', { name, company: company() });
+        const res = await axios.post('/saveQuestionGroup', { ...payload, company: company() });
         setGroups(prev => [{ ...res.data.data, questions: [] }, ...prev]);
+        if (elevatorTypeId) setSelectedType(elevatorTypeId);
       }
       setGDialog({ open: false, editing: null });
     } catch (e) { console.error(e); }
@@ -592,6 +706,16 @@ export default function Preguntas() {
 
   return (
     <Box>
+      {!loading && (
+        <SystemTypeSelector
+          systemTypes={systemTypes}
+          selected={selectedType}
+          onChange={(id) => { setSelectedType(id); setTab(0); }}
+          counts={counts}
+          unassignedCount={unassignedCount}
+        />
+      )}
+
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: '1px solid #e2e8f0' }}>
         <Tab label="Grupos de preguntas" />
         <Tab label="Plantillas de opciones" />
@@ -606,32 +730,43 @@ export default function Preguntas() {
         <Box>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
             <Box>
-              <Typography variant="h6" fontWeight={700}>Grupos de Preguntas</Typography>
-              <Typography variant="body2" color="text.secondary">Organiza las preguntas en grupos temáticos.</Typography>
+              <Typography variant="h6" fontWeight={700}>
+                Grupos de Preguntas{selectedTypeName ? ` · ${selectedTypeName}` : ''}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selectedType === 'none'
+                  ? 'Estos grupos no tienen tipo de sistema. Edítalos para asignarles uno.'
+                  : 'Organiza las preguntas en grupos temáticos para este tipo de sistema.'}
+              </Typography>
             </Box>
             <LoadingButton variant="contained" loading={savingGroup} startIcon={<PlusIcon className="h-5 w-5" />}
+              disabled={systemTypes.length === 0}
               onClick={() => setGDialog({ open: true, editing: null })} sx={{ borderRadius: 2, px: 3 }}>
               Nuevo grupo
             </LoadingButton>
           </Stack>
 
-          {groups.length === 0 ? (
+          {visibleGroups.length === 0 ? (
             <Paper elevation={0} sx={{ p: 6, textAlign: 'center', border: '2px dashed #e2e8f0', borderRadius: 4 }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>Sin grupos aún</Typography>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {selectedTypeName ? `Sin grupos para "${selectedTypeName}"` : 'Sin grupos aún'}
+              </Typography>
               <Button variant="outlined" startIcon={<PlusIcon className="h-4 w-4" />}
+                disabled={systemTypes.length === 0}
                 onClick={() => setGDialog({ open: true, editing: null })}>
                 Crear primer grupo
               </Button>
             </Paper>
           ) : (
-            <GroupsDndList groups={groups} setGroups={setGroups}
+            <GroupsDndList groups={visibleGroups} onReorder={handleReorder}
               onGroupEdited={grp => setGDialog({ open: true, editing: grp })}
               onGroupDeleted={handleDeleteGroup}
               optionTemplates={templates} />
           )}
 
           <GroupDialog open={gDialog.open} onClose={() => setGDialog({ open: false, editing: null })}
-            onSave={handleSaveGroup} initial={gDialog.editing} />
+            onSave={handleSaveGroup} initial={gDialog.editing}
+            systemTypes={systemTypes} defaultTypeId={selectedType} />
         </Box>
       ) : (
         <OptionTemplateManager templates={templates} onTemplatesChange={setTemplates} />

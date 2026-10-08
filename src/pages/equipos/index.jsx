@@ -105,16 +105,27 @@ export default function Equipos() {
       grid: { xs: 12, sm: 4 },
       required: true,
     },
+    {
+      name: 'question_group_ids',
+      label: 'Preguntas de mantenimiento',
+      input: 'questionGroups',
+      grid: { xs: 12 },
+      // Destaca la sección del tipo de sistema seleccionado en el equipo
+      dynamicProps: ({ values }) => ({ highlightTypeId: values?.elevatorType || null }),
+    },
   ];
 
   const mapData = (data) => {
-    return data.map((item) => ({
-      ...item,
-      'Nombre': item.nombre,
-      'Tipo de ascensor': item.typeDriveSystemName,
-      'Tipo de sistema': item.elevatorTypeName,
-      'Cliente': item.customerName,
-    }));
+    return data.map((item) => {
+      const { observaciones, ...rest } = item;
+      return {
+        ...rest,
+        'Nombre': item.nombre,
+        'Tipo de ascensor': item.typeDriveSystemName,
+        'Tipo de sistema': item.elevatorTypeName,
+        'Cliente': item.customerName,
+      };
+    });
   };
 
   const mapPayload = (payload) => {
@@ -122,6 +133,12 @@ export default function Equipos() {
     delete newPayload.necesita_encerramiento;
     delete newPayload.metros_cuadrados;
     delete newPayload.displayLabel;
+    if (newPayload.state === 1 || newPayload.state === 0 || newPayload.state === '1' || newPayload.state === '0') {
+      delete newPayload.state;
+    }
+    newPayload.question_group_ids = Array.isArray(payload.question_group_ids)
+      ? payload.question_group_ids.map(Number).filter((n) => Number.isInteger(n) && n > 0)
+      : [];
     return newPayload;
   };
 
@@ -141,8 +158,9 @@ export default function Equipos() {
         hideCreate={!hasPermission(PERMISOS.CREAR_PROYECTOS)}
         hideEdit={!isAdmin}
         hideDelete={!isAdmin}
+        formMaxWidth="md"
 
-        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'questionGroupId', 'lastMaintenance', 'user', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel']}
+        excludeKeys={['company', 'state', 'created_at', 'updated_at', 'password', 'signed_act', 'elevatorType', 'typeDriveSystem', 'customerId', 'elevatorTypeName', 'typeDriveSystemName', 'customerName', 'tipo', 'nombre', 'questionGroupId', 'question_group_ids', 'lastMaintenance', 'user', 'necesita_encerramiento', 'metros_cuadrados', 'displayLabel', 'observaciones', 'Observaciones']}
 
         customFilters={customFilters}
       />
