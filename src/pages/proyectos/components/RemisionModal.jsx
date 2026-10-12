@@ -29,10 +29,12 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import RemisionPDF from '../../productos/remisionPDF.jsx';
 import { pdf } from '@react-pdf/renderer';
+import { BASE_URL } from '../../../App';
 
 export default function RemisionModal({ open, onClose, project, projectId, company, showItemsTab, onSuccess }) {
   const [tabIndex, setTabIndex] = useState(0);
   const [description, setDescription] = useState('');
+  const [clientName, setClientName] = useState('');
   const [saving, setSaving] = useState(false);
 
   // States for products
@@ -47,8 +49,9 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
   // Reset form when opening
   React.useEffect(() => {
-    if (open && project) {
+    if (open) {
       setDescription('');
+      setClientName('');
       setTabIndex(0);
       setFilterText('');
       setLeftProductSelected([]);
@@ -350,7 +353,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       const remisionData = {
         remisionId,
         fecha: new Date().toLocaleDateString(),
-        cliente: project?.customerName || project?.customer || ' ',
+        cliente: project?.customerName || project?.customer || clientName || company || ' ',
         description: description,
         projectId: String(project?.id ?? projectId ?? ''),
         products: selectedProducts
@@ -422,11 +425,15 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             }
             return acc;
           }, []),
+        customer_signature: null,
+        customer_name: null,
+        signed_date: null,
         elaboradoPor: decrypt(sessionStorage.getItem('name')) || 'S/N',
         aprobadoPor: ' ',
       };
 
-      const blob = await pdf(<RemisionPDF remision={remisionData} />).toBlob();
+      const backendUrl = BASE_URL.replace('/api/v1/', '');
+      const blob = await pdf(<RemisionPDF remision={remisionData} backendUrl={backendUrl} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -445,6 +452,11 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
 
     if (!hasStagedProducts && !hasStagedItems) {
       Swal.fire('Atención', 'Selecciona al menos un producto o ítem con cantidad mayor a 0 para remisionar.', 'warning');
+      return;
+    }
+
+    if (!projectId && (!clientName || !clientName.trim())) {
+      Swal.fire('Atención', 'Por favor ingresa el nombre del cliente para la remisión.', 'warning');
       return;
     }
 
@@ -468,7 +480,8 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
         description,
         company,
         fkUser: decrypt(sessionStorage.getItem('userId')),
-        fk_proyect: projectId,
+        fk_proyect: projectId || null,
+        client_name: !projectId && clientName ? clientName.trim() : null,
         net_products: Object.entries(aggregatedProducts).map(([id, qty]) => ({ id: Number(id), quantity: qty })),
         net_items: Object.entries(aggregatedItems).map(([id, qty]) => ({ id: Number(id), quantity: qty })),
       };
@@ -946,7 +959,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
         sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <Typography variant="h6" fontWeight={800} component="div">
-          Nueva Remisión - Proyecto #{projectId}
+          {projectId ? `Nueva Remisión - Proyecto #${projectId}` : 'Nueva Remisión'}
         </Typography>
         <IconButton onClick={onClose} size="small">
           <XMarkIcon className="w-5 h-5" />
@@ -954,6 +967,20 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
       </DialogTitle>
       <Divider />
       <DialogContent sx={{ p: 3, bgcolor: '#f8fafc' }}>
+        {!projectId && (
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              label="Nombre del Cliente"
+              placeholder="Escribe el nombre del cliente"
+              size="small"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              sx={{ bgcolor: '#fff', borderRadius: 1 }}
+              required
+            />
+          </Box>
+        )}
         <Box mb={3}>
           <TextField
             fullWidth
@@ -1000,7 +1027,7 @@ export default function RemisionModal({ open, onClose, project, projectId, compa
             )}
       </DialogContent>
       <Divider />
-      <DialogActions sx={{ p: 2, bgcolor: '#f1f5f9' }}>
+      <DialogActions sx={{ p: 2, bgcolor: '#f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
         <Button onClick={onClose} color="inherit" sx={{ fontWeight: 600 }}>
           Cancelar
         </Button>

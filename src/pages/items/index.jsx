@@ -177,13 +177,24 @@ export default function Items() {
   const remissionFields = useMemo(() => [
     {
       name: 'fk_proyect',
-      label: 'Seleccione Proyecto',
+      label: 'Seleccione Proyecto (Opcional)',
       input: 'select',
       endpoint: `/getProjects/${sessionStorage.getItem('company')}`,
       optionLabel: 'displayLabel',
       optionValue: 'id',
       grid: { xs: 12 },
-      required: true,
+      required: false,
+    },
+    {
+      name: 'client_name',
+      label: 'Nombre del Cliente',
+      placeholder: 'Escribe el nombre del cliente',
+      input: 'text',
+      grid: { xs: 12 },
+      hasToHide: ({ values }) => Boolean(values?.fk_proyect),
+      dynamicProps: ({ values }) => ({
+        required: !values?.fk_proyect,
+      }),
     },
     {
       name: 'description',
@@ -230,7 +241,7 @@ export default function Items() {
     const remisionPDF = {
       remisionId: response.data.remisionId,
       projectId: payload.fk_proyect ? String(payload.fk_proyect) : '',
-      cliente: project?.customerName || project?.customer || 'S/N',
+      cliente: project?.customerName || project?.customer || payload.client_name || 'S/N',
       fecha: new Date().toLocaleDateString(),
       description: payload.description,
       items: (payload.net_items || []).map(item => {

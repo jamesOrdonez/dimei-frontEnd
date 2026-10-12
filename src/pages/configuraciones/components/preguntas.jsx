@@ -6,7 +6,7 @@ import {
   FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel,
   Divider, Tooltip, CircularProgress, Paper, Collapse, Tab, Tabs,
 } from '@mui/material';
-import { PlusIcon, PencilIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon, SquaresPlusIcon, Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon, SquaresPlusIcon, Bars3Icon, Cog6ToothIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -81,10 +81,11 @@ function OptionRow({ option, onChange, onRemove }) {
 }
 
 // ─── QuestionDialog ───────────────────────────────────────────────────────────
-function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
+function QuestionDialog({ open, onClose, onSave, initial, optionTemplates, availableQuestions }) {
   const [form, setForm] = useState({ text: '', type: 'unica', min_photos: 1, max_photos: 5, options: [] });
   const [saving, setSaving] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
+  const [copyPickerOpen, setCopyPickerOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -93,6 +94,7 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
         ? { ...initial, options: sortById(initial.options) }
         : { text: '', type: 'unica', min_photos: 1, max_photos: 5, options: [] });
       setSaving(false);
+      setCopyPickerOpen(false);
     }
   }, [open, initial]);
 
@@ -101,6 +103,21 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
   const updateOption = (i, val) => set('options', form.options.map((o, idx) => idx === i ? val : o));
   const removeOption = (i) => set('options', form.options.filter((_, idx) => idx !== i));
   const loadTemplate = (tpl) => { set('options', tpl.options.map(o => ({ text: o.text, requires_photo: !!o.requires_photo, requires_justification: !!o.requires_justification }))); setTplOpen(false); };
+
+  const handleCopyFromQuestion = (q) => {
+    setForm({
+      text: q.text,
+      type: q.type,
+      min_photos: q.min_photos || 1,
+      max_photos: q.max_photos || 5,
+      options: (q.options || []).map(o => ({
+        text: o.text,
+        requires_photo: o.requires_photo === 1 || o.requires_photo === true,
+        requires_justification: o.requires_justification === 1 || o.requires_justification === true
+      }))
+    });
+    setCopyPickerOpen(false);
+  };
 
   const isChoice = form.type === 'unica' || form.type === 'multiple';
   const valid = form.text.trim() && (
@@ -116,8 +133,22 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-      <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>{initial ? 'Editar pregunta' : 'Nueva pregunta'}</DialogTitle>
+    <>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>{initial ? 'Editar pregunta' : 'Nueva pregunta'}</span>
+        {availableQuestions?.length > 0 && (
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DocumentDuplicateIcon className="h-4 w-4" />}
+            onClick={() => setCopyPickerOpen(true)}
+            sx={{ textTransform: 'none', borderRadius: 2 }}
+          >
+            Copiar de pregunta existente
+          </Button>
+        )}
+      </DialogTitle>
       <Divider />
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
@@ -204,11 +235,60 @@ function QuestionDialog({ open, onClose, onSave, initial, optionTemplates }) {
         </LoadingButton>
       </DialogActions>
     </Dialog>
+
+    {/* Copy existing question dialog */}
+    <Dialog open={copyPickerOpen} onClose={() => setCopyPickerOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle sx={{ fontWeight: 700 }}>Seleccionar pregunta a copiar</DialogTitle>
+      <Divider />
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Selecciona una pregunta para copiar su enunciado y sus opciones de respuesta:
+        </Typography>
+        <Stack spacing={1.5}>
+          {availableQuestions?.map((q) => (
+            <Paper
+              key={q.id}
+              variant="outlined"
+              sx={{
+                p: 1.5,
+                cursor: 'pointer',
+                borderRadius: 2,
+                '&:hover': { bgcolor: '#f0f7ff', borderColor: '#3b82f6' }
+              }}
+              onClick={() => handleCopyFromQuestion(q)}
+            >
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                <Chip label={TYPE_LABELS[q.type]} color={TYPE_COLORS[q.type]} size="small" sx={{ fontWeight: 700, fontSize: '0.65rem' }} />
+                <Typography fontWeight={600} variant="body2">{q.text}</Typography>
+              </Stack>
+              {(q.type === 'unica' || q.type === 'multiple') && q.options?.length > 0 && (
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
+                  {q.options.map((o, idx) => (
+                    <Chip
+                      key={idx}
+                      label={`${o.text}${Number(o.requires_photo) === 1 ? ' 📷' : ''}${Number(o.requires_justification) === 1 ? ' ✍️' : ''}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                  ))}
+                </Stack>
+              )}
+            </Paper>
+          ))}
+        </Stack>
+      </DialogContent>
+      <Divider />
+      <DialogActions sx={{ px: 3, py: 1.5 }}>
+        <Button onClick={() => setCopyPickerOpen(false)}>Cancelar</Button>
+      </DialogActions>
+    </Dialog>
+  </>
   );
 }
 
 // ─── SortableQuestion ────────────────────────────────────────────────────────
-function SortableQuestion({ q, onEdit, deletingId, onDelete }) {
+function SortableQuestion({ q, onEdit, onCopy, copyingId, deletingId, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
   return (
@@ -228,10 +308,19 @@ function SortableQuestion({ q, onEdit, deletingId, onDelete }) {
           )}
         </Box>
         <Stack direction="row" spacing={0.5}>
-          <IconButton size="small" onClick={() => onEdit(q)}><PencilIcon className="h-4 w-4" /></IconButton>
-          <LoadingIconButton size="small" color="error" loading={deletingId === q.id} onClick={() => onDelete(q.id)}>
-            <TrashIcon className="h-4 w-4" />
-          </LoadingIconButton>
+          <Tooltip title="Copiar pregunta">
+            <LoadingIconButton size="small" color="primary" loading={copyingId === q.id} onClick={() => onCopy(q)}>
+              <DocumentDuplicateIcon className="h-4 w-4" />
+            </LoadingIconButton>
+          </Tooltip>
+          <Tooltip title="Editar pregunta">
+            <IconButton size="small" onClick={() => onEdit(q)}><PencilIcon className="h-4 w-4" /></IconButton>
+          </Tooltip>
+          <Tooltip title="Eliminar pregunta">
+            <LoadingIconButton size="small" color="error" loading={deletingId === q.id} onClick={() => onDelete(q.id)}>
+              <TrashIcon className="h-4 w-4" />
+            </LoadingIconButton>
+          </Tooltip>
         </Stack>
       </Stack>
     </Paper>
@@ -243,9 +332,22 @@ function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates, drag
   const [expanded, setExpanded] = useState(false);
   const [qDialog, setQDialog] = useState({ open: false, editing: null });
   const [savingQ, setSavingQ] = useState(false);
+  const [copyingId, setCopyingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(false);
   const [questions, setQuestions] = useState(group.questions || []);
+
+  const handleCopyQuestion = async (q) => {
+    setCopyingId(q.id);
+    try {
+      const res = await axios.post(`/copyQuestion/${q.id}`);
+      setQuestions(prev => [...prev, res.data.data]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCopyingId(null);
+    }
+  };
 
   const handleSaveQuestion = async (form) => {
     setSavingQ(true);
@@ -340,6 +442,8 @@ function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates, drag
                   {questions.map(q => (
                     <SortableQuestion key={q.id} q={q}
                       onEdit={q => setQDialog({ open: true, editing: q })}
+                      onCopy={handleCopyQuestion}
+                      copyingId={copyingId}
                       deletingId={deletingId}
                       onDelete={handleDeleteQuestion} />
                   ))}
@@ -351,7 +455,7 @@ function GroupCard({ group, onGroupEdited, onGroupDeleted, optionTemplates, drag
       </Collapse>
 
       <QuestionDialog open={qDialog.open} onClose={() => setQDialog({ open: false, editing: null })}
-        onSave={handleSaveQuestion} initial={qDialog.editing} optionTemplates={optionTemplates} />
+        onSave={handleSaveQuestion} initial={qDialog.editing} optionTemplates={optionTemplates} availableQuestions={questions} />
     </Paper>
   );
 }

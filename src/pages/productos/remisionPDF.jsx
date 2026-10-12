@@ -64,18 +64,25 @@ const styles = StyleSheet.create({
 
   // Firmas
   firmasContainer: {
-    marginTop: 50,
+    marginTop: 40,
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
 
   firmaBox: {
-    width: '35%',
+    width: '38%',
     alignItems: 'center',
   },
 
+  signatureImg: {
+    width: 120,
+    height: 55,
+    marginBottom: 4,
+    objectFit: 'contain',
+  },
+
   firmaLinea: {
-    marginTop: 10,
+    marginTop: 5,
     borderTop: '1 solid #475569',
     width: '100%',
     textAlign: 'center',
@@ -85,7 +92,15 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function RemisionPDF({ remision }) {
+export default function RemisionPDF({ remision, backendUrl }) {
+  const getFullUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('data:') || path.startsWith('blob:')) return path;
+    const base = backendUrl || '';
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return `${base.endsWith('/') ? base : base + '/'}${cleanPath}`;
+  };
+
   return (
     <Document title={`Remisión ${remision.remisionId}`}>
       <Page size="A4" style={styles.page}>
@@ -166,14 +181,31 @@ export default function RemisionPDF({ remision }) {
         )}
 
         {/* FIRMAS */}
-        <View style={styles.firmasContainer}>
+        <View style={styles.firmasContainer} wrap={false}>
           <View style={styles.firmaBox}>
-            <Text style={{ marginBottom: 2 }}>{remision.elaboradoPor || ' '}</Text>
-            <Text style={styles.firmaLinea}>Elaborado por</Text>
+            <View style={{ height: 60, justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Text style={{ marginBottom: 4, fontSize: 9 }}>{remision.elaboradoPor || ' '}</Text>
+            </View>
+            <Text style={styles.firmaLinea}>Elaborado por (DIMEI)</Text>
           </View>
+
           <View style={styles.firmaBox}>
-            <Text style={{ marginBottom: 2 }}>{remision.aprobadoPor || ' '}</Text>
-            <Text style={styles.firmaLinea}>Recibido conforme</Text>
+            <View style={{ height: 60, justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+              {remision.customer_signature ? (
+                <Image style={styles.signatureImg} src={getFullUrl(remision.customer_signature)} />
+              ) : null}
+            </View>
+            <Text style={styles.firmaLinea}>Recibido conforme (Cliente)</Text>
+            {remision.customer_name ? (
+              <Text style={{ fontSize: 8, color: '#475569', marginTop: 2 }}>{remision.customer_name}</Text>
+            ) : (
+              <Text style={{ fontSize: 8, color: '#475569', marginTop: 2 }}>{remision.aprobadoPor || ' '}</Text>
+            )}
+            {remision.signed_date ? (
+              <Text style={{ fontSize: 7, color: '#94a3b8', marginTop: 1 }}>
+                Firma: {new Date(remision.signed_date).toLocaleDateString()}
+              </Text>
+            ) : null}
           </View>
         </View>
       </Page>

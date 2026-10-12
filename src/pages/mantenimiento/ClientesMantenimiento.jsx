@@ -14,7 +14,12 @@ import {
   Button,
   Chip,
   Collapse,
-  Divider
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper
 } from '@mui/material';
 import { 
   MagnifyingGlassIcon, 
@@ -22,7 +27,9 @@ import {
   ChevronDownIcon,
   WrenchScrewdriverIcon,
   CheckBadgeIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  ShieldCheckIcon,
+  BoltIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { BASE_URL } from '../../App';
@@ -34,54 +41,105 @@ export default function ClientesMantenimiento() {
   const [loading, setLoading] = useState(true);
   const backendUrl = BASE_URL.replace('/api/v1/', '');
 
-  const handleDownloadLastPDF = async (equipo) => {
+  const handleDownloadLastPDF = async (equipo, cliente) => {
     if (!equipo.lastMaintenance?.id) return;
     try {
+      const base = axios.defaults.baseURL || '';
+      const getFullUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('data:') || path.startsWith('blob:')) return path;
+        const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+        return `${base.endsWith('/') ? base : base + '/'}${cleanPath}`;
+      };
+
+      const fetchImageAsBase64 = async (url) => {
+        if (!url) return null;
+        if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+        try {
+          const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('Token') || '' : '';
+          const authUrl = token
+            ? (url.includes('?') ? `${url}&token=${encodeURIComponent(token)}` : `${url}?token=${encodeURIComponent(token)}`)
+            : url;
+          const response = await axios.get(authUrl, { responseType: 'blob' });
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(response.data);
+          });
+        } catch (error) {
+          console.error('Error fetching image for PDF:', url, error);
+          return null;
+        }
+      };
+
       const res = await axios.get(`/getMaintenanceReport/${equipo.lastMaintenance.id}`);
       const report = res.data.data;
-      
-      if (report.pdf_path) {
-        const base = axios.defaults.baseURL || '';
-        const getFullUrl = (path) => {
-          if (!path) return '';
-          const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-          return `${base.endsWith('/') ? base : base + '/'}${cleanPath}`;
-        };
-        const token = sessionStorage.getItem('Token') || '';
-        const url = `${getFullUrl(report.pdf_path)}?token=${encodeURIComponent(token)}`;
-        const response = await axios.get(url, { responseType: 'blob' });
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `Reporte_${equipo.elevatorTypeName}_${equipo.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
-        link.click();
-        URL.revokeObjectURL(blobUrl);
-        return;
-      }
       
       const resGroup = await axios.get(`/getProjectQuestionGroups/${equipo.id}`);
       const group = resGroup.data.data;
       
       const techName = equipo.lastMaintenance.technician;
+      const technicianSignatureBase64 = await fetchImageAsBase64(getFullUrl(report.technician_signature));
+      const customerSignatureBase64 = await fetchImageAsBase64(getFullUrl(report.customer_signature));
       
       const answersMap = {};
-      (report.answers || []).forEach(ans => {
+      for (const ans of (report.answers || [])) {
+        const photosBase64 = [];
+        for (const p of (ans.photos || [])) {
+          const fullUrl = getFullUrl(p);
+          const b64 = await fetchImageAsBase64(fullUrl);
+          if (b64) photosBase64.push({ preview: b64, originalUrl: fullUrl, path: p });
+          else if (fullUrl) photosBase64.push({ preview: fullUrl, originalUrl: fullUrl, path: p });
+        }
         answersMap[ans.question_id] = {
           question_id: ans.question_id,
           optionIds: ans.selected_options || [],
           text: ans.answer_text,
-          photos: (ans.photos || []).map(p => ({ preview: p }))
+          photos: photosBase64,
         };
-      });
+      }
 
+      const parentClient = cliente || clientes.find(c => c.id === equipo.customerId || c.id === equipo.customerData?.id) || {};
+      const principalEmail = parentClient.contacto_principal?.correo 
+        || parentClient.principalContact?.correo 
+        || parentClient.correo 
+        || parentClient.email 
+        || equipo.customerData?.contactos?.find(c => c.contactoPrincipal == 1)?.correo
+        || equipo.customerData?.contactos?.[0]?.correo
+        || equipo.customerData?.correo
+        || equipo.customerData?.email
+        || '';
+
+      const enrichedEquipo = {
+        ...equipo,
+        cliente: parentClient,
+        customerName: parentClient.nombre || equipo.customerName || equipo.customerData?.nombre,
+        customerData: {
+          ...(equipo.customerData || {}),
+          ...parentClient,
+          correo: principalEmail,
+          email: principalEmail,
+          direccion: parentClient.direccion || equipo.customerData?.direccion || equipo.location || equipo.address,
+        },
+        customerEmail: principalEmail,
+      };
+
+      const equipName = equipo.nombre || equipo.elevatorTypeName || 'Equipo';
       const blob = await pdf(
         <MaintenanceReportPdf 
-          data={{ ...report, answers: answersMap, technicianSignature: report.technician_signature, customerSignature: report.customer_signature }} 
-          equipo={equipo} 
+          data={{ 
+            ...report, 
+            answers: answersMap, 
+            technicianSignature: technicianSignatureBase64, 
+            customerSignature: customerSignatureBase64 
+          }} 
+          equipo={enrichedEquipo} 
           group={group}
           technicianName={techName}
           customerName={report.customer_name || ''}
+          customerEmail={principalEmail}
+          maintenanceType={report.maintenance_type || 'Preventivo'}
+          recommendations={report.recommendations || []}
           backendUrl={backendUrl}
         />
       ).toBlob();
@@ -89,8 +147,9 @@ export default function ClientesMantenimiento() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Reporte_${equipo.elevatorTypeName}_${equipo.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
+      link.download = `Reporte_${equipName}_${equipo.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
       link.click();
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("No se pudo generar el PDF");
@@ -101,6 +160,21 @@ export default function ClientesMantenimiento() {
   const [loadingEquipos, setLoadingEquipos] = useState({}); // { clientId: true/false }
   const [search, setSearch] = useState('');
   const [expandedClientId, setExpandedClientId] = useState(null);
+  const [selectedEquipoForMaintenance, setSelectedEquipoForMaintenance] = useState(null);
+  const [typeDialogOpen, setTypeDialogOpen] = useState(false);
+
+  const handleOpenMaintenanceTypeModal = (equipo) => {
+    setSelectedEquipoForMaintenance(equipo);
+    setTypeDialogOpen(true);
+  };
+
+  const handleSelectMaintenanceType = (tipo) => {
+    if (!selectedEquipoForMaintenance) return;
+    const targetEquipo = selectedEquipoForMaintenance;
+    setTypeDialogOpen(false);
+    setSelectedEquipoForMaintenance(null);
+    navigate(`/mantenimiento/formulario/${targetEquipo.id}?tipo=${encodeURIComponent(tipo)}`);
+  };
   
   const company = sessionStorage.getItem('company');
 
@@ -344,7 +418,7 @@ export default function ClientesMantenimiento() {
                                     {equipo.lastMaintenance && (
                                       <IconButton 
                                         size="small" 
-                                        onClick={(e) => { e.stopPropagation(); handleDownloadLastPDF(equipo); }}
+                                        onClick={(e) => { e.stopPropagation(); handleDownloadLastPDF(equipo, cliente); }}
                                         sx={{ 
                                           p: 0.8, 
                                           color: '#3b82f6',
@@ -374,7 +448,7 @@ export default function ClientesMantenimiento() {
                                     fullWidth
                                     variant="contained"
                                     size="small"
-                                    onClick={() => navigate(`/mantenimiento/formulario/${equipo.id}`)}
+                                    onClick={() => handleOpenMaintenanceTypeModal(equipo)}
                                     startIcon={<CheckBadgeIcon className="h-4 w-4" />}
                                     sx={{ 
                                       mt: 0.5,
@@ -401,6 +475,173 @@ export default function ClientesMantenimiento() {
           )}
         </Stack>
       )}
+
+      {/* Dialog para seleccionar Tipo de Mantenimiento */}
+      <Dialog 
+        open={typeDialogOpen} 
+        onClose={() => setTypeDialogOpen(false)} 
+        maxWidth="xs" 
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+      >
+        <DialogTitle sx={{ pb: 1, textAlign: 'center' }}>
+          <Typography variant="h6" fontWeight="800">
+            Tipo de Mantenimiento
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {selectedEquipoForMaintenance?.nombre || `${selectedEquipoForMaintenance?.elevatorTypeName} #${selectedEquipoForMaintenance?.id || ''}`}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+            Selecciona el tipo de servicio a ejecutar:
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {/* Opción 1: Preventivo */}
+            <Paper
+              elevation={0}
+              onClick={() => handleSelectMaintenanceType('Preventivo')}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '2px solid #e2e8f0',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                '&:hover': {
+                  borderColor: '#10b981',
+                  bgcolor: '#f0fdf4',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
+                }
+              }}
+            >
+              <Box 
+                sx={{ 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: 2.5, 
+                  bgcolor: '#dcfce7', 
+                  color: '#16a34a', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <ShieldCheckIcon className="h-6 w-6" />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" fontWeight="700" sx={{ color: '#0f172a' }}>
+                  Preventivo
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inspección y rutina periódica programada
+                </Typography>
+              </Box>
+            </Paper>
+
+            {/* Opción 2: Correctivo */}
+            <Paper
+              elevation={0}
+              onClick={() => handleSelectMaintenanceType('Correctivo')}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '2px solid #e2e8f0',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                '&:hover': {
+                  borderColor: '#f59e0b',
+                  bgcolor: '#fffbeb',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
+                }
+              }}
+            >
+              <Box 
+                sx={{ 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: 2.5, 
+                  bgcolor: '#fef3c7', 
+                  color: '#d97706', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <WrenchScrewdriverIcon className="h-6 w-6" />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" fontWeight="700" sx={{ color: '#0f172a' }}>
+                  Correctivo
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Reparación, ajuste o reemplazo por fallas
+                </Typography>
+              </Box>
+            </Paper>
+
+            {/* Opción 3: Emergencia */}
+            <Paper
+              elevation={0}
+              onClick={() => handleSelectMaintenanceType('Emergencia')}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '2px solid #e2e8f0',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                '&:hover': {
+                  borderColor: '#ef4444',
+                  bgcolor: '#fef2f2',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+                }
+              }}
+            >
+              <Box 
+                sx={{ 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: 2.5, 
+                  bgcolor: '#fee2e2', 
+                  color: '#dc2626', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <BoltIcon className="h-6 w-6" />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" fontWeight="700" sx={{ color: '#0f172a' }}>
+                  Emergencia
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Atención inmediata por parada imprevista o urgencia
+                </Typography>
+              </Box>
+            </Paper>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button fullWidth onClick={() => setTypeDialogOpen(false)} sx={{ textTransform: 'none', color: '#64748b', fontWeight: '700' }}>
+            Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

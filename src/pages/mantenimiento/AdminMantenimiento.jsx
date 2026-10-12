@@ -18,6 +18,7 @@ const mapData = (raw) =>
       fecha,
       cliente: r.projectData?.customerData?.nombre || '—',
       equipo: r.projectData?.nombre || `${r.projectData?.elevatorTypeData?.elevatorType || ''} #${r.projectData?.id || ''}`,
+      tipo: r.maintenance_type || 'Preventivo',
       tecnico: r.technicianData?.name || '—',
       estado: r.status || 'Finalizado',
     };
@@ -27,7 +28,11 @@ const fetchImageAsBase64 = async (url) => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   try {
-    const response = await axios.get(url, { responseType: 'blob' });
+    const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('Token') || '' : '';
+    const authUrl = token
+      ? (url.includes('?') ? `${url}&token=${encodeURIComponent(token)}` : `${url}?token=${encodeURIComponent(token)}`)
+      : url;
+    const response = await axios.get(authUrl, { responseType: 'blob' });
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result);
@@ -53,21 +58,6 @@ const handleDownloadPDF = async (report) => {
     const resReport = await axios.get(`/getMaintenanceReport/${report.id}`);
     const fullReport = resReport.data.data;
 
-    if (fullReport.pdf_path) {
-      const token = sessionStorage.getItem('Token') || '';
-      const url = `${getFullUrl(fullReport.pdf_path)}?token=${encodeURIComponent(token)}`;
-      const response = await axios.get(url, { responseType: 'blob' });
-      const equipName = report.projectData?.nombre || report.projectData?.elevatorTypeData?.elevatorType || 'Equipo';
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `Reporte_${equipName}_${report.projectData?.id}_${new Date(report.date).toLocaleDateString()}.pdf`;
-      link.click();
-      URL.revokeObjectURL(blobUrl);
-      return;
-    }
-
     const projectId = report.project_id || report.projectData?.id;
     const resGroup = await axios.get(`/getProjectQuestionGroups/${projectId}`);
     const group = resGroup.data.data;
@@ -79,8 +69,10 @@ const handleDownloadPDF = async (report) => {
     for (const ans of (fullReport.answers || [])) {
       const photosBase64 = [];
       for (const p of (ans.photos || [])) {
-        const b64 = await fetchImageAsBase64(getFullUrl(p));
-        if (b64) photosBase64.push({ preview: b64 });
+        const fullUrl = getFullUrl(p);
+        const b64 = await fetchImageAsBase64(fullUrl);
+        if (b64) photosBase64.push({ preview: b64, originalUrl: fullUrl, path: p });
+        else if (fullUrl) photosBase64.push({ preview: fullUrl, originalUrl: fullUrl, path: p });
       }
       answersMap[ans.question_id] = {
         question_id: ans.question_id,
@@ -88,6 +80,33 @@ const handleDownloadPDF = async (report) => {
         text: ans.answer_text,
         photos: photosBase64,
       };
+    }
+
+    const custData = fullReport.projectData?.customerData || report.projectData?.customerData;
+    let principalEmail = custData?.contacto_principal?.correo;
+    if (!principalEmail && Array.isArray(custData?.contactos)) {
+      const p = custData.contactos.find(c => c.contactoPrincipal == 1) || custData.contactos[0];
+      principalEmail = p?.correo;
+    }
+    if (!principalEmail && custData?.correo) {
+      principalEmail = custData.correo;
+    }
+    if (!principalEmail && custData?.email) {
+      principalEmail = custData.email;
+    }
+    if (!principalEmail && custData?.id) {
+      try {
+        const comp = sessionStorage.getItem('company');
+        if (comp) {
+          const clRes = await axios.get(`/getClientes/${comp}?tipo=equipo`);
+          const clMatch = (clRes.data.data || []).find(c => c.id === custData.id);
+          if (clMatch) {
+            principalEmail = clMatch.contacto_principal?.correo;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch client details:', e);
+      }
     }
 
     const equipName = report.projectData?.nombre || report.projectData?.elevatorTypeData?.elevatorType || 'Equipo';
@@ -103,16 +122,25 @@ const handleDownloadPDF = async (report) => {
         equipo={{
           id: report.projectData.id,
           nombre: report.projectData.nombre,
-          customerName: report.projectData.customerData?.nombre,
+          customerName: custData?.nombre || report.projectData.customerName,
           elevatorTypeName: report.projectData.elevatorTypeData?.elevatorType,
           description: report.projectData.description,
           stopNumber: report.projectData.stopNumber,
           capacity: report.projectData.capacity,
           typeDriveSystemName: report.projectData.driveSystemData?.typeDriveSystem,
+          customerData: {
+            ...(custData || {}),
+            email: principalEmail,
+            correo: principalEmail,
+          },
+          customerEmail: principalEmail,
         }}
         group={group}
         technicianName={report.technicianData?.name}
         customerName={fullReport.customer_name || ''}
+        customerEmail={principalEmail}
+        maintenanceType={fullReport.maintenance_type || 'Preventivo'}
+        recommendations={fullReport.recommendations || []}
         backendUrl={base}
       />
     ).toBlob();
